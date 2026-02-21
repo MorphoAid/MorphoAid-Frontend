@@ -6,6 +6,16 @@
           Sign in to your account
         </h2>
       </div>
+
+      <!-- Dev Quick Login (Only in development mode) -->
+      <div v-if="isDev" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-sm mb-4">
+        <p class="font-semibold text-yellow-800 mb-2">Dev Quick Login</p>
+        <div class="flex gap-2 justify-center">
+          <button @click="fillDevAdmin" type="button" class="bg-purple-100 text-purple-700 font-medium px-3 py-1 rounded hover:bg-purple-200 transition">Admin</button>
+          <button @click="fillDevDataUse" type="button" class="bg-green-100 text-green-700 font-medium px-3 py-1 rounded hover:bg-green-200 transition">DataUse</button>
+        </div>
+      </div>
+
       <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
         
         <div v-if="errorMsg" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -65,6 +75,17 @@ const form = reactive({
 });
 const loading = ref(false);
 const errorMsg = ref('');
+
+// Dev mode quick fills
+const isDev = import.meta.env.DEV;
+const fillDevAdmin = () => {
+  form.username = 'admin@test.com';
+  form.password = 'Admin123!';
+};
+const fillDevDataUse = () => {
+  form.username = 'sample@datause.local';
+  form.password = 'Pass1234!';
+};
 
 const handleLogin = async () => {
   errorMsg.value = '';
