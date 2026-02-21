@@ -38,6 +38,12 @@ const routes = [
         meta: { requiresAuth: true, requiresRole: ['ADMIN'] }
     },
     {
+        path: '/admin/users',
+        name: 'UserManagement',
+        component: () => import('@/features/admin/views/UserManagement.vue'),
+        meta: { requiresAuth: true, requiresRole: ['ADMIN'] }
+    },
+    {
         path: '/dataprep',
         name: 'DataPrepDashboard',
         component: () => import('@/features/dataprep/views/DataPrepDashboard.vue'),
