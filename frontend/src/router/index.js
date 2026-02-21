@@ -80,7 +80,11 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore()
 
-    if (to.meta.requiresAuth && !authStore.token) {
+    // Public whitelist - ensuring these pages are never blocked
+    const publicPages = ['/login', '/register/data-use', '/register/data-prep', '/__auth', '/forbidden', '/'];
+    const isPublic = publicPages.includes(to.path) || !to.meta.requiresAuth;
+
+    if (!isPublic && !authStore.token) {
         return next('/login')
     }
 
