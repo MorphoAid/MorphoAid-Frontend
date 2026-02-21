@@ -6,7 +6,19 @@
                 class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded shadow transition-colors">
                 &larr; Back to Cases
             </button>
-            <h1 class="text-2xl font-bold">Case Detail (ID: {{ route.params.id }})</h1>
+            <h1 class="text-2xl font-bold flex-1">Case Detail (ID: {{ route.params.id }})</h1>
+            <button @click="handleAnalyze" :disabled="isAnalyzing"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition-colors disabled:opacity-50">
+                {{ isAnalyzing ? 'Analyzing...' : 'Analyze with AI' }}
+            </button>
+        </div>
+
+        <!-- Analyze Messages -->
+        <div v-if="analyzeError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            {{ analyzeError }}
+        </div>
+        <div v-if="analyzeSuccess" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+            Analysis completed successfully.
         </div>
 
         <!-- 404 Case Not Found -->
@@ -122,6 +134,32 @@ const aiData = ref(null);
 const loadingAi = ref(true);
 const aiError = ref(null);
 const aiNotFound = ref(false);
+
+// State: Analyze
+const isAnalyzing = ref(false);
+const analyzeError = ref(null);
+const analyzeSuccess = ref(false);
+
+const handleAnalyze = async () => {
+    isAnalyzing.value = true;
+    analyzeError.value = null;
+    analyzeSuccess.value = false;
+
+    try {
+        await http.post(`/cases/${caseId}/analyze`);
+        analyzeSuccess.value = true;
+    } catch (err) {
+        if (!err.response) {
+            analyzeError.value = "Backend unreachable";
+        } else if (err.response.status === 404) {
+            analyzeError.value = "Analyze endpoint not available yet";
+        } else {
+            analyzeError.value = "Analyze failed";
+        }
+    } finally {
+        isAnalyzing.value = false;
+    }
+};
 
 const fetchCaseDetail = async () => {
     try {
