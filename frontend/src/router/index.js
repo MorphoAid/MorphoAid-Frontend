@@ -2,6 +2,36 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
     {
+        path: '/login',
+        name: 'Login',
+        component: () => import('@/features/auth/views/Login.vue')
+    },
+    {
+        path: '/register/data-use',
+        name: 'RegisterDataUse',
+        component: () => import('@/features/auth/views/RegisterDataUse.vue')
+    },
+    {
+        path: '/register/data-prep',
+        name: 'RegisterDataPrep',
+        component: () => import('@/features/auth/views/RegisterDataPrep.vue')
+    },
+    {
+        path: '/forbidden',
+        name: 'Forbidden',
+        component: () => import('@/features/auth/views/Forbidden.vue')
+    },
+    {
+        path: '/admin',
+        name: 'AdminDashboard',
+        component: () => import('@/features/admin/views/AdminDashboard.vue')
+    },
+    {
+        path: '/dataprep',
+        name: 'DataPrepDashboard',
+        component: () => import('@/features/dataprep/views/DataPrepDashboard.vue')
+    },
+    {
         path: '/__test',
         component: () => import('@/layouts/TestLayout.vue'),
         children: [
