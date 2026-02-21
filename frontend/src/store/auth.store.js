@@ -8,9 +8,9 @@ export const useAuthStore = defineStore('auth', {
         role: null,
     }),
     actions: {
-        async login(username, password) {
+        async login(email, password) {
             try {
-                const response = await authService.login(username, password);
+                const response = await authService.login(email, password);
                 const token = response.data.token || response.data.accessToken;
 
                 // Save token

@@ -11,50 +11,53 @@
       <div v-if="isDev" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-sm mb-4">
         <p class="font-semibold text-yellow-800 mb-2">Dev Quick Login</p>
         <div class="flex gap-2 justify-center">
-          <button @click="fillDevAdmin" type="button" class="bg-purple-100 text-purple-700 font-medium px-3 py-1 rounded hover:bg-purple-200 transition">Admin</button>
-          <button @click="fillDevDataUse" type="button" class="bg-green-100 text-green-700 font-medium px-3 py-1 rounded hover:bg-green-200 transition">DataUse</button>
+          <button @click="fillDevAdmin" type="button"
+            class="bg-purple-100 text-purple-700 font-medium px-3 py-1 rounded hover:bg-purple-200 transition">Admin</button>
+          <button @click="fillDevDataUse" type="button"
+            class="bg-green-100 text-green-700 font-medium px-3 py-1 rounded hover:bg-green-200 transition">DataUse</button>
         </div>
       </div>
 
       <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
-        
-        <div v-if="errorMsg" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+
+        <div v-if="errorMsg" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          role="alert">
           <span class="block sm:inline">{{ errorMsg }}</span>
         </div>
 
         <div class="rounded-md shadow-sm -space-y-px">
           <div>
-            <label for="username" class="sr-only">Username/Email</label>
-            <input id="username" name="username" type="text" required v-model="form.username"
-                   class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                   placeholder="Username or Email">
+            <label for="email" class="sr-only">Email address</label>
+            <input id="email" name="email" type="email" required v-model="form.email"
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              placeholder="Email address">
           </div>
           <div>
             <label for="password" class="sr-only">Password</label>
             <input id="password" name="password" type="password" required v-model="form.password"
-                   class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                   placeholder="Password">
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              placeholder="Password">
           </div>
         </div>
 
         <div>
-           <button type="submit" :disabled="loading"
-                  class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
+          <button type="submit" :disabled="loading"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
             {{ loading ? 'Signing in...' : 'Sign in' }}
           </button>
         </div>
-        
+
         <div class="flex items-center justify-between mt-4">
-           <div class="text-sm">
-             <router-link to="/register/data-use" class="font-medium text-blue-600 hover:text-blue-500">
-               Register (Data Use)
-             </router-link>
-           </div>
-           <div class="text-sm">
-             <router-link to="/register/data-prep" class="font-medium text-blue-600 hover:text-blue-500">
-               Join (Data Prep)
-             </router-link>
-           </div>
+          <div class="text-sm">
+            <router-link to="/register/data-use" class="font-medium text-blue-600 hover:text-blue-500">
+              Register (Data Use)
+            </router-link>
+          </div>
+          <div class="text-sm">
+            <router-link to="/register/data-prep" class="font-medium text-blue-600 hover:text-blue-500">
+              Join (Data Prep)
+            </router-link>
+          </div>
         </div>
       </form>
     </div>
@@ -70,7 +73,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const form = reactive({
-  username: '',
+  email: '',
   password: ''
 });
 const loading = ref(false);
@@ -79,26 +82,26 @@ const errorMsg = ref('');
 // Dev mode quick fills
 const isDev = import.meta.env.DEV;
 const fillDevAdmin = () => {
-  form.username = 'admin@test.com';
+  form.email = 'admin@test.com';
   form.password = 'Admin123!';
 };
 const fillDevDataUse = () => {
-  form.username = 'sample@datause.local';
+  form.email = 'sample@datause.local';
   form.password = 'Pass1234!';
 };
 
 const handleLogin = async () => {
   errorMsg.value = '';
 
-  if (!form.username || !form.password) {
-    errorMsg.value = "Please enter username and password.";
+  if (!form.email || !form.password) {
+    errorMsg.value = "Please enter your email and password.";
     return;
   }
 
   loading.value = true;
   try {
-    await authStore.login(form.username, form.password);
-    
+    await authStore.login(form.email, form.password);
+
     // Redirect based on role
     const role = authStore.role;
     if (role === 'DATA_USE') {
