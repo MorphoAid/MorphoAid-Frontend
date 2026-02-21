@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/store/auth.store'
 
 const routes = [
     {
@@ -24,16 +25,19 @@ const routes = [
     {
         path: '/admin',
         name: 'AdminDashboard',
-        component: () => import('@/features/admin/views/AdminDashboard.vue')
+        component: () => import('@/features/admin/views/AdminDashboard.vue'),
+        meta: { requiresAuth: true, requiresRole: ['ADMIN'] }
     },
     {
         path: '/dataprep',
         name: 'DataPrepDashboard',
-        component: () => import('@/features/dataprep/views/DataPrepDashboard.vue')
+        component: () => import('@/features/dataprep/views/DataPrepDashboard.vue'),
+        meta: { requiresAuth: true, requiresRole: ['DATA_PREP', 'ADMIN'] }
     },
     {
         path: '/__test',
         component: () => import('@/layouts/TestLayout.vue'),
+        meta: { requiresAuth: true },
         children: [
             {
                 path: '',
@@ -62,6 +66,22 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes,
+})
+
+router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore()
+
+    if (to.meta.requiresAuth && !authStore.token) {
+        return next('/login')
+    }
+
+    if (to.meta.requiresRole) {
+        if (!authStore.role || !to.meta.requiresRole.includes(authStore.role)) {
+            return next('/forbidden')
+        }
+    }
+
+    next()
 })
 
 export default router
