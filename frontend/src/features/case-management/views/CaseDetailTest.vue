@@ -116,6 +116,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/services/http';
+import { analyzeCase, fetchAiResult as getAiResult } from '@/features/case-management/services/case.service';
 
 const route = useRoute();
 const router = useRouter();
@@ -146,7 +147,7 @@ const handleAnalyze = async () => {
     analyzeSuccess.value = false;
 
     try {
-        await http.post(`/cases/${caseId}/analyze`);
+        await analyzeCase(caseId);
         analyzeSuccess.value = true;
     } catch (err) {
         if (!err.response) {
@@ -179,7 +180,7 @@ const fetchCaseDetail = async () => {
 
 const fetchAiResult = async () => {
     try {
-        const response = await http.get(`/cases/${caseId}/ai-result`);
+        const response = await getAiResult(caseId);
         aiData.value = response.data;
     } catch (err) {
         if (err.response && err.response.status === 404) {
