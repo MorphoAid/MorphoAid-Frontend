@@ -84,10 +84,12 @@
                 </div>
 
                 <div v-else-if="aiData" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><strong class="text-gray-600">Parasite Stage:</strong> {{ aiData.parasiteStage }}</div>
-                    <div><strong class="text-gray-600">Drug Exposure:</strong> {{ aiData.drugExposure }}</div>
-                    <div><strong class="text-gray-600">Confidence:</strong> {{ (aiData.confidence * 100).toFixed(2) }}%
+                    <div v-if="aiData.parasiteStage"><strong class="text-gray-600">Parasite Stage:</strong> {{ aiData.parasiteStage }}</div>
+                    <div v-if="aiData.drugExposure"><strong class="text-gray-600">Drug Exposure:</strong> 
+                        {{ aiData.drugExposure }} 
+                        <span v-if="aiData.drugType">({{ aiData.drugType }})</span>
                     </div>
+                    <div><strong class="text-gray-600">Confidence:</strong> {{ aiData.confidence ? (aiData.confidence * 100).toFixed(2) : 0 }}%</div>
                     <div v-if="aiData.createdAt"><strong class="text-gray-600">Analyzed At:</strong> {{ new
                         Date(aiData.createdAt).toLocaleString() }}</div>
                 </div>
@@ -147,8 +149,12 @@ const handleAnalyze = async () => {
     analyzeSuccess.value = false;
 
     try {
-        await analyzeCase(caseId);
+        const analyzeResponse = await analyzeCase(caseId);
         analyzeSuccess.value = true;
+        
+        // Refresh AI result immediately (optionally using response, but here we refetch for consistency)
+        loadingAi.value = true;
+        await fetchAiResult();
     } catch (err) {
         if (!err.response) {
             analyzeError.value = "Backend unreachable";
