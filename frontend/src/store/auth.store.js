@@ -6,8 +6,20 @@ export const useAuthStore = defineStore('auth', {
         token: localStorage.getItem('token') || null,
         user: null,
         role: null,
+        isHydrated: false,
     }),
     actions: {
+        async init() {
+            if (this.isHydrated) return;
+            if (this.token && !this.user) {
+                try {
+                    await this.fetchMe();
+                } catch (error) {
+                    console.error("Auth hydration failed", error);
+                }
+            }
+            this.isHydrated = true;
+        },
         async login(email, password) {
             try {
                 const response = await authService.login(email, password);

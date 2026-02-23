@@ -83,8 +83,12 @@ const router = createRouter({
     routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
+
+    if (!authStore.isHydrated) {
+        await authStore.init()
+    }
 
     // Public whitelist - ensuring these pages are never blocked
     const publicPages = ['/login', '/register/data-use', '/register/data-prep', '/__auth', '/forbidden', '/'];
