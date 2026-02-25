@@ -9,8 +9,8 @@ export const authService = {
         return http.post('/auth/register/dataprep', data);
     },
 
-    async login(email, password) {
-        return http.post('/auth/login', { email, password });
+    async login(email, password, rememberMe) {
+        return http.post('/auth/login', { email, password, rememberMe });
     },
 
     async me() {

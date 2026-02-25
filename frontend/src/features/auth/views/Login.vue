@@ -40,6 +40,16 @@
           </div>
         </div>
 
+        <div class="flex items-center justify-between mb-4 mt-2">
+          <div class="flex items-center">
+            <input id="rememberMe" name="rememberMe" type="checkbox" v-model="form.rememberMe"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="rememberMe" class="ml-2 block text-sm text-gray-900">
+              Remember me
+            </label>
+          </div>
+        </div>
+
         <div>
           <button type="submit" :disabled="loading"
             class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
@@ -74,7 +84,8 @@ const authStore = useAuthStore();
 
 const form = reactive({
   email: '',
-  password: ''
+  password: '',
+  rememberMe: false
 });
 const loading = ref(false);
 const errorMsg = ref('');
@@ -100,7 +111,7 @@ const handleLogin = async () => {
 
   loading.value = true;
   try {
-    await authStore.login(form.email, form.password);
+    await authStore.login(form.email, form.password, form.rememberMe);
 
     // Redirect based on role
     const role = authStore.role;

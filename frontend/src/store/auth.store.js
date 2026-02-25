@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
 import { authService } from '@/services/auth.service';
+import { getToken, setToken, clearToken } from '@/services/tokenStorage';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        token: localStorage.getItem('token') || null,
+        token: getToken(),
         user: null,
         role: null,
         isHydrated: false,
@@ -20,14 +21,14 @@ export const useAuthStore = defineStore('auth', {
             }
             this.isHydrated = true;
         },
-        async login(email, password) {
+        async login(email, password, rememberMe) {
             try {
-                const response = await authService.login(email, password);
+                const response = await authService.login(email, password, rememberMe);
                 const token = response.data.token || response.data.accessToken;
 
                 // Save token
                 this.token = token;
-                localStorage.setItem('token', token);
+                setToken(token, rememberMe);
 
                 // Fetch user context
                 await this.fetchMe();
@@ -53,7 +54,7 @@ export const useAuthStore = defineStore('auth', {
             this.token = null;
             this.user = null;
             this.role = null;
-            localStorage.removeItem('token');
+            clearToken();
         }
     }
 });
