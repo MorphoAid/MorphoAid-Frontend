@@ -2,11 +2,11 @@ import http from '@/services/http';
 
 export const authService = {
     async registerDataUse(data) {
-        return http.post('/auth/register/data-use', data);
+        return http.post('/auth/register', data);
     },
 
     async registerDataPrep(data) {
-        return http.post('/auth/register/data-prep', data);
+        return http.post('/auth/register/dataprep', data);
     },
 
     async login(email, password) {
