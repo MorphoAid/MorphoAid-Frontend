@@ -123,6 +123,9 @@
                 </div>
             </div>
 
+            <!-- Image Upload Section -->
+            <CaseImageUpload :caseId="caseId" />
+
             <!-- Debug Pre Blocks (Optional) -->
             <details class="text-sm text-gray-500 mt-8">
                 <summary class="cursor-pointer font-semibold">Show Raw JSON Data (Debug)</summary>
@@ -147,6 +150,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/services/http';
 import AnnotatedImage from '@/components/AnnotatedImage.vue';
+import CaseImageUpload from '../components/CaseImageUpload.vue';
 
 const route = useRoute();
 const router = useRouter();
