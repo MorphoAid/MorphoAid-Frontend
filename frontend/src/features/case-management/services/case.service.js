@@ -6,6 +6,12 @@ export const uploadCase = async (formData) => {
     })
 }
 
+export const uploadCaseImageToS3 = async (caseId, formData) => {
+    return http.post(`/cases/${caseId}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    })
+}
+
 export const analyzeCase = async (caseId) => {
     return http.post(`/cases/${caseId}/analyze`)
 }

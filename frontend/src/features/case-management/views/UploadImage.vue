@@ -37,9 +37,11 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { uploadCase, analyzeCase } from '../services/case.service';
+import { uploadCase, uploadCaseImageToS3, analyzeCase } from '../services/case.service';
+import { useAuthStore } from '@/store/auth.store';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const loading = ref(false);
 const loadingMessage = ref('Uploading...');
@@ -65,21 +67,33 @@ const handleSubmit = async () => {
         return;
     }
 
+    // Step 1: Create Case (Initial Form Data)
     const formData = new FormData();
-    formData.append('image', selectedFile.value);
+    formData.append('image', selectedFile.value); // Backend currently expects image here too by default, we'll keep it for now
     formData.append('patientCode', form.patientCode);
     formData.append('technicianId', form.technicianId);
     formData.append('location', form.location);
-    formData.append('uploaderId', 1);
+    
+    // Dynamically fetch actual user ID from store
+    const uploaderId = authStore.user?.id || 1;
+    formData.append('uploaderId', uploaderId);
 
     loading.value = true;
-    loadingMessage.value = 'Uploading image...';
+    loadingMessage.value = 'Creating case...';
     error.value = null;
 
     try {
         const response = await uploadCase(formData);
         const caseId = response.data.id;
         
+        // Step 2: Upload Image to AWS S3 Cloud Storage
+        const imageFormData = new FormData();
+        imageFormData.append('image', selectedFile.value);
+        
+        loadingMessage.value = 'Uploading image to Cloud Storage...';
+        await uploadCaseImageToS3(caseId, imageFormData);
+
+        // Step 3: Trigger AI Analysis
         loadingMessage.value = 'Analyzing image...';
         await analyzeCase(caseId);
 
