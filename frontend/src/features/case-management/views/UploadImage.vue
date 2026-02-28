@@ -4,7 +4,7 @@
         <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
             <div>
                 <label for="image" class="block font-medium">Image File</label>
-                <input id="image" type="file" @change="handleFileChange" class="border p-2 w-full rounded" required />
+                <input id="image" type="file" accept=".png, .jpg, .jpeg, image/png, image/jpeg" @change="handleFileChange" class="border p-2 w-full rounded" required />
             </div>
             <div>
                 <label for="patientCode" class="block font-medium">Patient Code</label>
@@ -28,7 +28,7 @@
 
             <button type="submit" :disabled="loading"
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
-                {{ loading ? 'Uploading...' : 'Submit Upload' }}
+                {{ loading ? loadingMessage : 'Submit Upload' }}
             </button>
         </form>
     </div>
@@ -37,11 +37,12 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { uploadCase } from '../services/case.service';
+import { uploadCase, analyzeCase } from '../services/case.service';
 
 const router = useRouter();
 
 const loading = ref(false);
+const loadingMessage = ref('Uploading...');
 const error = ref(null);
 
 const form = reactive({
@@ -72,12 +73,18 @@ const handleSubmit = async () => {
     formData.append('uploaderId', 1);
 
     loading.value = true;
+    loadingMessage.value = 'Uploading image...';
     error.value = null;
 
     try {
         const response = await uploadCase(formData);
-        alert('Upload successful! Redirecting to case details...');
-        router.push(`/__test/cases/${response.data.id}`);
+        const caseId = response.data.id;
+        
+        loadingMessage.value = 'Analyzing image...';
+        await analyzeCase(caseId);
+
+        alert('Upload and analysis successful! Redirecting to case details...');
+        router.push(`/__test/cases/${caseId}`);
     } catch (err) {
         if (err.response) {
             error.value = `HTTP ${err.response.status}: ${err.response.data?.error || err.message}`;
@@ -86,7 +93,7 @@ const handleSubmit = async () => {
         } else {
             error.value = `Error: ${err.message}`;
         }
-        console.error('Upload failed:', err);
+        console.error('Upload/Analysis failed:', err);
     } finally {
         loading.value = false;
     }

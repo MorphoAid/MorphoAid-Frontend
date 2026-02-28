@@ -83,7 +83,7 @@ const router = createRouter({
     routes,
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
     const authStore = useAuthStore()
 
     if (!authStore.isHydrated) {
@@ -95,16 +95,16 @@ router.beforeEach(async (to, from, next) => {
     const isPublic = publicPages.includes(to.path) || !to.meta.requiresAuth;
 
     if (!isPublic && !authStore.token) {
-        return next('/login')
+        return '/login'
     }
 
     if (to.meta.requiresRole) {
         if (!authStore.role || !to.meta.requiresRole.includes(authStore.role)) {
-            return next('/forbidden')
+            return '/forbidden'
         }
     }
 
-    next()
+    return true
 })
 
 export default router
