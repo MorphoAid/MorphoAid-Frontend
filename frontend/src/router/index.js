@@ -1,85 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/store/auth.store'
 
+import publicRoutes from './public_rout'
+import adminRoutes from './admin_rout'
+import dataPrepRoutes from './dataPrep_rout'
+import dataUseRoutes from './dataUse_rout'
+
 const routes = [
     {
         path: '/',
-        redirect: '/__auth'
+        name: 'Root',
+        meta: { requiresAuth: true }
     },
+    ...publicRoutes,
+    ...adminRoutes,
+    ...dataPrepRoutes,
+    ...dataUseRoutes,
+    // Catch-all for undefined routes
     {
-        path: '/__auth',
-        name: 'AuthLanding',
-        component: () => import('@/features/auth/views/AuthLanding.vue')
-    },
-    {
-        path: '/login',
-        name: 'Login',
-        component: () => import('@/features/auth/views/Login.vue')
-    },
-    {
-        path: '/register/data-use',
-        name: 'RegisterDataUse',
-        component: () => import('@/features/auth/views/RegisterDataUse.vue')
-    },
-    {
-        path: '/register/data-prep',
-        name: 'RegisterDataPrep',
-        component: () => import('@/features/auth/views/RegisterDataPrep.vue')
-    },
-    {
-        path: '/forbidden',
-        name: 'Forbidden',
-        component: () => import('@/features/auth/views/Forbidden.vue')
-    },
-    {
-        path: '/admin',
-        name: 'AdminDashboard',
-        component: () => import('@/features/admin/views/AdminDashboard.vue'),
-        meta: { requiresAuth: true, requiresRole: ['ADMIN'] }
-    },
-    {
-        path: '/admin/users',
-        name: 'UserManagement',
-        component: () => import('@/features/admin/views/UserManagement.vue'),
-        meta: { requiresAuth: true, requiresRole: ['ADMIN'] }
-    },
-    {
-        path: '/dataprep',
-        name: 'DataPrepDashboard',
-        component: () => import('@/features/dataprep/views/DataPrepDashboard.vue'),
-        meta: { requiresAuth: true, requiresRole: ['DATA_PREP', 'ADMIN'] }
-    },
-    {
-        path: '/__test',
-        component: () => import('@/layouts/TestLayout.vue'),
-        meta: { requiresAuth: true },
-        children: [
-            {
-                path: '',
-                name: 'TestHub',
-                component: () => import('@/features/case-management/views/TestHub.vue'),
-            },
-            {
-                path: 'upload',
-                name: 'TestUpload',
-                component: () => import('@/features/case-management/views/UploadImage.vue'),
-            },
-            {
-                path: 'cases',
-                name: 'TestCasesList',
-                component: () => import('@/features/case-management/views/CaseListTest.vue'),
-            },
-            {
-                path: 'cases/:id',
-                name: 'TestCaseDetail',
-                component: () => import('@/features/case-management/views/CaseDetailTest.vue'),
-            },
-            {
-                path: 'visualization',
-                name: 'TestVisualization',
-                component: () => import('@/features/visualization/views/ThailandHeatmap.vue'),
-            }
-        ]
+        path: '/:pathMatch(.*)*',
+        redirect: '/public/403'
     }
 ]
 
@@ -88,24 +28,62 @@ const router = createRouter({
     routes,
 })
 
+/**
+ * Get the dashboard path based on user role
+ * @param {string} role 
+ * @returns {string}
+ */
+const getDashboardByRole = (role) => {
+    switch (role) {
+        case 'ADMIN': return '/admin/dashboard';
+        case 'DATA_PREP': return '/data-prep/dashboard';
+        case 'DATA_USE': return '/data-use/dashboard';
+        default: return '/public/login';
+    }
+}
+
 router.beforeEach(async (to, from) => {
     const authStore = useAuthStore()
 
+    // Ensure store is hydrated
     if (!authStore.isHydrated) {
         await authStore.init()
     }
 
-    // Public whitelist - ensuring these pages are never blocked
-    const publicPages = ['/login', '/register/data-use', '/register/data-prep', '/__auth', '/forbidden', '/'];
-    const isPublic = publicPages.includes(to.path) || !to.meta.requiresAuth;
+    const { token, role } = authStore
+    const isAuthenticated = !!token
 
-    if (!isPublic && !authStore.token) {
-        return '/login'
+    // 1. Root "/" auto-redirect based on role
+    if (to.path === '/') {
+        if (!isAuthenticated) return '/public/login'
+        return getDashboardByRole(role)
     }
 
-    if (to.meta.requiresRole) {
-        if (!authStore.role || !to.meta.requiresRole.includes(authStore.role)) {
-            return '/forbidden'
+    // 2. Logged in users visiting login/register -> redirect to dashboard
+    if (to.meta.guestOnly && isAuthenticated) {
+        return getDashboardByRole(role)
+    }
+
+    // 3. Auth Guard
+    if (to.meta.requiresAuth && !isAuthenticated) {
+        return {
+            path: '/public/login',
+            query: { redirect: to.fullPath }
+        }
+    }
+
+    // 4. Role Guard
+    // Check if the route OR any of its parent routes require a specific role
+    const requiredRoles = to.matched.flatMap(record => record.meta.roles || [])
+    if (requiredRoles.length > 0) {
+        if (!isAuthenticated) {
+            return {
+                path: '/public/login',
+                query: { redirect: to.fullPath }
+            }
+        }
+        if (!requiredRoles.includes(role)) {
+            return '/public/403' // Consistent forbidden path
         }
     }
 
