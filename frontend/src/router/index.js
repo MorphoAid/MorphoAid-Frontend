@@ -10,16 +10,27 @@ const routes = [
     {
         path: '/',
         name: 'Root',
-        meta: { requiresAuth: true }
+        redirect: (to) => {
+            const authStore = useAuthStore()
+            if (!authStore.token) return '/login'
+
+            // Precise role-based dashboard mapping
+            switch (authStore.role) {
+                case 'ADMIN': return '/admin/dashboard';
+                case 'DATA_PREP': return '/data-prep/dashboard';
+                case 'DATA_USE': return '/data-use/dashboard';
+                default: return '/login';
+            }
+        }
     },
     ...publicRoutes,
     ...adminRoutes,
     ...dataPrepRoutes,
     ...dataUseRoutes,
-    // Catch-all for undefined routes
+    // Catch-all: Hardened redirect to root
     {
         path: '/:pathMatch(.*)*',
-        redirect: '/public/403'
+        redirect: '/'
     }
 ]
 
@@ -28,24 +39,10 @@ const router = createRouter({
     routes,
 })
 
-/**
- * Get the dashboard path based on user role
- * @param {string} role 
- * @returns {string}
- */
-const getDashboardByRole = (role) => {
-    switch (role) {
-        case 'ADMIN': return '/admin/dashboard';
-        case 'DATA_PREP': return '/data-prep/dashboard';
-        case 'DATA_USE': return '/data-use/dashboard';
-        default: return '/public/login';
-    }
-}
-
 router.beforeEach(async (to, from) => {
     const authStore = useAuthStore()
 
-    // Ensure store is hydrated
+    // Auth hydration
     if (!authStore.isHydrated) {
         await authStore.init()
     }
@@ -53,37 +50,38 @@ router.beforeEach(async (to, from) => {
     const { token, role } = authStore
     const isAuthenticated = !!token
 
-    // 1. Root "/" auto-redirect based on role
-    if (to.path === '/') {
-        if (!isAuthenticated) return '/public/login'
-        return getDashboardByRole(role)
+    // Role-based dashboard utility for redirects
+    const getDashboardPath = (userRole) => {
+        if (userRole === 'ADMIN') return '/admin/dashboard'
+        if (userRole === 'DATA_PREP') return '/data-prep/dashboard'
+        if (userRole === 'DATA_USE') return '/data-use/dashboard'
+        return '/login'
     }
 
-    // 2. Logged in users visiting login/register -> redirect to dashboard
+    // 1. Guest Only (Login/Register) vs Auth Session
     if (to.meta.guestOnly && isAuthenticated) {
-        return getDashboardByRole(role)
+        return getDashboardPath(role)
     }
 
-    // 3. Auth Guard
+    // 2. Requires Auth
     if (to.meta.requiresAuth && !isAuthenticated) {
         return {
-            path: '/public/login',
+            path: '/login',
             query: { redirect: to.fullPath }
         }
     }
 
-    // 4. Role Guard
-    // Check if the route OR any of its parent routes require a specific role
+    // 3. Role Authorization check
     const requiredRoles = to.matched.flatMap(record => record.meta.roles || [])
     if (requiredRoles.length > 0) {
         if (!isAuthenticated) {
             return {
-                path: '/public/login',
+                path: '/login',
                 query: { redirect: to.fullPath }
             }
         }
         if (!requiredRoles.includes(role)) {
-            return '/public/403' // Consistent forbidden path
+            return '/403' // Normalized forbidden path
         }
     }
 

@@ -20,11 +20,6 @@ export default [
                 path: 'review/:id',
                 name: 'ReviewDetail',
                 component: () => import('@/features/lab-review/views/VotePanel.vue')
-            },
-            {
-                path: 'cases',
-                name: 'AdminCaseList',
-                component: () => import('@/features/case-management/views/CaseListTest.vue')
             }
         ]
     }
