@@ -2,14 +2,9 @@ import PublicLayout from '@/layouts/PublicLayout.vue';
 
 export default [
     {
-        path: '/public',
+        path: '/',
         component: PublicLayout,
         children: [
-            {
-                path: 'welcome',
-                name: 'AuthLanding',
-                component: () => import('@/features/auth/views/AuthLanding.vue')
-            },
             {
                 path: 'login',
                 name: 'Login',
@@ -34,11 +29,5 @@ export default [
                 component: () => import('@/features/auth/views/Forbidden.vue')
             }
         ]
-    },
-    // Aliases for root level access if needed, or redirect from root
-    { path: '/login', redirect: '/public/login' },
-    { path: '/register/data-use', redirect: '/public/register/data-use' },
-    { path: '/register/data-prep', redirect: '/public/register/data-prep' },
-    { path: '/forbidden', redirect: '/public/403' },
-    { path: '/403', redirect: '/public/403' }
+    }
 ];

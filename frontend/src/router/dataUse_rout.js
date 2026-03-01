@@ -9,12 +9,7 @@ export default [
             {
                 path: 'dashboard',
                 name: 'DataUseDashboard',
-                component: () => import('@/features/case-management/views/CaseListTest.vue') // Placeholder dashboard
-            },
-            {
-                path: 'upload',
-                name: 'ClinicalUpload',
-                component: () => import('@/features/case-management/views/UploadImage.vue')
+                component: () => import('@/features/case-management/views/UploadImage.vue') // Primary entry is upload
             },
             {
                 path: 'case/:id',
