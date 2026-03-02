@@ -1,88 +1,95 @@
 <template>
-    <div class="p-8 max-w-4xl mx-auto flex flex-col items-center justify-center min-h-screen">
-        <h1 class="text-4xl font-bold mb-8 text-gray-800">UI Testing Hub</h1>
-        <p class="text-gray-600 mb-8 text-center max-w-lg">
-            Welcome to the MorphoAid frontend testing portal. Select a workflow below to begin UI interaction testing.
-        </p>
-
-        <!-- Error Toast -->
-        <div v-if="error"
-            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8 shadow w-full max-w-md text-center">
-            <strong class="font-bold">Error: </strong>
-            <span class="block sm:inline">{{ error }}</span>
+    <div class="p-8 max-w-6xl mx-auto w-full">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold text-[#2E2E2E]">Case Details</h1>
+            <button
+                class="bg-[#48B7CB] hover:bg-[#368998] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm flex items-center gap-2"
+                @click="$router.push('/data-use/cases/new')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                New Case
+            </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-            <!-- Upload Case Button -->
-            <button @click="router.push('/data-use/cases/new')"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Upload Case
-            </button>
+        <!-- Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <StatCard title="Needs Review" value="12" />
+            <StatCard title="In Queue" value="8" />
+            <StatCard title="Completed" value="142" />
+            <StatCard title="Failed" value="3" />
+        </div>
 
-            <!-- Case List Button -->
-            <button @click="router.push('/data-use/cases')"
-                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-6 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-                Case List
-            </button>
+        <!-- Attention Box -->
+        <div class="border-l-4 border-[#FF4C38] bg-[#FF4C38]/5 rounded-r-lg p-5 mb-8 shadow-sm">
+            <div class="flex items-start gap-4">
+                <div class="text-[#FF4C38] mt-0.5">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-[#A92222] font-semibold text-lg mb-1">Attention Required</h3>
+                    <p class="text-[#2E2E2E] text-sm">3 cases have failed automatic AI analysis and require manual
+                        technician review.</p>
+                </div>
+            </div>
+        </div>
 
-            <!-- Latest Case Button -->
-            <button @click="openLatestCase" :disabled="loading"
-                class="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-6 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
-                <svg v-if="loading" class="animate-spin h-8 w-8 mb-2 text-white" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                </svg>
-                {{ loading ? 'Opening...' : 'Open Latest Case' }}
-            </button>
+        <!-- Recent Cases Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-[#2E2E2E]">Recent Cases</h2>
+                <button class="text-[#48B7CB] text-sm font-medium hover:text-[#368998] transition-colors"
+                    @click="$router.push('/data-use/cases')">View All</button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-gray-50/50 border-b border-gray-100">
+                            <th class="py-3 px-6 font-semibold text-[#5C5C5C]">Case ID</th>
+                            <th class="py-3 px-6 font-semibold text-[#5C5C5C]">Upload Date</th>
+                            <th class="py-3 px-6 font-semibold text-[#5C5C5C]">AI Summary</th>
+                            <th class="py-3 px-6 font-semibold text-[#5C5C5C]">Status</th>
+                            <th class="py-3 px-6 font-semibold text-[#5C5C5C]">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr v-for="caseItem in recentCases" :key="caseItem.id"
+                            class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-6 font-medium text-[#2E2E2E]">{{ caseItem.id }}</td>
+                            <td class="py-4 px-6 text-[#5C5C5C]">{{ caseItem.date }}</td>
+                            <td class="py-4 px-6 text-[#5C5C5C]">{{ caseItem.summary }}</td>
+                            <td class="py-4 px-6">
+                                <StatusPill :status="caseItem.status" :label="caseItem.status" />
+                            </td>
+                            <td class="py-4 px-6">
+                                <button @click="$router.push(`/data-use/cases/${caseItem.id}`)"
+                                    class="text-[#48B7CB] hover:text-[#2B6E7A] font-medium transition-colors">
+                                    View
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import http from '@/services/http';
+import { ref } from 'vue'
+import StatCard from '@/components/datause/StatCard.vue'
+import StatusPill from '@/components/datause/StatusPill.vue'
 
-const router = useRouter();
-const loading = ref(false);
-const error = ref(null);
-
-const openLatestCase = async () => {
-    loading.value = true;
-    error.value = null;
-    try {
-        const response = await http.get('/cases');
-        const cases = response.data;
-        if (cases && cases.length > 0) {
-            router.push(`/data-use/cases/${cases[0].id}`);
-        } else {
-            error.value = "Database is empty. No cases available.";
-        }
-    } catch (err) {
-        if (err.request) {
-            error.value = "Network Error: Could not reach the backend.";
-        } else {
-            error.value = err.message || "Failed to fetch latest case.";
-        }
-        console.error("Failed fetching latest case:", err);
-    } finally {
-        loading.value = false;
-    }
-};
+// Mock Data
+const recentCases = ref([
+    { id: 'CAS-0089', date: 'Oct 24, 2026', summary: 'P. falciparum detected (High Confidence)', status: 'Success' },
+    { id: 'CAS-0088', date: 'Oct 24, 2026', summary: 'Pending computational analysis', status: 'In Queue' },
+    { id: 'CAS-0087', date: 'Oct 23, 2026', summary: 'Image artifact detected. Unreadable.', status: 'Danger' },
+    { id: 'CAS-0086', date: 'Oct 23, 2026', summary: 'Negative for malaria parasites', status: 'Completed' },
+])
 </script>
