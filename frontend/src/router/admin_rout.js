@@ -1,21 +1,27 @@
-import AdminLayout from '@/layouts/AdminLayout.vue';
+const AdminLayout = () => import('@/layouts/AdminLayout.vue');
 
 export default [
     {
         path: '/admin',
-        component: AdminLayout,
-        meta: { requiresAuth: true, roles: ['ADMIN'] },
-        children: [
-            {
-                path: 'dashboard',
-                name: 'AdminDashboard',
-                component: () => import('@/features/admin/views/AdminDashboard.vue')
-            },
-            {
-                path: 'users',
-                name: 'UserManagement',
-                component: () => import('@/features/admin/views/UserManagement.vue')
-            }
-        ]
+        redirect: '/admin/dashboard',
+        meta: { requiresAuth: true, roles: ['ADMIN'], layout: 'AdminLayout' }
+    },
+    {
+        path: '/admin/dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/features/admin/views/AdminDashboard.vue'),
+        meta: { requiresAuth: true, roles: ['ADMIN'], layout: 'AdminLayout' }
+    },
+    {
+        path: '/admin/users',
+        name: 'UserManagement',
+        component: () => import('@/features/admin/views/UserManagement.vue'),
+        meta: { requiresAuth: true, roles: ['ADMIN'], layout: 'AdminLayout' }
+    },
+    {
+        path: '/admin/activity-log',
+        name: 'ActivityLog',
+        component: () => import('@/features/admin/views/ActivityLog.vue'),
+        meta: { requiresAuth: true, roles: ['ADMIN'], layout: 'AdminLayout' }
     }
 ];

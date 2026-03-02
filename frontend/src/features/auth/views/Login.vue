@@ -113,14 +113,28 @@ const handleLogin = async () => {
   try {
     await authStore.login(form.email, form.password, form.rememberMe);
 
-    // Redirect based on role
+    // Ensure tokens/roles are in localStorage to match backend response requirements
+    if (authStore.token) {
+      localStorage.setItem('access_token', authStore.token);
+    }
+    if (authStore.role) {
+      localStorage.setItem('role', authStore.role);
+    }
+
+    // Redirect logic
+    const redirectPath = router.currentRoute.value.query.redirect;
+    if (redirectPath) {
+      router.push(redirectPath);
+      return;
+    }
+
     const role = authStore.role;
-    if (role === 'DATA_USE') {
-      router.push('/__test/cases');
+    if (role === 'ADMIN') {
+      router.push('/admin/dashboard');
     } else if (role === 'DATA_PREP') {
-      router.push('/dataprep');
-    } else if (role === 'ADMIN') {
-      router.push('/admin');
+      router.push('/data-prep/dashboard');
+    } else if (role === 'DATA_USE') {
+      router.push('/data-use/dashboard');
     } else {
       router.push('/');
     }

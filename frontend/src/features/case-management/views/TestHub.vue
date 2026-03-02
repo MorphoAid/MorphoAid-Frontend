@@ -14,7 +14,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
             <!-- Upload Case Button -->
-            <button @click="router.push('/__test/upload')"
+            <button @click="router.push('/data-use/cases/new')"
                 class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -25,7 +25,7 @@
             </button>
 
             <!-- Case List Button -->
-            <button @click="router.push('/__test/cases')"
+            <button @click="router.push('/data-use/cases')"
                 class="bg-green-600 hover:bg-green-700 text-white font-semibold py-6 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -70,7 +70,7 @@ const openLatestCase = async () => {
         const response = await http.get('/cases');
         const cases = response.data;
         if (cases && cases.length > 0) {
-            router.push(`/__test/cases/${cases[0].id}`);
+            router.push(`/data-use/cases/${cases[0].id}`);
         } else {
             error.value = "Database is empty. No cases available.";
         }
