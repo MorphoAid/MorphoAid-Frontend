@@ -73,6 +73,11 @@ const routes = [
                 path: 'cases/:id',
                 name: 'TestCaseDetail',
                 component: () => import('@/features/case-management/views/CaseDetailTest.vue'),
+            },
+            {
+                path: 'visualization',
+                name: 'TestVisualization',
+                component: () => import('@/features/visualization/views/ThailandHeatmap.vue'),
             }
         ]
     }

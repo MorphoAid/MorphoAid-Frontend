@@ -25,6 +25,11 @@
                                 :class="{ 'bg-indigo-800': $route.path.startsWith('/__test/cases') }">
                                 Cases
                             </RouterLink>
+                            <RouterLink to="/__test/visualization"
+                                class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition"
+                                active-class="bg-indigo-800">
+                                Visualization
+                            </RouterLink>
                         </nav>
                     </div>
 
