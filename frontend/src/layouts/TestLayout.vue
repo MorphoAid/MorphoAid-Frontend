@@ -10,19 +10,19 @@
                         <span class="font-bold text-xl tracking-wide shrink-0">MorphoAid Test</span>
 
                         <nav class="hidden md:flex space-x-4">
-                            <RouterLink to="/__test"
+                            <RouterLink to="/data-use"
                                 class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition"
                                 active-class="bg-indigo-800" exact>
                                 Hub
                             </RouterLink>
-                            <RouterLink to="/__test/upload"
+                            <RouterLink to="/data-use/cases/new"
                                 class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition"
                                 active-class="bg-indigo-800">
                                 Upload
                             </RouterLink>
-                            <RouterLink to="/__test/cases"
+                            <RouterLink to="/data-use/cases"
                                 class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition"
-                                :class="{ 'bg-indigo-800': $route.path.startsWith('/__test/cases') }">
+                                :class="{ 'bg-indigo-800': $route.path.startsWith('/data-use/cases') }">
                                 Cases
                             </RouterLink>
                         </nav>

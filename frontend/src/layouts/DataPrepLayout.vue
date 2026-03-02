@@ -5,5 +5,5 @@
 </template>
 
 <script setup>
-// minimal layout shell for DATA_PREP
+// minimal DataPrep layout shell
 </script>

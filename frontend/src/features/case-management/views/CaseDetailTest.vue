@@ -2,7 +2,7 @@
     <div class="p-6 max-w-4xl mx-auto">
         <!-- Header & Back Button -->
         <div class="flex items-center gap-4 mb-6">
-            <button @click="router.push('/__test/cases')"
+            <button @click="router.push('/data-use/cases')"
                 class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded shadow transition-colors">
                 &larr; Back to Cases
             </button>

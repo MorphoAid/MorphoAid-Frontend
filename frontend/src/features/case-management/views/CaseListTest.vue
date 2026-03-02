@@ -8,7 +8,7 @@
                     :disabled="loading">
                     {{ loading ? 'Refreshing...' : 'Refresh List' }}
                 </button>
-                <RouterLink to="/__test/upload"
+                <RouterLink to="/data-use/cases/new"
                     class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition-colors flex items-center">
                     Upload New Case
                 </RouterLink>
@@ -62,10 +62,11 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ new
                             Date(c.createdAt).toLocaleString() }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <RouterLink :to="`/__test/cases/${c.id}`"
+                            <RouterLink :to="`/data-use/cases/${c.id}`"
                                 class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors">
                                 View
                             </RouterLink>
+
                         </td>
                     </tr>
                 </tbody>
@@ -81,7 +82,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import http from '@/services/http';
 
 const cases = ref([]);
 const loading = ref(false);
@@ -90,21 +90,16 @@ const error = ref(null);
 const fetchCases = async () => {
     loading.value = true;
     error.value = null;
-    try {
-        const response = await http.get('/cases');
-        cases.value = response.data;
-    } catch (err) {
-        if (err.response) {
-            error.value = `HTTP ${err.response.status}: ${err.message}`;
-        } else if (err.request) {
-            error.value = 'Network Error: Could not reach the backend. Is it running on port 8081?';
-        } else {
-            error.value = `Error: ${err.message}`;
-        }
-        console.error('Failed to fetch cases:', err);
-    } finally {
+
+    // MOCKED FOR UI MODE - NO API CALL
+    setTimeout(() => {
+        cases.value = [
+            { id: 101, patientCode: 'PT-001', technicianId: 'T-99', location: 'Clinic A', status: 'COMPLETED', createdAt: '2026-03-01T10:00:00Z' },
+            { id: 102, patientCode: 'PT-002', technicianId: 'T-42', location: 'Hospital B', status: 'PENDING', createdAt: '2026-03-02T08:30:00Z' },
+            { id: 103, patientCode: 'PT-003', technicianId: 'T-99', location: 'Clinic A', status: 'FAILED', createdAt: '2026-03-02T09:15:00Z' }
+        ];
         loading.value = false;
-    }
+    }, 500);
 };
 
 onMounted(() => {

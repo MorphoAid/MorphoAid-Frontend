@@ -5,5 +5,5 @@
 </template>
 
 <script setup>
-// minimal layout shell for DATA_USE
+// minimal DataUse layout shell
 </script>

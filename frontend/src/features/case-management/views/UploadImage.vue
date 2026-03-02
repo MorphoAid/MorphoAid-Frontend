@@ -98,7 +98,7 @@ const handleSubmit = async () => {
         await analyzeCase(caseId);
 
         alert('Upload and analysis successful! Redirecting to case details...');
-        router.push(`/__test/cases/${caseId}`);
+        router.push(`/data-use/cases/${caseId}`);
     } catch (err) {
         if (err.response) {
             error.value = `HTTP ${err.response.status}: ${err.response.data?.error || err.message}`;

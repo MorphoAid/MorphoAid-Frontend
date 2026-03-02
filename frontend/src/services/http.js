@@ -26,11 +26,12 @@ http.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       clearToken();
       // Redirect to login using router or fallback to window.location
-      if (router) {
-        router.push('/login');
-      } else {
-        window.location.href = '/login';
-      }
+      // DISABLED for UI MODE:
+      // if (router) {
+      //   router.push('/login');
+      // } else {
+      //   window.location.href = '/login';
+      // }
     }
     return Promise.reject(error);
   }
