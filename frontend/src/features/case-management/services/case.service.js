@@ -15,3 +15,11 @@ export const uploadCaseImageToS3 = async (caseId, formData) => {
 export const analyzeCase = async (caseId) => {
     return http.post(`/cases/${caseId}/analyze`)
 }
+
+export const fetchCases = async () => {
+    return http.get('/cases')
+}
+
+export const getCaseById = async (caseId) => {
+    return http.get(`/cases/${caseId}`)
+}

@@ -1,5 +1,6 @@
 <template>
-    <aside class="w-64 bg-white border-r border-gray-200 p-4 flex flex-col">
+    <aside
+        class="w-64 bg-white border-r border-gray-200 p-4 flex flex-col sticky top-16 h-[calc(100vh-64px)] overflow-y-auto">
         <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 px-4">Menu</div>
 
         <template v-for="(item, index) in items" :key="index">

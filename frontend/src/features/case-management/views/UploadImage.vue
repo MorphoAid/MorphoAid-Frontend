@@ -90,6 +90,8 @@
 <script setup>
 import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { uploadCase, analyzeCase } from '@/features/case-management/services/case.service'
+import { uploadCaseImage } from '@/features/case-management/services/caseImage.service'
 
 const router = useRouter()
 const fileInputRef = ref(null)
@@ -149,13 +151,33 @@ onUnmounted(() => {
     }
 })
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
     if (!previewUrl.value) {
         alert('Please select an image file first.')
         return
     }
-    // MOCK SUCCESS
-    alert('Upload simulated! Redirecting to case mock...')
-    router.push('/data-use/cases/CAS-NEW-01')
+
+    try {
+        const caseFormData = new FormData()
+        caseFormData.append('patientCode', form.patientCode)
+        caseFormData.append('technicianId', form.technicianId)
+        caseFormData.append('location', form.location)
+        // Add fake uploaderId for now to satisfy backend
+        caseFormData.append('uploaderId', 1)
+
+        if (fileInputRef.value.files && fileInputRef.value.files.length > 0) {
+            caseFormData.append('image', fileInputRef.value.files[0])
+        }
+
+        const res = await uploadCase(caseFormData)
+        const caseId = res.data.id
+
+        await analyzeCase(caseId)
+
+        router.push(`/data-use/cases/${caseId}`)
+    } catch (error) {
+        console.error("Upload error:", error)
+        alert('Upload failed: ' + (error.response?.data?.message || error.message))
+    }
 }
 </script>

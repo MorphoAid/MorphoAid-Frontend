@@ -116,6 +116,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import StatusPill from '@/components/datause/StatusPill.vue'
+import { fetchCases as apiFetchCases } from '@/features/case-management/services/case.service'
 
 const cases = ref([])
 const loading = ref(false)
@@ -137,15 +138,25 @@ const fetchCases = async () => {
     loading.value = true
     error.value = null
 
-    // MOCKED FOR UI MODE - NO API CALL
-    setTimeout(() => {
-        cases.value = [
-            { id: 101, patientCode: 'PT-001', technicianId: 'T-99', location: 'Clinic A', status: 'COMPLETED', createdAt: '2026-10-24T10:00:00Z' },
-            { id: 102, patientCode: 'PT-002', technicianId: 'T-42', location: 'Hospital B', status: 'PENDING', createdAt: '2026-10-24T08:30:00Z' },
-            { id: 103, patientCode: 'PT-003', technicianId: 'T-99', location: 'Clinic A', status: 'FAILED', createdAt: '2026-10-23T09:15:00Z' }
-        ]
+    try {
+        const response = await apiFetchCases()
+        // Map into UI table safely
+        cases.value = (response.data || []).map(c => ({
+            id: c.id,
+            patientCode: c.patientCode || 'N/A',
+            technicianId: c.technicianId || 'N/A',
+            location: c.location || 'N/A',
+            status: c.status || 'UNKNOWN',
+            createdAt: c.createdAt || new Date().toISOString()
+        }))
+        // sort by newest
+        cases.value.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    } catch (err) {
+        console.error("Fetch cases error:", err)
+        error.value = 'Failed to load cases: ' + (err.response?.data?.message || err.message)
+    } finally {
         loading.value = false
-    }, 600)
+    }
 }
 
 onMounted(() => {

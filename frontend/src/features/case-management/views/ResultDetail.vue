@@ -31,11 +31,13 @@
                 </h2>
                 <div
                     class="flex-1 min-h-[400px] bg-[#F8F8F8] border border-gray-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-                    <p class="text-[#5C5C5C] font-medium z-10">Image Placeholder</p>
-                    <!-- Mock bounding box -->
-                    <div
-                        class="absolute top-1/4 left-1/3 w-32 h-32 border-2 border-[#FF4C38] bg-[#FF4C38]/10 rounded shadow-sm z-0">
-                    </div>
+                    <template v-if="imageUrl">
+                        <img :src="imageUrl" class="max-w-full max-h-[500px] object-contain z-10" />
+                    </template>
+                    <template v-else>
+                        <p class="text-[#5C5C5C] font-medium z-10">{{ loading ? 'Loading...' : 'No image available' }}
+                        </p>
+                    </template>
                 </div>
             </div>
 
@@ -54,23 +56,21 @@
                         <div>
                             <p class="text-xs text-[#5C5C5C] uppercase tracking-wide font-medium mb-1">Status</p>
                             <div
-                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#407533]/10 text-[#407533]">
-                                Success
+                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-[#2E2E2E]">
+                                {{ caseData?.status || 'Pending' }}
                             </div>
                         </div>
                         <div>
                             <p class="text-xs text-[#5C5C5C] uppercase tracking-wide font-medium mb-1">Detection Result
                             </p>
-                            <p class="text-[#2E2E2E] font-medium">Plasmodium falciparum (Rings)</p>
+                            <p class="text-[#2E2E2E] font-medium">{{ caseData?.analysisResult || 'Unavailable' }}</p>
                         </div>
                         <div>
                             <p class="text-xs text-[#5C5C5C] uppercase tracking-wide font-medium mb-1">Confidence Score
                             </p>
                             <div class="flex items-center gap-3">
-                                <div class="h-2 flex-1 bg-gray-100 rounded-full overflow-hidden">
-                                    <div class="h-full bg-[#407533] w-[94%] rounded-full"></div>
-                                </div>
-                                <span class="text-[#407533] font-bold text-sm">94.2%</span>
+                                <span class="text-[#2E2E2E] font-bold text-sm">{{ caseData?.confidenceScore ?
+                                    `${(caseData.confidenceScore * 100).toFixed(1)}%` : 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -103,8 +103,53 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { getCaseById } from '@/features/case-management/services/case.service'
+import { fetchCaseImageBlob } from '@/features/case-management/services/caseImage.service'
 
 const route = useRoute()
 const caseId = route.params.caseId
+
+const caseData = ref(null)
+const loading = ref(true)
+const error = ref(null)
+const imageUrl = ref(null)
+
+const loadCaseDetails = async () => {
+    loading.value = true
+    error.value = null
+    try {
+        const res = await getCaseById(caseId)
+        caseData.value = res.data
+
+        // Fetch image if available
+        if (caseData.value?.images?.length > 0) {
+            const imageId = caseData.value.images[0].id
+            try {
+                const blob = await fetchCaseImageBlob(caseId, imageId)
+                if (blob) {
+                    imageUrl.value = URL.createObjectURL(blob)
+                }
+            } catch (imgErr) {
+                console.error("Failed to load image blob", imgErr)
+            }
+        }
+    } catch (err) {
+        console.error("Fetch case error:", err)
+        error.value = err.response?.data?.message || err.message
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(() => {
+    loadCaseDetails()
+})
+
+onUnmounted(() => {
+    if (imageUrl.value) {
+        URL.revokeObjectURL(imageUrl.value)
+    }
+})
 </script>
