@@ -12,17 +12,42 @@
                     </path>
                 </svg>
             </div>
-            <div
-                class="w-10 h-10 bg-[#F8F8F8] rounded-full flex items-center justify-center text-[#5C5C5C] shadow-sm overflow-hidden border border-gray-200">
-                <!-- Profile Placeholder -->
-                <svg class="w-6 h-6 text-gray-400 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clip-rule="evenodd"></path>
-                </svg>
+
+            <div class="relative">
+                <button @click="isDropdownOpen = !isDropdownOpen"
+                    class="w-10 h-10 bg-[#F8F8F8] rounded-full flex items-center justify-center text-[#5C5C5C] shadow-sm overflow-hidden border border-gray-200 focus:outline-none hover:bg-gray-100 transition-colors">
+                    <!-- Profile Placeholder -->
+                    <svg class="w-6 h-6 text-gray-400 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+
+                <!-- Dropdown Panel -->
+                <div v-if="isDropdownOpen"
+                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 z-50">
+                    <button @click="handleLogout"
+                        class="block w-full text-left px-4 py-2 text-sm text-[#2E2E2E] hover:bg-gray-50 hover:text-[#FF4C38] transition-colors">
+                        Logout
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/store/auth.store'
+
+const isDropdownOpen = ref(false)
+const router = useRouter()
+const authStore = useAuthStore()
+
+const handleLogout = () => {
+    isDropdownOpen.value = false
+    authStore.logout()
+    router.push('/login')
+}
 </script>
