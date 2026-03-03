@@ -1,171 +1,139 @@
 <template>
-  <div class="h-full w-full flex flex-col p-4">
-    <div class="mb-4">
-      <h1 class="text-2xl font-bold text-gray-800">Thailand Heatmap (Mock Data)</h1>
-      <p class="text-sm text-gray-600">Visualizing detected cases by province.</p>
+    <div class="relative w-full" style="height: 420px;">
+        <!-- Map Container -->
+        <div ref="mapEl" class="w-full h-full rounded-b-xl overflow-hidden"></div>
+
+        <!-- Loading Overlay -->
+        <div v-if="isLoading"
+            class="absolute inset-0 bg-white/75 flex items-center justify-center z-[1000] rounded-b-xl">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#368998]"></div>
+        </div>
+
+        <!-- Legend -->
+        <div
+            class="absolute bottom-4 right-4 z-[500] bg-white/90 border border-[#368998]/20 rounded-lg px-3 py-2 text-xs text-[#5C5C5C] shadow-sm pointer-events-none">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="w-4 h-3 rounded-sm inline-block border border-[#2B6E7A]"
+                    style="background:#C6E9EF;"></span>
+                <span>Province boundary</span>
+            </div>
+            <p class="text-[10px] text-[#5C5C5C]/70 italic">Intensity coming later</p>
+        </div>
     </div>
-    <div class="flex-grow bg-white rounded-lg shadow-md overflow-hidden relative min-h-[600px]">
-      <div id="map" class="h-full w-full"></div>
-      
-      <!-- Loading overlay -->
-      <div v-if="isLoading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[1000]">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
-import 'leaflet/dist/leaflet.css'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import L from 'leaflet'
-import { visualizationService } from '../services/visualization.service'
-// Using an import to ensure Vite bundles the JSON properly or references it
 import thailandGeoJSON from '@/assets/geo/thailand.json'
 
-const map = ref(null);
-const geojsonLayer = ref(null);
-const isLoading = ref(true);
+const mapEl = ref(null)
+const isLoading = ref(true)
+let mapInstance = null
 
-// Mockup Heatmap colors
-function getColor(d) {
-    return d > 400 ? '#800026' :
-           d > 300  ? '#BD0026' :
-           d > 200  ? '#E31A1C' :
-           d > 100  ? '#FC4E2A' :
-           d > 50   ? '#FD8D3C' :
-           d > 20   ? '#FEB24C' :
-           d > 10   ? '#FED976' :
-                      '#FFEDA0';
+const defaultStyle = {
+    weight: 1,
+    color: '#2B6E7A',
+    fillColor: '#C6E9EF',
+    fillOpacity: 0.6,
 }
 
-function style(feature, backendData) {
-    // try to find the match by English Name first
-    const provinceData = backendData.find(
-        (p) =>
-            p.provinceNameEn.toLowerCase() === feature.properties.name.toLowerCase() ||
-            p.provinceNameEn.toLowerCase().replace(' ', '') === feature.properties.name.toLowerCase().replace(' ', '')
-    );
-    const mockValue = provinceData ? provinceData.value : 0;
-    
-    return {
-        fillColor: getColor(mockValue),
-        weight: 2,
-        opacity: 1,
-        color: 'white',
-        dashArray: '3',
-        fillOpacity: 0.7
-    };
+const hoverStyle = {
+    weight: 2,
+    color: '#2B6E7A',
+    fillColor: '#C6E9EF',
+    fillOpacity: 0.85,
 }
 
-function highlightFeature(e) {
-    var layer = e.target;
-    layer.setStyle({
-        weight: 5,
-        color: '#666',
-        dashArray: '',
-        fillOpacity: 0.7
-    });
-    layer.bringToFront();
-}
-
-function resetHighlight(e, backendData) {
-    geojsonLayer.value.resetStyle(e.target);
-}
-
-function zoomToFeature(e) {
-    map.value.fitBounds(e.target.getBounds());
-}
-
-async function initMap() {
-    try {
-        isLoading.value = true;
-        // Fetch data from backend
-        const serverData = await visualizationService.getHeatmapData();
-
-        // 13.0367, 101.4913 is roughly center of Thailand
-        map.value = L.map('map').setView([13.0367, 101.4913], 6);
-
-        // Add base tile layer (optional, but good for context)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(map.value);
-
-        // Add GeoJSON Layer with backend data binding
-        geojsonLayer.value = L.geoJSON(thailandGeoJSON, {
-            style: (feature) => style(feature, serverData),
-            onEachFeature: (feature, layer) => {
-                const pNameEn = feature.properties.name;
-                const pNameTh = feature.properties.name_th || 'N/A';
-                
-                // Find data
-                const pData = serverData.find(
-                    (p) => p.provinceNameEn.toLowerCase() === pNameEn.toLowerCase() || 
-                           p.provinceNameEn.toLowerCase().replace(' ', '') === pNameEn.toLowerCase().replace(' ', '')
-                );
-                const mockCases = pData ? pData.value : 0;
-
-                // Popup content
-                const popupContent = `
-                    <div class="px-2 py-1">
-                        <strong class="text-sm font-bold block">${pNameEn} / ${pNameTh}</strong>
-                        <span class="text-xs text-gray-600 block mb-1">Detected Cases</span>
-                        <div class="bg-indigo-100 text-indigo-800 text-lg font-semibold rounded px-2 py-1 inline-block">
-                           ${mockCases}
-                        </div>
-                    </div>
-                `;
-                
-                layer.bindPopup(popupContent, { closeButton: false, className: 'custom-popup' });
-                
-                layer.on({
-                    mouseover: function(e) {
-                        highlightFeature(e);
-                        this.openPopup();
-                    },
-                    mouseout: function(e) {
-                        geojsonLayer.value.resetStyle(e.target);
-                        this.closePopup();
-                    },
-                    click: zoomToFeature
-                });
-            }
-        }).addTo(map.value);
-        
-    } catch (error) {
-        console.error("Failed to load map data:", error);
-    } finally {
-        isLoading.value = false;
-    }
+function getProvinceName(feature) {
+    const p = feature.properties
+    return p.name || p.NAME_1 || p.province || p.Province || 'Unknown'
 }
 
 onMounted(() => {
-    initMap();
-});
+    mapInstance = L.map(mapEl.value, {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        attributionControl: false,
+    })
+
+    // Minimal tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 10,
+    }).addTo(mapInstance)
+
+    // Attribution small
+    L.control.attribution({ position: 'bottomleft', prefix: false })
+        .addAttribution('© <a href="https://carto.com">CARTO</a>')
+        .addTo(mapInstance)
+
+    const layer = L.geoJSON(thailandGeoJSON, {
+        style: () => ({ ...defaultStyle }),
+
+        onEachFeature(feature, lyr) {
+            const name = getProvinceName(feature)
+
+            lyr.bindTooltip(name, {
+                permanent: false,
+                direction: 'top',
+                className: 'morpho-tooltip',
+                offset: [0, -4],
+            })
+
+            lyr.on({
+                mouseover(e) {
+                    e.target.setStyle(hoverStyle)
+                    e.target.bringToFront()
+                },
+                mouseout(e) {
+                    layer.resetStyle(e.target)
+                },
+            })
+        },
+    }).addTo(mapInstance)
+
+    mapInstance.fitBounds(layer.getBounds(), { padding: [12, 12] })
+    isLoading.value = false
+})
 
 onBeforeUnmount(() => {
-    if (map.value) {
-        map.value.remove();
+    if (mapInstance) {
+        mapInstance.remove()
+        mapInstance = null
     }
-});
+})
 </script>
 
 <style>
-/* Leaflet uses z-index deeply, adjusting it slightly so it doesn't conflict with our navbar */
+/* Keep leaflet z-index below sticky navbar (z-20) */
 .leaflet-pane {
-    z-index: 10;
+    z-index: 10 !important;
 }
+
 .leaflet-top,
 .leaflet-bottom {
-    z-index: 20;
+    z-index: 20 !important;
 }
-.custom-popup .leaflet-popup-content-wrapper {
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+.leaflet-control {
+    z-index: 20 !important;
 }
-.custom-popup .leaflet-popup-content {
-    margin: 8px;
+
+/* Tooltip styling */
+.morpho-tooltip {
+    background: white;
+    border: 1px solid rgba(54, 137, 152, 0.25);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    color: #2E2E2E;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+}
+
+.morpho-tooltip::before {
+    display: none;
 }
 </style>
