@@ -22,6 +22,7 @@ const UploadImage = () => import('@/features/case-management/views/UploadImage.v
 const CaseList = () => import('@/features/case-management/views/CaseListTest.vue')
 const CaseDetail = () => import('@/features/case-management/views/CaseDetailTest.vue')
 const ResultDetail = () => import('@/features/case-management/views/ResultDetail.vue')
+const Insight = () => import('@/features/visualization/views/Insight.vue')
 
 // AUTH
 const AuthLanding = () => import('@/features/auth/views/AuthLanding.vue')
@@ -104,7 +105,8 @@ const routes = [
       { path: 'upload', component: UploadImage },
       { path: 'cases', component: CaseList },
       { path: 'cases/:id', component: CaseDetail, props: true },
-      { path: 'result/:id', component: ResultDetail, props: true }
+      { path: 'result/:id', component: ResultDetail, props: true },
+      { path: 'insights', component: Insight }
     ]
   },
 

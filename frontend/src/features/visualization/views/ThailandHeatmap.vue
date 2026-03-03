@@ -16,12 +16,12 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { visualizationService } from '../services/visualization.service';
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import { visualizationService } from '../services/visualization.service'
 // Using an import to ensure Vite bundles the JSON properly or references it
-import thailandGeoJSON from '@/assets/geo/thailand.json';
+import thailandGeoJSON from '@/assets/geo/thailand.json'
 
 const map = ref(null);
 const geojsonLayer = ref(null);
