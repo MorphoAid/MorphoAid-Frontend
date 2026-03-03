@@ -151,6 +151,8 @@ onUnmounted(() => {
     }
 })
 
+const analyzeError = ref('')
+
 const handleSubmit = async () => {
     if (!previewUrl.value) {
         alert('Please select an image file first.')
@@ -172,11 +174,22 @@ const handleSubmit = async () => {
         const res = await uploadCase(caseFormData)
         const caseId = res.data.id
 
-        await analyzeCase(caseId)
+        // Attempt AI analysis — non-blocking: 502 means AI service is down,
+        // but the case was created successfully so we still navigate.
+        try {
+            await analyzeCase(caseId)
+        } catch (analyzeErr) {
+            const status = analyzeErr.response?.status
+            console.warn(`AI analysis failed (HTTP ${status || 'unknown'}):`, analyzeErr.message)
+            // Soft warning — user sees the case detail page anyway
+            analyzeError.value = status === 502
+                ? 'AI analysis service is currently unavailable. You can retry analysis from the case detail page.'
+                : `AI analysis failed: ${analyzeErr.response?.data?.message || analyzeErr.message}`
+        }
 
         router.push(`/data-use/cases/${caseId}`)
     } catch (error) {
-        console.error("Upload error:", error)
+        console.error('Upload error:', error)
         alert('Upload failed: ' + (error.response?.data?.message || error.message))
     }
 }

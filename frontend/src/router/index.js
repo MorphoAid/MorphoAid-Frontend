@@ -96,19 +96,26 @@ const routes = [
   },
 
   // DATA USE (ใช้ case-management views)
-  {
-    path: '/data-use',
-    component: DataUseLayout,
-    meta: { requiresAuth: true, roles: ['DATA_USE'] },
-    children: [
-      { path: '', component: TestHub },
-      { path: 'upload', component: UploadImage },
-      { path: 'cases', component: CaseList },
-      { path: 'cases/:id', component: CaseDetail, props: true },
-      { path: 'result/:id', component: ResultDetail, props: true },
-      { path: 'insights', component: Insight }
-    ]
-  },
+{
+  path: '/data-use',
+  component: DataUseLayout,
+  meta: { requiresAuth: true, roles: ['DATA_USE'] },
+  children: [
+    { path: '', component: TestHub },
+
+    // ✅ Create new case route (static) — MUST be before cases/:id
+    { path: 'cases/new', component: UploadImage },
+
+    { path: 'upload', component: UploadImage }, // (optional) you can keep for now
+    { path: 'cases', component: CaseList },
+
+    // ✅ Detail route (dynamic)
+    { path: 'cases/:id', component: CaseDetail, props: true },
+
+    { path: 'result/:id', component: ResultDetail, props: true },
+    { path: 'insights', component: Insight }
+  ]
+},
 
   // TEST
   {

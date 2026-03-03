@@ -78,11 +78,15 @@
                         <AnnotatedImage :caseId="caseId" :detections="rawResults" />
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><strong class="text-gray-600">Parasite Stage:</strong> {{ aiData.parasiteStage || 'N/A' }}</div>
-                        <div><strong class="text-gray-600">Drug Exposure:</strong> {{ aiData.drugExposure }} <span v-if="aiData.drugType">({{ aiData.drugType }})</span></div>
-                        <div><strong class="text-gray-600">Confidence:</strong> {{ (aiData.confidence * 100).toFixed(2) }}%
+                        <div><strong class="text-gray-600">Parasite Stage:</strong> {{ aiData.parasiteStage || 'N/A' }}
                         </div>
-                        <div v-if="aiData.createdAt"><strong class="text-gray-600">Analyzed At:</strong> {{ new Date(aiData.createdAt).toLocaleString() }}</div>
+                        <div><strong class="text-gray-600">Drug Exposure:</strong> {{ aiData.drugExposure }} <span
+                                v-if="aiData.drugType">({{ aiData.drugType }})</span></div>
+                        <div><strong class="text-gray-600">Confidence:</strong> {{ (aiData.confidence * 100).toFixed(2)
+                            }}%
+                        </div>
+                        <div v-if="aiData.createdAt"><strong class="text-gray-600">Analyzed At:</strong> {{ new
+                            Date(aiData.createdAt).toLocaleString() }}</div>
                     </div>
 
                     <!-- All Detections from Array -->
@@ -92,19 +96,31 @@
                             <table class="min-w-full divide-y divide-gray-200 border">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class ID</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage / Type</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exposure</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Box [x1, y1, x2, y2]</th>
+                                        <th
+                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Class ID</th>
+                                        <th
+                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Stage / Type</th>
+                                        <th
+                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Exposure</th>
+                                        <th
+                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Confidence</th>
+                                        <th
+                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Box [x1, y1, x2, y2]</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     <tr v-for="(res, idx) in rawResults" :key="idx" class="hover:bg-gray-50">
                                         <td class="px-4 py-2 border-l">{{ res.class }}</td>
                                         <td class="px-4 py-2 border-l">
-                                            <span v-if="res.mappedStage" class="text-indigo-600 font-medium">{{ res.mappedStage }}</span>
-                                            <span v-else-if="res.mappedDrugType" class="text-green-600 font-medium">Drug {{ res.mappedDrugType }}</span>
+                                            <span v-if="res.mappedStage" class="text-indigo-600 font-medium">{{
+                                                res.mappedStage }}</span>
+                                            <span v-else-if="res.mappedDrugType" class="text-green-600 font-medium">Drug
+                                                {{ res.mappedDrugType }}</span>
                                             <span v-else class="text-gray-400">Unknown</span>
                                         </td>
                                         <td class="px-4 py-2 border-l">
@@ -112,7 +128,8 @@
                                         </td>
                                         <td class="px-4 py-2 border-l">{{ (res.confidence * 100).toFixed(2) }}%</td>
                                         <td class="px-4 py-2 border-l text-xs font-mono text-gray-500">
-                                            <span v-if="res.box">[{{ res.box.x1.toFixed(0) }}, {{ res.box.y1.toFixed(0) }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
+                                            <span v-if="res.box">[{{ res.box.x1.toFixed(0) }}, {{ res.box.y1.toFixed(0)
+                                                }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
                                             <span v-else class="text-gray-300">N/A</span>
                                         </td>
                                     </tr>
@@ -155,8 +172,8 @@ import CaseImageUpload from '../components/CaseImageUpload.vue';
 const route = useRoute();
 const router = useRouter();
 
-// Derived ID
-const caseId = Number(route.params.id);
+// Derived ID — treat as string to support both numeric and UUID backends
+const caseId = route.params.id;
 
 // State: Case
 const caseData = ref(null);
@@ -191,12 +208,12 @@ const fetchAiResult = async () => {
     try {
         const response = await http.get(`/cases/${caseId}/ai-result`);
         aiData.value = response.data;
-        
+
         // Attempt to parse rawResponseJson if it exists to fill in missing fields
         if (aiData.value && aiData.value.rawResponseJson) {
             try {
                 const rawJson = JSON.parse(aiData.value.rawResponseJson);
-                
+
                 // New format: rawJson.images[0].results
                 if (rawJson.images && rawJson.images.length > 0) {
                     const firstImage = rawJson.images[0];
@@ -206,30 +223,30 @@ const fetchAiResult = async () => {
                             let mappedStage = null;
                             let mappedExposure = false;
                             let mappedDrugType = null;
-                            
-                            switch(res.class) {
+
+                            switch (res.class) {
                                 case 0: mappedExposure = true; mappedDrugType = 'A'; break;
                                 case 1: mappedExposure = true; mappedDrugType = 'B'; break;
                                 case 2: mappedExposure = false; mappedStage = 'RING'; break;
                                 case 3: mappedExposure = false; mappedStage = 'SCHIZ'; break;
                                 case 4: mappedExposure = false; mappedStage = 'TROPH'; break;
                             }
-                            
+
                             return { ...res, mappedStage, mappedExposure, mappedDrugType };
                         });
 
                         // Extract top result by confidence
-                        const topResult = firstImage.results.reduce((prev, current) => 
+                        const topResult = firstImage.results.reduce((prev, current) =>
                             (prev.confidence > current.confidence) ? prev : current
                         );
-                        
+
                         // Map missing fields from raw json onto main aiData
                         if (topResult.confidence !== undefined) {
                             aiData.value.confidence = topResult.confidence;
                         }
                         if (topResult.class !== undefined) {
                             aiData.value.topClassId = topResult.class;
-                            switch(topResult.class) {
+                            switch (topResult.class) {
                                 case 0:
                                     aiData.value.drugExposure = true;
                                     aiData.value.drugType = 'A';
@@ -257,7 +274,7 @@ const fetchAiResult = async () => {
                     // Fallback to old box array logic if needed (optional)
                     const oldBoxes = rawJson[0].boxes;
                     if (oldBoxes.length > 0) {
-                         // omitted for brevity, but won't crash
+                        // omitted for brevity, but won't crash
                     }
                 }
             } catch (parseError) {
@@ -277,7 +294,7 @@ const fetchAiResult = async () => {
 };
 
 onMounted(() => {
-    if (Number.isNaN(caseId)) {
+    if (!caseId) {
         caseError.value = "Invalid case id format.";
         loadingCase.value = false;
         loadingAi.value = false;
