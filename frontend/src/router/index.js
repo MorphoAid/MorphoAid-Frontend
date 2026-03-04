@@ -15,6 +15,14 @@ const ActivityLog = () => import('@/features/admin/views/ActivityLog.vue')
 
 // DATA PREP
 const DataPrepDashboard = () => import('@/features/dataprep/views/DataPrepDashboard.vue')
+const DataPrepImages = () => import('@/features/dataprep/views/Images.vue')
+const DataPrepImageDetail = () => import('@/features/dataprep/views/ImageDetail.vue')
+const DataPrepSettings = () => import('@/features/dataprep/views/Settings.vue')
+const DataPrepExport = () => import('@/features/dataprep/views/Export.vue')
+// LAB module (dedicated components)
+const ReviewQueue = () => import('@/features/dataprep/views/ReviewQueue.vue')
+const ReviewDetail = () => import('@/features/dataprep/views/ReviewDetail.vue')
+const ExportPage = () => import('@/features/dataprep/views/ExportPage.vue')
 
 // DATA USE (อยู่ใน case-management)
 const TestHub = () => import('@/features/case-management/views/TestHub.vue')
@@ -34,7 +42,7 @@ const Forbidden = () => import('@/features/auth/views/Forbidden.vue')
 
 function getRoleHome(role) {
   if (role === 'ADMIN') return '/admin/dashboard'
-  if (role === 'DATA_PREP') return '/dataprep'
+  if (role === 'DATA_PREP') return '/lab/review'
   if (role === 'DATA_USE') return '/data-use'
   return '/__auth'
 }
@@ -85,37 +93,53 @@ const routes = [
     ]
   },
 
-  // DATA PREP
+  // DATA PREP (/dataprep — legacy, kept intact)
   {
     path: '/dataprep',
     component: DataPrepLayout,
     meta: { requiresAuth: true, roles: ['DATA_PREP', 'ADMIN'] },
     children: [
-      { path: '', component: DataPrepDashboard }
+      { path: '', component: DataPrepDashboard },
+      { path: 'images', component: DataPrepImages },
+      { path: 'images/:id', component: DataPrepImageDetail, props: true },
+      { path: 'settings', component: DataPrepSettings },
+    ]
+  },
+
+  // LAB (/lab — aligned with SRS, DATA_PREP only)
+  {
+    path: '/lab',
+    component: DataPrepLayout,
+    meta: { requiresAuth: true, roles: ['DATA_PREP'] },
+    redirect: '/lab/review',
+    children: [
+      { path: 'review', component: ReviewQueue },
+      { path: 'review/:id', component: ReviewDetail, props: true },
+      { path: 'export', component: ExportPage },
     ]
   },
 
   // DATA USE (ใช้ case-management views)
-{
-  path: '/data-use',
-  component: DataUseLayout,
-  meta: { requiresAuth: true, roles: ['DATA_USE'] },
-  children: [
-    { path: '', component: TestHub },
+  {
+    path: '/data-use',
+    component: DataUseLayout,
+    meta: { requiresAuth: true, roles: ['DATA_USE'] },
+    children: [
+      { path: '', component: TestHub },
 
-    // ✅ Create new case route (static) — MUST be before cases/:id
-    { path: 'cases/new', component: UploadImage },
+      // ✅ Create new case route (static) — MUST be before cases/:id
+      { path: 'cases/new', component: UploadImage },
 
-    { path: 'upload', component: UploadImage }, // (optional) you can keep for now
-    { path: 'cases', component: CaseList },
+      { path: 'upload', component: UploadImage }, // (optional) you can keep for now
+      { path: 'cases', component: CaseList },
 
-    // ✅ Detail route (dynamic)
-    { path: 'cases/:id', component: CaseDetail, props: true },
+      // ✅ Detail route (dynamic)
+      { path: 'cases/:id', component: CaseDetail, props: true },
 
-    { path: 'result/:id', component: ResultDetail, props: true },
-    { path: 'insights', component: Insight }
-  ]
-},
+      { path: 'result/:id', component: ResultDetail, props: true },
+      { path: 'insights', component: Insight }
+    ]
+  },
 
   // TEST
   {
