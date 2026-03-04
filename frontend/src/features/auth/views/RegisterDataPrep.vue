@@ -15,20 +15,10 @@
           role="alert">
           <span class="block sm:inline">{{ globalErrorMsg }}</span>
         </div>
-        <div v-if="successMsg" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
-          role="alert">
-          <span class="block sm:inline">{{ successMsg }}</span>
-        </div>
+
 
         <div class="rounded-md shadow-sm space-y-4">
-          <div>
-            <label for="invitationToken" class="block text-sm font-medium text-gray-700">Invitation Token</label>
-            <input id="invitationToken" name="invitationToken" type="text" required v-model="form.invitationToken"
-              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              :class="{ 'border-red-500': fieldErrors.invitationToken }" placeholder="Invitation Token">
-            <p v-if="fieldErrors.invitationToken" class="mt-1 text-xs text-red-600">{{ fieldErrors.invitationToken }}
-            </p>
-          </div>
+
           <div>
             <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
             <input id="username" name="username" type="text" required v-model="form.username"
@@ -83,6 +73,15 @@
             </label>
           </div>
           <p v-if="fieldErrors.agreeTerms" class="mt-1 text-xs text-red-600">{{ fieldErrors.agreeTerms }}</p>
+
+          <div>
+            <label for="invitationToken" class="block text-sm font-medium text-gray-700">Invitation Token</label>
+            <input id="invitationToken" name="invitationToken" type="text" required v-model="form.invitationToken"
+              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              :class="{ 'border-red-500': fieldErrors.invitationToken }" placeholder="Invitation Token">
+            <p v-if="fieldErrors.invitationToken" class="mt-1 text-xs text-red-600">{{ fieldErrors.invitationToken }}
+            </p>
+          </div>
         </div>
 
         <div>
@@ -128,7 +127,6 @@ onMounted(() => {
 
 const fieldErrors = reactive({});
 const globalErrorMsg = ref('');
-const successMsg = ref('');
 const loading = ref(false);
 
 const validateForm = () => {
@@ -171,7 +169,6 @@ const validateForm = () => {
 
 const handleRegister = async () => {
   globalErrorMsg.value = '';
-  successMsg.value = '';
 
   if (!validateForm()) {
     return;
@@ -180,14 +177,17 @@ const handleRegister = async () => {
   loading.value = true;
   try {
     await authService.registerDataPrep(form);
-    successMsg.value = "Registration successful! You can now log in.";
+    
+    // Clear form
     Object.keys(form).forEach(key => {
       if (typeof form[key] === 'boolean') form[key] = false;
       else form[key] = '';
     });
-    setTimeout(() => {
-      router.push('/login');
-    }, 2000);
+
+    // Show popup and redirect
+    window.alert("Registration successful.");
+    router.push('/login');
+    
   } catch (err) {
     if (err.response?.data?.errors) {
       // Backend returned field-level errors

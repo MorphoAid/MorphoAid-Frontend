@@ -12,6 +12,7 @@ const TestLayout = () => import('@/layouts/TestLayout.vue')
 const AdminDashboard = () => import('@/features/admin/views/AdminDashboard.vue')
 const UserManagement = () => import('@/features/admin/views/UserManagement.vue')
 const ActivityLog = () => import('@/features/admin/views/ActivityLog.vue')
+const InvitationManagement = () => import('@/features/admin/views/InvitationManagement.vue')
 
 // DATA PREP
 const DataPrepDashboard = () => import('@/features/dataprep/views/DataPrepDashboard.vue')
@@ -81,6 +82,7 @@ const routes = [
     children: [
       { path: 'dashboard', component: AdminDashboard },
       { path: 'users', component: UserManagement },
+      { path: 'invitations', component: InvitationManagement },
       { path: 'activity-log', component: ActivityLog }
     ]
   },
