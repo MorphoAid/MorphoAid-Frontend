@@ -32,6 +32,10 @@ const CaseDetail = () => import('@/features/case-management/views/CaseDetailTest
 const ResultDetail = () => import('@/features/case-management/views/ResultDetail.vue')
 const Insight = () => import('@/features/visualization/views/Insight.vue')
 
+// CLINICAL (Feature 2)
+const ClinicalUpload = () => import('@/features/clinical/views/ClinicalUpload.vue')
+const ClinicalCaseDetail = () => import('@/features/clinical/views/ClinicalCaseDetail.vue')
+
 // AUTH
 const AuthLanding = () => import('@/features/auth/views/AuthLanding.vue')
 const Login = () => import('@/features/auth/views/Login.vue')
@@ -126,6 +130,10 @@ const routes = [
     meta: { requiresAuth: true, roles: ['DATA_USE'] },
     children: [
       { path: '', component: TestHub },
+
+      // CLINICAL Feature 2
+      { path: 'clinical/upload', name: 'ClinicalUpload', component: ClinicalUpload },
+      { path: 'clinical/cases/:id', name: 'ClinicalCaseDetail', component: ClinicalCaseDetail },
 
       // ✅ Create new case route (static) — MUST be before cases/:id
       { path: 'cases/new', component: UploadImage },
