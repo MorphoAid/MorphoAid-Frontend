@@ -19,13 +19,7 @@
 
         <div class="rounded-md shadow-sm space-y-4">
 
-          <div>
-            <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-            <input id="username" name="username" type="text" required v-model="form.username"
-              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              :class="{ 'border-red-500': fieldErrors.username }" placeholder="Username">
-            <p v-if="fieldErrors.username" class="mt-1 text-xs text-red-600">{{ fieldErrors.username }}</p>
-          </div>
+
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
@@ -138,10 +132,7 @@ const validateForm = () => {
     isValid = false;
   }
 
-  if (form.username.length < 3 || form.username.length > 10) {
-    fieldErrors.username = "Username must be between 3 and 10 characters.";
-    isValid = false;
-  }
+
 
   const alphaRegex = /^[A-Za-z]+$/;
   if (!alphaRegex.test(form.firstName)) {
