@@ -67,12 +67,29 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[#2E2E2E] mb-1">Location</label>
-                        <input type="text" v-model="form.location" placeholder="Select Province"
-                            list="english-provinces"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#48B7CB] focus:border-transparent transition-all text-[#2E2E2E]" />
-                        <datalist id="english-provinces">
-                            <option v-for="province in englishProvinces" :key="province" :value="province"></option>
-                        </datalist>
+                        <div class="relative">
+                            <input type="text"
+                                v-model="provinceSearch"
+                                @focus="showDropdown = true"
+                                @input="handleSearchInput"
+                                @blur="handleBlur"
+                                placeholder="🔍 Search or select province..."
+                                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#48B7CB] focus:border-transparent transition-all text-[#2E2E2E] text-sm" />
+                            
+                            <div v-if="showDropdown && filteredProvinces.length > 0"
+                                class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                <div v-for="province in filteredProvinces" :key="province"
+                                    @mousedown.prevent="selectProvince(province)"
+                                    class="px-4 py-2 hover:bg-[#F3F9FA] cursor-pointer text-sm text-[#2E2E2E] transition-colors"
+                                    :class="{'bg-[#F3F9FA] font-medium text-[#368998]': form.location === province}">
+                                    {{ province }}
+                                </div>
+                            </div>
+                            
+                            <p v-if="form.location" class="mt-1 text-xs text-[#368998] font-medium">
+                                ✓ Selected: {{ form.location }}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { uploadCase, analyzeCase, fetchNextPatientCode } from '@/features/case-management/services/case.service'
 import { uploadCaseImage } from '@/features/case-management/services/caseImage.service'
@@ -114,14 +131,49 @@ const selectedFileSize = ref('')
 const previewUrl = ref('')
 const isSubmitting = ref(false)
 
+const provinceSearch = ref('')
+
 const form = reactive({
     patientCode: '',
     technicianId: '',
     location: ''
 })
 
+const filteredProvinces = computed(() => {
+    const q = provinceSearch.value.trim().toLowerCase()
+    if (!q) return englishProvinces
+    return englishProvinces.filter(p => p.toLowerCase().includes(q))
+})
+
+const showDropdown = ref(false)
+
+const handleSearchInput = () => {
+    showDropdown.value = true
+    // If user types, invalidate previous selection until they click again or exact match
+    if (form.location !== provinceSearch.value) {
+        form.location = ''
+    }
+}
+
+const selectProvince = (province) => {
+    form.location = province
+    provinceSearch.value = province
+    showDropdown.value = false
+}
+
+const handleBlur = () => {
+    showDropdown.value = false
+    // Auto-select if exact match typed, otherwise clear invalid input
+    if (provinceSearch.value && !form.location) {
+        const exactMatch = englishProvinces.find(p => p.toLowerCase() === provinceSearch.value.trim().toLowerCase())
+        if (exactMatch) {
+            selectProvince(exactMatch)
+        }
+    }
+}
+
 const englishProvinces = [
-    "Amnat Charoen", "Ang Thong", "Bangkok", "Bueng Kan", "Buri Ram", "Chachoengsao",
+    "Amnat Charoen", "Ang Thong", "Bangkok Metropolis", "Bueng Kan", "Buri Ram", "Chachoengsao",
     "Chai Nat", "Chaiyaphum", "Chanthaburi", "Chiang Mai", "Chiang Rai", "Chon Buri",
     "Chumphon", "Kalasin", "Kamphaeng Phet", "Kanchanaburi", "Khon Kaen", "Krabi",
     "Lampang", "Lamphun", "Loei", "Lop Buri", "Mae Hong Son", "Maha Sarakham",

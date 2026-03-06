@@ -100,16 +100,78 @@
                                 <StatusPill :status="c.status" :label="c.status" />
                             </td>
                             <td class="py-4 px-6">
-                                <RouterLink :to="`/data-use/cases/${c.id}`"
-                                    class="text-[#48B7CB] hover:text-[#2B6E7A] font-medium transition-colors">
-                                    View
-                                </RouterLink>
+                                <div class="flex items-center gap-3">
+                                    <RouterLink :to="`/data-use/cases/${c.id}`"
+                                        class="text-[#48B7CB] hover:text-[#2B6E7A] font-medium transition-colors">
+                                        View
+                                    </RouterLink>
+                                    <button @click="confirmDelete(c)"
+                                        :disabled="deleting === c.id"
+                                        class="text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                                        title="Delete case">
+                                        <svg v-if="deleting === c.id" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                        </svg>
+                                        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+
+        <!-- Delete Confirmation Dialog -->
+        <Teleport to="body">
+            <Transition name="fade">
+                <div v-if="showDeleteDialog"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                    @click.self="cancelDelete">
+                    <Transition name="scale">
+                        <div v-if="showDeleteDialog"
+                            class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 max-w-sm w-full mx-4">
+                            <!-- Icon -->
+                            <div class="flex items-center justify-center w-12 h-12 bg-red-50 rounded-full mx-auto mb-4">
+                                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <!-- Text -->
+                            <h3 class="text-lg font-bold text-[#2E2E2E] text-center mb-1">Delete Case</h3>
+                            <p class="text-[#5C5C5C] text-sm text-center mb-6">
+                                Are you sure you want to delete
+                                <span class="font-semibold text-[#2E2E2E]">CAS-0{{ caseToDelete?.id }}</span>?
+                                This action cannot be undone.
+                            </p>
+                            <!-- Actions -->
+                            <div class="flex gap-3">
+                                <button @click="cancelDelete"
+                                    class="flex-1 px-4 py-2.5 bg-white border border-gray-200 text-[#2E2E2E] rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors">
+                                    Cancel
+                                </button>
+                                <button @click="executeDelete"
+                                    :disabled="deleting"
+                                    class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                                    <svg v-if="deleting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    {{ deleting ? 'Deleting...' : 'Delete' }}
+                                </button>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 
@@ -117,11 +179,14 @@
 import { ref, onMounted } from 'vue'
 import StatusPill from '@/components/datause/StatusPill.vue'
 import { useAuthStore } from '@/store/auth.store'
-import { fetchCases as apiFetchCases } from '@/features/case-management/services/case.service'
+import { fetchCases as apiFetchCases, deleteCase as apiDeleteCase } from '@/features/case-management/services/case.service'
 
 const cases = ref([])
 const loading = ref(false)
 const error = ref(null)
+const deleting = ref(null)
+const showDeleteDialog = ref(false)
+const caseToDelete = ref(null)
 
 const formatDate = (dateString) => {
     const d = new Date(dateString)
@@ -133,6 +198,35 @@ const getMockSummary = (status) => {
     if (status === 'FAILED') return 'Image artifact detected. Unreadable.'
     if (status === 'PENDING') return 'Pending computational analysis'
     return 'Processing...'
+}
+
+const confirmDelete = (caseItem) => {
+    caseToDelete.value = caseItem
+    showDeleteDialog.value = true
+}
+
+const cancelDelete = () => {
+    showDeleteDialog.value = false
+    caseToDelete.value = null
+}
+
+const executeDelete = async () => {
+    if (!caseToDelete.value) return
+    const id = caseToDelete.value.id
+    deleting.value = id
+    try {
+        await apiDeleteCase(id)
+        showDeleteDialog.value = false
+        caseToDelete.value = null
+        await fetchCases()
+    } catch (err) {
+        console.error("Delete case error:", err)
+        error.value = 'Failed to delete case: ' + (err.response?.data?.message || err.message)
+        showDeleteDialog.value = false
+        caseToDelete.value = null
+    } finally {
+        deleting.value = null
+    }
 }
 
 const fetchCases = async () => {
@@ -173,3 +267,24 @@ onMounted(async () => {
     }
 })
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.scale-enter-active,
+.scale-leave-active {
+    transition: all 0.2s ease;
+}
+.scale-enter-from,
+.scale-leave-to {
+    opacity: 0;
+    transform: scale(0.95);
+}
+</style>

@@ -23,3 +23,7 @@ export const getCaseById = async (caseId) => {
 export const fetchNextPatientCode = async () => {
     return http.get('/cases/next-patient-code')
 }
+
+export const deleteCase = async (caseId) => {
+    return http.delete(`/cases/${caseId}`)
+}
