@@ -25,7 +25,8 @@ const CLASS_LABELS = {
 };
 
 const props = defineProps({
-    caseId: { type: Number, required: true },
+    caseId: { type: [Number, String], required: true },
+    imageId: { type: [Number, String], required: false },
     detections: { type: Array, default: () => [] },
 });
 
@@ -36,11 +37,17 @@ const errorMsg = ref(null);
 let loadedImage = null;
 
 const fetchAndDraw = async () => {
+    if (!props.imageId) {
+        errorMsg.value = 'No image associated with this case.';
+        loading.value = false;
+        return;
+    }
+
     loading.value = true;
     errorMsg.value = null;
 
     try {
-        const response = await http.get(`/cases/${props.caseId}/image`, {
+        const response = await http.get(`/cases/${props.caseId}/images/${props.imageId}/content`, {
             responseType: 'arraybuffer',
         });
 
@@ -151,6 +158,10 @@ onMounted(() => {
 watch(() => props.detections, () => {
     if (loadedImage) drawAnnotations();
 }, { deep: true });
+
+watch(() => props.imageId, () => {
+    fetchAndDraw();
+});
 </script>
 
 <style scoped>

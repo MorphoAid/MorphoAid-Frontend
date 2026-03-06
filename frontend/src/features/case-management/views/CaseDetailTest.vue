@@ -35,13 +35,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><strong class="text-gray-600">Patient Code:</strong> {{ caseData.patientCode }}</div>
                     <div><strong class="text-gray-600">Technician ID:</strong> {{ caseData.technicianId }}</div>
-                    <div><strong class="text-gray-600">Location:</strong> {{ caseData.location }}</div>
+                    <div><strong class="text-gray-600">Location:</strong> {{ clinicalData?.provinceName ||
+                        caseData.location }}</div>
                     <div>
                         <strong class="text-gray-600">Status:</strong>
                         <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
                             :class="caseData.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
                             {{ caseData.status }}
                         </span>
+                        <button v-if="caseData.status === 'PENDING'" @click="triggerAnalysis"
+                            class="ml-3 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded shadow transition-colors"
+                            :disabled="isAnalyzing">
+                            {{ isAnalyzing ? 'Analyzing...' : 'Analyze Now' }}
+                        </button>
                     </div>
                     <div><strong class="text-gray-600">Uploaded By ID:</strong> {{ caseData.uploadedById }}</div>
                     <div><strong class="text-gray-600">Created At:</strong> {{ new
@@ -53,6 +59,7 @@
                     <code class="bg-gray-100 px-2 py-1 rounded text-sm break-all">{{ caseData.imagePath }}</code>
                 </div>
             </div>
+
 
             <!-- AI Result Section -->
             <div class="bg-white p-6 rounded shadow border border-gray-200">
@@ -73,9 +80,9 @@
 
                 <div v-else-if="aiData">
                     <!-- Annotated Image with Bounding Boxes -->
-                    <div v-if="rawResults.length > 0" class="mb-6">
+                    <div v-if="caseData?.imageId" class="mb-6">
                         <h3 class="text-lg font-semibold mb-3">Detection Visualization</h3>
-                        <AnnotatedImage :caseId="caseId" :detections="rawResults" />
+                        <AnnotatedImage :caseId="caseId" :imageId="caseData.imageId" :detections="rawResults" />
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div><strong class="text-gray-600">Parasite Stage:</strong> {{ aiData.parasiteStage || 'N/A' }}
@@ -83,7 +90,7 @@
                         <div><strong class="text-gray-600">Drug Exposure:</strong> {{ aiData.drugExposure }} <span
                                 v-if="aiData.drugType">({{ aiData.drugType }})</span></div>
                         <div><strong class="text-gray-600">Confidence:</strong> {{ (aiData.confidence * 100).toFixed(2)
-                            }}%
+                        }}%
                         </div>
                         <div v-if="aiData.createdAt"><strong class="text-gray-600">Analyzed At:</strong> {{ new
                             Date(aiData.createdAt).toLocaleString() }}</div>
@@ -129,7 +136,7 @@
                                         <td class="px-4 py-2 border-l">{{ (res.confidence * 100).toFixed(2) }}%</td>
                                         <td class="px-4 py-2 border-l text-xs font-mono text-gray-500">
                                             <span v-if="res.box">[{{ res.box.x1.toFixed(0) }}, {{ res.box.y1.toFixed(0)
-                                                }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
+                                            }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
                                             <span v-else class="text-gray-300">N/A</span>
                                         </td>
                                     </tr>
@@ -140,8 +147,42 @@
                 </div>
             </div>
 
+            <!-- Diagnostic Notes Section -->
+            <div v-if="notes.length > 0 || !loadingClinical" class="bg-white p-6 rounded shadow border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2">Diagnostic Notes</h2>
+
+                <!-- Notes List -->
+                <div class="space-y-4 mb-6 max-h-80 overflow-y-auto pr-2">
+                    <div v-for="note in notes" :key="note.id" class="bg-gray-50 p-4 rounded border border-gray-100">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-gray-700 text-sm">{{ note.authorName }}</span>
+                            <span class="text-gray-400 text-xs">{{ formatDate(note.createdAt) }}</span>
+                        </div>
+                        <p class="text-gray-800 whitespace-pre-wrap">{{ note.note }}</p>
+                    </div>
+                    <p v-if="notes.length === 0" class="text-gray-500 italic text-center py-4">No diagnostic notes added
+                        yet.</p>
+                </div>
+
+                <!-- Add Note Form -->
+                <div class="mt-6 pt-4 border-t">
+                    <textarea v-model="newNote" placeholder="Add clinical observation or diagnostic note..."
+                        class="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all h-24 resize-none"
+                        :disabled="isSavingNote"></textarea>
+                    <div class="mt-3 flex justify-end">
+                        <button @click="saveNote"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded font-semibold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            :disabled="!newNote.trim() || isSavingNote">
+                            {{ isSavingNote ? 'Saving...' : 'Save Note' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Image Upload Section -->
-            <CaseImageUpload :caseId="caseId" />
+
+            <CaseImageUpload :caseId="caseId" :existingFilename="caseData.imageFilename" :imageId="caseData.imageId"
+                @upload-success="fetchCaseDetail" />
 
             <!-- Debug Pre Blocks (Optional) -->
             <details class="text-sm text-gray-500 mt-8">
@@ -168,12 +209,13 @@ import { useRoute, useRouter } from 'vue-router';
 import http from '@/services/http';
 import AnnotatedImage from '@/components/AnnotatedImage.vue';
 import CaseImageUpload from '../components/CaseImageUpload.vue';
+import ClinicalService from '@/features/clinical/services/clinical.service';
 
 const route = useRoute();
 const router = useRouter();
 
 // Derived ID — treat as string to support both numeric and UUID backends
-const caseId = route.params.id;
+const caseId = computed(() => route.params.id);
 
 // State: Case
 const caseData = ref(null);
@@ -188,9 +230,109 @@ const aiError = ref(null);
 const aiNotFound = ref(false);
 const rawResults = ref([]);
 
+// State: Clinical
+const clinicalData = ref(null);
+const notes = ref([]);
+const newNote = ref('');
+const isSavingNote = ref(false);
+const isExporting = ref(false);
+const loadingClinical = ref(true);
+const isAnalyzing = ref(false);
+
+const triggerAnalysis = async () => {
+    isAnalyzing.value = true;
+    try {
+        const response = await http.post(`/cases/${caseId.value}/analyze`);
+        // Immediately update status and results without waiting for re-fetch
+        processAiResults(response.data);
+        aiNotFound.value = false;
+
+        // Background refresh to ensure everything is perfect
+        fetchCaseDetail();
+
+        alert('Analysis completed successfully!');
+    } catch (err) {
+        console.error('Analysis failed:', err);
+        alert('Analysis failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+        isAnalyzing.value = false;
+    }
+};
+
+const processAiResults = (data) => {
+    aiData.value = data;
+    rawResults.value = [];
+
+    if (data && data.rawResponseJson) {
+        try {
+            const rawJson = JSON.parse(data.rawResponseJson);
+
+            // New format: rawJson.images[0].results
+            if (rawJson.images && rawJson.images.length > 0) {
+                const firstImage = rawJson.images[0];
+                if (firstImage.results && firstImage.results.length > 0) {
+                    // Store the full array for the table display
+                    rawResults.value = firstImage.results.map(res => {
+                        let mappedStage = null;
+                        let mappedExposure = false;
+                        let mappedDrugType = null;
+
+                        switch (res.class) {
+                            case 0: mappedExposure = true; mappedDrugType = 'A'; break;
+                            case 1: mappedExposure = true; mappedDrugType = 'B'; break;
+                            case 2: mappedExposure = false; mappedStage = 'RING'; break;
+                            case 3: mappedExposure = false; mappedStage = 'SCHIZ'; break;
+                            case 4: mappedExposure = false; mappedStage = 'TROPH'; break;
+                        }
+
+                        return { ...res, mappedStage, mappedExposure, mappedDrugType };
+                    });
+
+                    // Extract top result by confidence
+                    const topResult = firstImage.results.reduce((prev, current) =>
+                        (prev.confidence > current.confidence) ? prev : current
+                    );
+
+                    // Map missing fields from raw json onto main aiData
+                    if (topResult.confidence !== undefined) {
+                        aiData.value.confidence = topResult.confidence;
+                    }
+                    if (topResult.class !== undefined) {
+                        aiData.value.topClassId = topResult.class;
+                        switch (topResult.class) {
+                            case 0:
+                                aiData.value.drugExposure = true;
+                                aiData.value.drugType = 'A';
+                                break;
+                            case 1:
+                                aiData.value.drugExposure = true;
+                                aiData.value.drugType = 'B';
+                                break;
+                            case 2:
+                                aiData.value.drugExposure = false;
+                                aiData.value.parasiteStage = 'RING';
+                                break;
+                            case 3:
+                                aiData.value.drugExposure = false;
+                                aiData.value.parasiteStage = 'SCHIZ';
+                                break;
+                            case 4:
+                                aiData.value.drugExposure = false;
+                                aiData.value.parasiteStage = 'TROPH';
+                                break;
+                        }
+                    }
+                }
+            }
+        } catch (parseError) {
+            console.warn('Failed to parse rawResponseJson on frontend:', parseError);
+        }
+    }
+};
+
 const fetchCaseDetail = async () => {
     try {
-        const response = await http.get(`/cases/${caseId}`);
+        const response = await http.get(`/cases/${caseId.value}`);
         caseData.value = response.data;
     } catch (err) {
         if (err.response && err.response.status === 404) {
@@ -206,81 +348,8 @@ const fetchCaseDetail = async () => {
 
 const fetchAiResult = async () => {
     try {
-        const response = await http.get(`/cases/${caseId}/ai-result`);
-        aiData.value = response.data;
-
-        // Attempt to parse rawResponseJson if it exists to fill in missing fields
-        if (aiData.value && aiData.value.rawResponseJson) {
-            try {
-                const rawJson = JSON.parse(aiData.value.rawResponseJson);
-
-                // New format: rawJson.images[0].results
-                if (rawJson.images && rawJson.images.length > 0) {
-                    const firstImage = rawJson.images[0];
-                    if (firstImage.results && firstImage.results.length > 0) {
-                        // Store the full array for the table display
-                        rawResults.value = firstImage.results.map(res => {
-                            let mappedStage = null;
-                            let mappedExposure = false;
-                            let mappedDrugType = null;
-
-                            switch (res.class) {
-                                case 0: mappedExposure = true; mappedDrugType = 'A'; break;
-                                case 1: mappedExposure = true; mappedDrugType = 'B'; break;
-                                case 2: mappedExposure = false; mappedStage = 'RING'; break;
-                                case 3: mappedExposure = false; mappedStage = 'SCHIZ'; break;
-                                case 4: mappedExposure = false; mappedStage = 'TROPH'; break;
-                            }
-
-                            return { ...res, mappedStage, mappedExposure, mappedDrugType };
-                        });
-
-                        // Extract top result by confidence
-                        const topResult = firstImage.results.reduce((prev, current) =>
-                            (prev.confidence > current.confidence) ? prev : current
-                        );
-
-                        // Map missing fields from raw json onto main aiData
-                        if (topResult.confidence !== undefined) {
-                            aiData.value.confidence = topResult.confidence;
-                        }
-                        if (topResult.class !== undefined) {
-                            aiData.value.topClassId = topResult.class;
-                            switch (topResult.class) {
-                                case 0:
-                                    aiData.value.drugExposure = true;
-                                    aiData.value.drugType = 'A';
-                                    break;
-                                case 1:
-                                    aiData.value.drugExposure = true;
-                                    aiData.value.drugType = 'B';
-                                    break;
-                                case 2:
-                                    aiData.value.drugExposure = false;
-                                    aiData.value.parasiteStage = 'RING';
-                                    break;
-                                case 3:
-                                    aiData.value.drugExposure = false;
-                                    aiData.value.parasiteStage = 'SCHIZ';
-                                    break;
-                                case 4:
-                                    aiData.value.drugExposure = false;
-                                    aiData.value.parasiteStage = 'TROPH';
-                                    break;
-                            }
-                        }
-                    }
-                } else if (rawJson.isArray && rawJson.length > 0 && rawJson[0].boxes) {
-                    // Fallback to old box array logic if needed (optional)
-                    const oldBoxes = rawJson[0].boxes;
-                    if (oldBoxes.length > 0) {
-                        // omitted for brevity, but won't crash
-                    }
-                }
-            } catch (parseError) {
-                console.warn('Failed to parse rawResponseJson on frontend:', parseError);
-            }
-        }
+        const response = await http.get(`/cases/${caseId.value}/ai-result`);
+        processAiResults(response.data);
     } catch (err) {
         if (err.response && err.response.status === 404) {
             aiNotFound.value = true;
@@ -293,8 +362,73 @@ const fetchAiResult = async () => {
     }
 };
 
-onMounted(() => {
-    if (!caseId) {
+const fetchClinicalData = async () => {
+    loadingClinical.value = true;
+    try {
+        const res = await ClinicalService.getCase(caseId.value);
+        clinicalData.value = res.data;
+    } catch (err) {
+        console.error('Failed to fetch clinical data:', err);
+    } finally {
+        loadingClinical.value = false;
+    }
+};
+
+const fetchNotes = async () => {
+    try {
+        const res = await ClinicalService.getNotes(caseId.value);
+        notes.value = res.data;
+    } catch (err) {
+        console.error('Failed to fetch notes:', err);
+    }
+};
+
+const saveNote = async () => {
+    if (!newNote.value.trim()) return;
+    isSavingNote.value = true;
+    try {
+        await ClinicalService.addNote(caseId.value, newNote.value);
+        newNote.value = '';
+        await fetchNotes();
+    } catch (err) {
+        alert("Error saving note. Please try again later.");
+    } finally {
+        isSavingNote.value = false;
+    }
+};
+
+const exportPdf = async () => {
+    isExporting.value = true;
+    try {
+        const response = await ClinicalService.exportPdf(caseId.value);
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `report_${String(caseId.value).padStart(5, '0')}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (err) {
+        alert("Error exporting report. Please try again later.");
+    } finally {
+        isExporting.value = false;
+    }
+};
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    });
+};
+
+// Derived ID reactive — so template and logic updates automatically
+import { computed, watch } from 'vue';
+
+const loadAllData = () => {
+    if (!caseId.value) {
         caseError.value = "Invalid case id format.";
         loadingCase.value = false;
         loadingAi.value = false;
@@ -302,5 +436,16 @@ onMounted(() => {
     }
     fetchCaseDetail();
     fetchAiResult();
+    fetchClinicalData();
+    fetchNotes();
+};
+
+onMounted(loadAllData);
+
+// Watch for ID changes (e.g., when navigating from the list side-by-side or back-and-forth)
+watch(() => route.params.id, (newId) => {
+    if (newId) {
+        loadAllData();
+    }
 });
 </script>

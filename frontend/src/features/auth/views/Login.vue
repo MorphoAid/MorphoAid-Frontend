@@ -97,8 +97,8 @@ const fillDevAdmin = () => {
   form.password = 'Admin123!';
 };
 const fillDevDataUse = () => {
-  form.email = 'sample@datause.local';
-  form.password = 'Pass1234!';
+  form.email = 'demo@morphoaid.com';
+  form.password = 'demopass';
 };
 
 const handleLogin = async () => {
@@ -134,7 +134,7 @@ const handleLogin = async () => {
     } else if (role === 'DATA_PREP') {
       router.push('/data-prep/dashboard');
     } else if (role === 'DATA_USE') {
-      router.push('/data-use/dashboard');
+      router.push('/data-use/cases');
     } else {
       router.push('/');
     }

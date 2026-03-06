@@ -145,6 +145,7 @@ const routes = [
 
       // ✅ Detail route (dynamic)
       { path: 'cases/:id', component: CaseDetail, props: true },
+      // { path: 'clinical/cases/:id', name: 'ClinicalCaseDetail', component: ClinicalCaseDetail },
 
       { path: 'result/:id', component: ResultDetail, props: true },
       { path: 'insights', component: Insight }

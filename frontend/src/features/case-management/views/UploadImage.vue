@@ -54,33 +54,46 @@
             <div class="space-y-5 mb-8">
                 <div>
                     <label class="block text-sm font-medium text-[#2E2E2E] mb-1">Patient Code</label>
-                    <input type="text" v-model="form.patientCode" placeholder="e.g. PT-1004"
-                        class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#48B7CB] focus:border-transparent transition-all text-[#2E2E2E]" />
+                    <input type="text" v-model="form.patientCode" placeholder="Loading..." disabled
+                        class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed focus:outline-none transition-all" />
                 </div>
 
                 <div class="grid grid-cols-2 gap-5">
                     <div>
-                        <label class="block text-sm font-medium text-[#2E2E2E] mb-1">Technician ID</label>
-                        <input type="text" v-model="form.technicianId" placeholder="e.g. T-99"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#48B7CB] focus:border-transparent transition-all text-[#2E2E2E]" />
+                        <label class="block text-sm font-medium text-[#2E2E2E] mb-1">Technician Firstname
+                            Lastname</label>
+                        <input type="text" v-model="form.technicianId" placeholder="Loading..." disabled
+                            class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed focus:outline-none transition-all" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[#2E2E2E] mb-1">Location</label>
-                        <input type="text" v-model="form.location" placeholder="e.g. Clinic A"
+                        <input type="text" v-model="form.location" placeholder="Select Province"
+                            list="english-provinces"
                             class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#48B7CB] focus:border-transparent transition-all text-[#2E2E2E]" />
+                        <datalist id="english-provinces">
+                            <option v-for="province in englishProvinces" :key="province" :value="province"></option>
+                        </datalist>
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button type="button" @click="$router.push('/data-use/dashboard')"
-                    class="px-5 py-2 text-[#5C5C5C] hover:bg-gray-100 font-medium rounded-lg transition-colors">
+                <button type="button" @click="$router.push('/data-use/dashboard')" :disabled="isSubmitting"
+                    class="px-5 py-2 text-[#5C5C5C] hover:bg-gray-100 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     Cancel
                 </button>
-                <button type="submit"
-                    class="px-6 py-2 bg-[#48B7CB] hover:bg-[#368998] text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center min-w-[120px]">
-                    Upload Case
+                <button type="submit" :disabled="isSubmitting"
+                    class="px-6 py-2 bg-[#48B7CB] hover:bg-[#368998] text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center min-w-[140px] disabled:opacity-70 disabled:cursor-not-allowed">
+                    <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    {{ isSubmitting ? 'Uploading...' : 'Upload Case' }}
                 </button>
             </div>
         </form>
@@ -88,21 +101,59 @@
 </template>
 
 <script setup>
-import { ref, reactive, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { uploadCase, analyzeCase } from '@/features/case-management/services/case.service'
+import { uploadCase, analyzeCase, fetchNextPatientCode } from '@/features/case-management/services/case.service'
 import { uploadCaseImage } from '@/features/case-management/services/caseImage.service'
+import http from '@/services/http'
 
 const router = useRouter()
 const fileInputRef = ref(null)
 const selectedFileName = ref('')
 const selectedFileSize = ref('')
 const previewUrl = ref('')
+const isSubmitting = ref(false)
 
 const form = reactive({
     patientCode: '',
     technicianId: '',
     location: ''
+})
+
+const englishProvinces = [
+    "Amnat Charoen", "Ang Thong", "Bangkok", "Bueng Kan", "Buri Ram", "Chachoengsao",
+    "Chai Nat", "Chaiyaphum", "Chanthaburi", "Chiang Mai", "Chiang Rai", "Chon Buri",
+    "Chumphon", "Kalasin", "Kamphaeng Phet", "Kanchanaburi", "Khon Kaen", "Krabi",
+    "Lampang", "Lamphun", "Loei", "Lop Buri", "Mae Hong Son", "Maha Sarakham",
+    "Mukdahan", "Nakhon Nayok", "Nakhon Pathom", "Nakhon Phanom", "Nakhon Ratchasima",
+    "Nakhon Sawan", "Nakhon Si Thammarat", "Nan", "Narathiwat", "Nong Bua Lam Phu",
+    "Nong Khai", "Nonthaburi", "Pathum Thani", "Pattani", "Phangnga", "Phatthalung",
+    "Phayao", "Phetchabun", "Phetchaburi", "Phichit", "Phitsanulok", "Phra Nakhon Si Ayutthaya",
+    "Phrae", "Phuket", "Prachin Buri", "Prachuap Khiri Khan", "Ranong", "Ratchaburi",
+    "Rayong", "Roi Et", "Sa Kaeo", "Sakon Nakhon", "Samut Prakan", "Samut Sakhon",
+    "Samut Songkhram", "Saraburi", "Satun", "Sing Buri", "Si Sa Ket", "Songkhla",
+    "Sukhothai", "Suphan Buri", "Surat Thani", "Surin", "Tak", "Trang", "Trat",
+    "Ubon Ratchathani", "Udon Thani", "Uthai Thani", "Uttaradit", "Yala", "Yasothon"
+].sort((a, b) => a.localeCompare(b));
+
+onMounted(async () => {
+    try {
+        const nextCodeRes = await fetchNextPatientCode();
+        form.patientCode = nextCodeRes.data;
+
+        const authRes = await http.get('/auth/me');
+        if (authRes.data) {
+            if (authRes.data.firstName || authRes.data.lastName) {
+                form.technicianId = `${authRes.data.firstName || ''} ${authRes.data.lastName || ''}`.trim();
+            } else if (authRes.data.fullName) {
+                form.technicianId = authRes.data.fullName;
+            } else {
+                form.technicianId = authRes.data.email || 'Unknown User';
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load initial data:', e);
+    }
 })
 
 const triggerFileInput = () => {
@@ -159,13 +210,20 @@ const handleSubmit = async () => {
         return
     }
 
+    if (isSubmitting.value) {
+        return // Prevent duplicate submissions
+    }
+
     try {
+        isSubmitting.value = true
+
+        // 3-second delay as requested
+        await new Promise(resolve => setTimeout(resolve, 3000))
+
         const caseFormData = new FormData()
         caseFormData.append('patientCode', form.patientCode)
         caseFormData.append('technicianId', form.technicianId)
         caseFormData.append('location', form.location)
-        // Add fake uploaderId for now to satisfy backend
-        caseFormData.append('uploaderId', 1)
 
         if (fileInputRef.value.files && fileInputRef.value.files.length > 0) {
             caseFormData.append('image', fileInputRef.value.files[0])
@@ -191,6 +249,8 @@ const handleSubmit = async () => {
     } catch (error) {
         console.error('Upload error:', error)
         alert('Upload failed: ' + (error.response?.data?.message || error.message))
+    } finally {
+        isSubmitting.value = false
     }
 }
 </script>

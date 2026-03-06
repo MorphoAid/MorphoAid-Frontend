@@ -116,6 +116,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import StatusPill from '@/components/datause/StatusPill.vue'
+import { useAuthStore } from '@/store/auth.store'
 import { fetchCases as apiFetchCases } from '@/features/case-management/services/case.service'
 
 const cases = ref([])
@@ -159,7 +160,16 @@ const fetchCases = async () => {
     }
 }
 
-onMounted(() => {
-    fetchCases()
+onMounted(async () => {
+    const authStore = useAuthStore()
+    if (!authStore.isHydrated) {
+        await authStore.init()
+    }
+    if (authStore.token) {
+        fetchCases()
+    } else {
+        console.warn("CaseList: No token found after hydration, skipping fetch")
+        error.value = "Please log in to view cases."
+    }
 })
 </script>

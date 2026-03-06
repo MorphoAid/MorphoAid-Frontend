@@ -14,14 +14,14 @@
 
         <!-- Stats Row -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <StatCard title="Needs Review" value="12" />
-            <StatCard title="In Queue" value="8" />
-            <StatCard title="Completed" value="142" />
-            <StatCard title="Failed" value="3" />
+            <StatCard title="Needs Review" :value="stats.needsReview.toString()" />
+            <StatCard title="In Queue" :value="stats.inQueue.toString()" />
+            <StatCard title="Completed" :value="stats.completed.toString()" />
+            <StatCard title="Failed" :value="stats.failed.toString()" />
         </div>
 
         <!-- Attention Box -->
-        <div class="border-l-4 border-[#FF4C38] bg-[#FF4C38]/5 rounded-r-lg p-5 mb-8 shadow-sm">
+        <div v-if="stats.failed > 0" class="border-l-4 border-[#FF4C38] bg-[#FF4C38]/5 rounded-r-lg p-5 mb-8 shadow-sm">
             <div class="flex items-start gap-4">
                 <div class="text-[#FF4C38] mt-0.5">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +32,8 @@
                 </div>
                 <div>
                     <h3 class="text-[#A92222] font-semibold text-lg mb-1">Attention Required</h3>
-                    <p class="text-[#2E2E2E] text-sm">3 cases have failed automatic AI analysis and require manual
+                    <p class="text-[#2E2E2E] text-sm">{{ stats.failed }} cases have failed automatic AI analysis and
+                        require manual
                         technician review.</p>
                 </div>
             </div>
@@ -58,11 +59,19 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
+                        <tr v-if="loading && !recentCases.length">
+                            <td colspan="5" class="py-8 text-center text-[#5C5C5C]">Loading cases...</td>
+                        </tr>
+                        <tr v-else-if="!recentCases.length">
+                            <td colspan="5" class="py-8 text-center text-[#5C5C5C]">No cases found.</td>
+                        </tr>
                         <tr v-for="caseItem in recentCases" :key="caseItem.id"
                             class="hover:bg-gray-50/50 transition-colors">
-                            <td class="py-4 px-6 font-medium text-[#2E2E2E]">{{ caseItem.id }}</td>
-                            <td class="py-4 px-6 text-[#5C5C5C]">{{ caseItem.date }}</td>
-                            <td class="py-4 px-6 text-[#5C5C5C]">{{ caseItem.summary }}</td>
+                            <td class="py-4 px-6 font-medium text-[#2E2E2E]">CAS-0{{ caseItem.id }}</td>
+                            <td class="py-4 px-6 text-[#5C5C5C]">{{ formatDate(caseItem.createdAt) }}</td>
+                            <td class="py-4 px-6 text-[#5C5C5C]">
+                                {{ getSummary(caseItem) }}
+                            </td>
                             <td class="py-4 px-6">
                                 <StatusPill :status="caseItem.status" :label="caseItem.status" />
                             </td>
@@ -81,15 +90,61 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import StatCard from '@/components/datause/StatCard.vue'
 import StatusPill from '@/components/datause/StatusPill.vue'
+import { fetchCases as apiFetchCases } from '@/features/case-management/services/case.service'
 
-// Mock Data
-const recentCases = ref([
-    { id: 'CAS-0089', date: 'Oct 24, 2026', summary: 'P. falciparum detected (High Confidence)', status: 'Success' },
-    { id: 'CAS-0088', date: 'Oct 24, 2026', summary: 'Pending computational analysis', status: 'In Queue' },
-    { id: 'CAS-0087', date: 'Oct 23, 2026', summary: 'Image artifact detected. Unreadable.', status: 'Danger' },
-    { id: 'CAS-0086', date: 'Oct 23, 2026', summary: 'Negative for malaria parasites', status: 'Completed' },
-])
+const recentCases = ref([])
+const loading = ref(false)
+const stats = ref({
+    needsReview: 0,
+    inQueue: 0,
+    completed: 0,
+    failed: 0
+})
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    const d = new Date(dateString)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const getSummary = (c) => {
+    if (c.analysisStatus === 'COMPLETED') return 'P. falciparum detected'
+    if (c.analysisStatus === 'FAILED') return 'Image artifact detected. Unreadable.'
+    if (c.analysisStatus === 'PENDING' || c.analysisStatus === 'PROCESSING') return 'Pending computational analysis'
+    return 'Processing...'
+}
+
+const loadDashboardData = async () => {
+    loading.value = true
+    try {
+        const response = await apiFetchCases()
+        const allCases = response.data || []
+
+        // Calculate Stats
+        stats.value = allCases.reduce((acc, c) => {
+            if (c.status === 'ANALYZED') acc.needsReview++
+
+            if (c.analysisStatus === 'PENDING' || c.analysisStatus === 'PROCESSING') acc.inQueue++
+            else if (c.analysisStatus === 'COMPLETED') acc.completed++
+            else if (c.analysisStatus === 'FAILED') acc.failed++
+
+            return acc
+        }, { needsReview: 0, inQueue: 0, completed: 0, failed: 0 })
+
+        // Sort and get recent
+        const sorted = [...allCases].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        recentCases.value = sorted.slice(0, 5)
+    } catch (err) {
+        console.error("Dashboard load error:", err)
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(() => {
+    loadDashboardData()
+})
 </script>
