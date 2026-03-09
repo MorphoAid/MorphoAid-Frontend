@@ -134,14 +134,6 @@ onMounted(async () => {
             let tooltipContent = `<div class="font-semibold border-b border-[#368998]/10 mb-1 pb-1">${name}</div>`
             if (data && data.value > 0) {
                 tooltipContent += `<div class="mb-1 text-[#368998]">Total: ${data.value} cases</div>`
-                if (data.categories) {
-                    Object.entries(data.categories).forEach(([stage, count]) => {
-                        tooltipContent += `<div class="flex justify-between gap-4 text-[11px]">
-                            <span>${stage}:</span>
-                            <span class="font-medium">${count}</span>
-                        </div>`
-                    })
-                }
             } else {
                 tooltipContent += `<div class="italic text-[#5C5C5C]/70">No case data</div>`
             }
