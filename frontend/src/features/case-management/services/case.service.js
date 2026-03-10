@@ -1,19 +1,22 @@
 import http from '@/services/http'
 
+// Longer timeout for requests that involve file upload + S3 + AI processing
+const LONG_TIMEOUT = 120000 // 120 seconds
+
 export const uploadCase = async (formData) => {
-    return http.post('/cases', formData)
+    return http.post('/cases', formData, { timeout: LONG_TIMEOUT })
 }
 
 export const uploadDataPrepCase = async (formData) => {
-    return http.post('/dataprep/cases', formData)
+    return http.post('/dataprep/cases', formData, { timeout: LONG_TIMEOUT })
 }
 
 export const uploadCaseImageToS3 = async (caseId, formData) => {
-    return http.post(`/cases/${caseId}/images`, formData)
+    return http.post(`/cases/${caseId}/images`, formData, { timeout: LONG_TIMEOUT })
 }
 
 export const analyzeCase = async (caseId) => {
-    return http.post(`/cases/${caseId}/analyze`)
+    return http.post(`/cases/${caseId}/analyze`, null, { timeout: LONG_TIMEOUT })
 }
 
 export const fetchCases = async () => {

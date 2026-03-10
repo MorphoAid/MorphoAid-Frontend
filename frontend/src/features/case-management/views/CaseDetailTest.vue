@@ -123,7 +123,7 @@
                         <div><strong class="text-gray-600">Drug Exposure:</strong> {{ aiData.drugExposure }} <span
                                 v-if="aiData.drugType">({{ aiData.drugType }})</span></div>
                         <div><strong class="text-gray-600">Confidence:</strong> {{ (aiData.confidence * 100).toFixed(2)
-                            }}%
+                        }}%
                         </div>
                         <div v-if="aiData.createdAt"><strong class="text-gray-600">Analyzed At:</strong> {{ new
                             Date(aiData.createdAt).toLocaleString() }}</div>
@@ -169,7 +169,7 @@
                                         <td class="px-4 py-2 border-l">{{ (res.confidence * 100).toFixed(2) }}%</td>
                                         <td class="px-4 py-2 border-l text-xs font-mono text-gray-500">
                                             <span v-if="res.box">[{{ res.box.x1.toFixed(0) }}, {{ res.box.y1.toFixed(0)
-                                                }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
+                                            }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
                                             <span v-else class="text-gray-300">N/A</span>
                                         </td>
                                     </tr>
@@ -295,7 +295,7 @@ const isAnalyzing = ref(false);
 const triggerAnalysis = async () => {
     isAnalyzing.value = true;
     try {
-        const response = await http.post(`/cases/${caseId.value}/analyze`);
+        const response = await http.post(`/cases/${caseId.value}/analyze`, null, { timeout: 120000 });
         // Immediately update status and results without waiting for re-fetch
         processAiResults(response.data);
         aiNotFound.value = false;
