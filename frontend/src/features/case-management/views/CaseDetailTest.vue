@@ -69,9 +69,42 @@
                     Fetching AI results...
                 </div>
 
-                <div v-else-if="aiNotFound"
-                    class="bg-gray-50 border border-gray-300 text-gray-600 px-4 py-6 rounded text-center italic">
-                    No AI analysis performed yet.
+                <div v-else-if="aiNotFound" class="space-y-4">
+                    <!-- Uploaded Image Preview -->
+                    <div v-if="caseData?.imageId" class="relative">
+                        <h3 class="text-lg font-semibold mb-3">Uploaded Image</h3>
+                        <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                            <img v-if="previewImageUrl" :src="previewImageUrl" alt="Uploaded case image"
+                                class="w-full h-auto block" />
+                            <div v-else class="text-center py-10 text-gray-400 italic">Loading image preview...</div>
+                        </div>
+
+                        <!-- Analyzing Overlay -->
+                        <div v-if="isAnalyzing"
+                            class="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg mt-9">
+                            <div
+                                class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-blue-400 mb-4">
+                            </div>
+                            <p class="text-white text-lg font-semibold">🔬 AI is analyzing...</p>
+                            <p class="text-gray-300 text-sm mt-1">This may take a moment</p>
+                        </div>
+                    </div>
+
+                    <!-- No Image Uploaded -->
+                    <div v-else
+                        class="bg-gray-50 border border-gray-300 text-gray-500 px-6 py-8 rounded text-center italic">
+                        No image uploaded for this case.
+                    </div>
+
+                    <!-- Status & Analyze Button -->
+                    <div class="text-center py-4">
+                        <p class="text-gray-500 mb-4">No AI analysis performed yet.</p>
+                        <button v-if="caseData?.imageId" @click="triggerAnalysis"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg shadow-md transition-all transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                            :disabled="isAnalyzing">
+                            {{ isAnalyzing ? '🔄 Analyzing...' : '🔬 Analyze Now' }}
+                        </button>
+                    </div>
                 </div>
 
                 <div v-else-if="aiError" class="text-red-600 italic">
@@ -90,7 +123,7 @@
                         <div><strong class="text-gray-600">Drug Exposure:</strong> {{ aiData.drugExposure }} <span
                                 v-if="aiData.drugType">({{ aiData.drugType }})</span></div>
                         <div><strong class="text-gray-600">Confidence:</strong> {{ (aiData.confidence * 100).toFixed(2)
-                        }}%
+                            }}%
                         </div>
                         <div v-if="aiData.createdAt"><strong class="text-gray-600">Analyzed At:</strong> {{ new
                             Date(aiData.createdAt).toLocaleString() }}</div>
@@ -136,7 +169,7 @@
                                         <td class="px-4 py-2 border-l">{{ (res.confidence * 100).toFixed(2) }}%</td>
                                         <td class="px-4 py-2 border-l text-xs font-mono text-gray-500">
                                             <span v-if="res.box">[{{ res.box.x1.toFixed(0) }}, {{ res.box.y1.toFixed(0)
-                                            }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
+                                                }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
                                             <span v-else class="text-gray-300">N/A</span>
                                         </td>
                                     </tr>
@@ -204,7 +237,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/services/http';
 import AnnotatedImage from '@/components/AnnotatedImage.vue';
@@ -229,6 +262,26 @@ const loadingAi = ref(true);
 const aiError = ref(null);
 const aiNotFound = ref(false);
 const rawResults = ref([]);
+const previewImageUrl = ref(null);
+
+// Load image preview for cases that haven't been analyzed yet
+const loadPreviewImage = async () => {
+    if (!caseData.value?.imageId) return;
+    try {
+        const response = await http.get(
+            `/cases/${caseId.value}/images/${caseData.value.imageId}/content`,
+            { responseType: 'arraybuffer' }
+        );
+        const blob = new Blob([response.data], {
+            type: response.headers['content-type'] || 'image/png',
+        });
+        // Revoke previous URL if exists
+        if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value);
+        previewImageUrl.value = URL.createObjectURL(blob);
+    } catch (err) {
+        console.error('Failed to load preview image:', err);
+    }
+};
 
 // State: Clinical
 const clinicalData = ref(null);
@@ -246,11 +299,12 @@ const triggerAnalysis = async () => {
         // Immediately update status and results without waiting for re-fetch
         processAiResults(response.data);
         aiNotFound.value = false;
+        aiError.value = null;
 
-        // Background refresh to ensure everything is perfect
-        fetchCaseDetail();
+        // Refresh case detail & AI result to ensure everything is up-to-date
+        await fetchCaseDetail();
+        await fetchAiResult();
 
-        alert('Analysis completed successfully!');
     } catch (err) {
         console.error('Analysis failed:', err);
         alert('Analysis failed: ' + (err.response?.data?.message || err.message));
@@ -334,6 +388,10 @@ const fetchCaseDetail = async () => {
     try {
         const response = await http.get(`/cases/${caseId.value}`);
         caseData.value = response.data;
+        // Load image preview if available (for pre-analysis display)
+        if (response.data?.imageId) {
+            loadPreviewImage();
+        }
     } catch (err) {
         if (err.response && err.response.status === 404) {
             caseNotFound.value = true;
@@ -349,14 +407,21 @@ const fetchCaseDetail = async () => {
 const fetchAiResult = async () => {
     try {
         const response = await http.get(`/cases/${caseId.value}/ai-result`);
-        processAiResults(response.data);
+        if (response.data) {
+            processAiResults(response.data);
+            aiNotFound.value = false;
+        } else {
+            // Backend returned 200 with null — no AI result yet
+            aiNotFound.value = true;
+        }
     } catch (err) {
+        // Fallback: handle 404 gracefully in case older backend is running
         if (err.response && err.response.status === 404) {
             aiNotFound.value = true;
         } else {
             aiError.value = err.message || 'Error loading AI result';
+            console.error('Failed to fetch AI result:', err);
         }
-        console.error('Failed to fetch AI result:', err);
     } finally {
         loadingAi.value = false;
     }
@@ -423,6 +488,13 @@ const formatDate = (dateStr) => {
         timeStyle: 'short'
     });
 };
+
+// Cleanup object URL on unmount
+onUnmounted(() => {
+    if (previewImageUrl.value) {
+        URL.revokeObjectURL(previewImageUrl.value);
+    }
+});
 
 // Derived ID reactive — so template and logic updates automatically
 import { computed, watch } from 'vue';
