@@ -4,6 +4,10 @@ export const uploadCase = async (formData) => {
     return http.post('/cases', formData)
 }
 
+export const uploadDataPrepCase = async (formData) => {
+    return http.post('/dataprep/cases', formData)
+}
+
 export const uploadCaseImageToS3 = async (caseId, formData) => {
     return http.post(`/cases/${caseId}/images`, formData)
 }

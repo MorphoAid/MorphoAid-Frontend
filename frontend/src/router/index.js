@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth.store'
 const PublicLayout = () => import('@/layouts/PublicLayout.vue')
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 const DataPrepLayout = () => import('@/layouts/DataPrepLayout.vue')
+const SimplifiedDataPrepLayout = () => import('@/layouts/SimplifiedDataPrepLayout.vue')
 const DataUseLayout = () => import('@/layouts/DataUseLayout.vue')
 const TestLayout = () => import('@/layouts/TestLayout.vue')
 
@@ -47,7 +48,7 @@ const Forbidden = () => import('@/features/auth/views/Forbidden.vue')
 
 function getRoleHome(role) {
   if (role === 'ADMIN') return '/admin/dashboard'
-  if (role === 'DATA_PREP') return '/lab/review'
+  if (role === 'DATA_PREP') return '/dataprep/cases/new'
   if (role === 'DATA_USE') return '/data-use'
   return '/__auth'
 }
@@ -109,6 +110,17 @@ const routes = [
       { path: 'images', component: DataPrepImages },
       { path: 'images/:id', component: DataPrepImageDetail, props: true },
       { path: 'settings', component: DataPrepSettings },
+    ]
+  },
+
+  // DATA PREP SIMPLIFIED UPLOAD (Isolated Flow)
+  {
+    path: '/dataprep/cases',
+    component: SimplifiedDataPrepLayout,
+    meta: { requiresAuth: true, roles: ['DATA_PREP', 'ADMIN'] },
+    children: [
+      { path: 'new', component: () => import('@/features/dataprep/views/DataPrepUploadCase.vue') },
+      { path: ':id/result', component: () => import('@/features/dataprep/views/DataPrepResult.vue'), props: true }
     ]
   },
 
