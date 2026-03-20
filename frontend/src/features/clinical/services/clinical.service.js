@@ -26,6 +26,10 @@ const ClinicalService = {
             responseType: "blob",
         });
     },
+
+    updatePatientInfo(caseId, payload) {
+        return http.patch(`/clinical/cases/${caseId}/patient-info`, payload);
+    },
 };
 
 export default ClinicalService;

@@ -1,12 +1,14 @@
 <template>
-    <div class="p-6 max-w-4xl mx-auto">
+    <div class="h-full bg-slate-50 relative p-6">
         <!-- Header & Back Button -->
-        <div class="flex items-center gap-4 mb-6">
+        <div class="flex justify-between items-center mb-6 text-gray-800">
             <button @click="router.push('/data-use/cases')"
-                class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded shadow transition-colors">
-                &larr; Back to Cases
+                class="hover:bg-gray-200 p-1 rounded transition-colors text-sm font-semibold flex items-center">
+                <ChevronLeft class="w-4 h-4 mr-1"/> Case Details
             </button>
-            <h1 class="text-2xl font-bold">Case Detail (ID: {{ route.params.id }})</h1>
+            <button @click="exportCase" class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow-sm transition-colors">
+                 <Download class="w-4 h-4" /> Export Report
+            </button>
         </div>
 
         <!-- 404 Case Not Found -->
@@ -16,8 +18,9 @@
         </div>
 
         <!-- Loading State -->
-        <div v-else-if="loadingCase" class="text-center py-10">
-            <p class="text-gray-500 text-lg">Loading case details...</p>
+        <div v-else-if="loadingCase" class="text-center py-10 flex flex-col items-center justify-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-500 mb-4"></div>
+            <p class="text-gray-500 font-medium">Loading case details...</p>
         </div>
 
         <!-- General Error (Non 404) -->
@@ -26,229 +29,417 @@
             <span class="block sm:inline">{{ caseError }}</span>
         </div>
 
-        <!-- Case Details Content -->
-        <div v-else-if="caseData" class="space-y-6">
+        <!-- Case Details Content: 2-Column Layout -->
+        <div v-else-if="caseData" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- LEFT COLUMN: Annotated Image -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col items-center w-full relative min-h-[500px]">
+                 <!-- Image Upload Section (if no image yet) -->
+                <div v-if="!caseData?.imageId" class="w-full p-6">
+                    <CaseImageUpload :caseId="caseId" :existingFilename="caseData.imageFilename" :imageId="caseData.imageId"
+                        @upload-success="fetchCaseDetail" />
+                </div>
 
-            <!-- Primary Case Info Card -->
-            <div class="bg-white p-6 rounded shadow border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2">Case Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><strong class="text-gray-600">Patient Code:</strong> {{ caseData.patientCode }}</div>
-                    <div><strong class="text-gray-600">Technician ID:</strong> {{ caseData.technicianId }}</div>
-                    <div><strong class="text-gray-600">Location:</strong> {{ clinicalData?.provinceName ||
-                        caseData.location }}</div>
-                    <div>
-                        <strong class="text-gray-600">Status:</strong>
-                        <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                            :class="caseData.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
-                            {{ caseData.status }}
-                        </span>
-                        <button v-if="caseData.status === 'PENDING'" @click="triggerAnalysis"
-                            class="ml-3 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded shadow transition-colors"
-                            :disabled="isAnalyzing">
-                            {{ isAnalyzing ? 'Analyzing...' : 'Analyze Now' }}
-                        </button>
+                <!-- Preview / Loading Image -->
+                <div v-else-if="loadingAi || isAnalyzing" class="w-full flex-grow relative flex items-center justify-center bg-gray-100">
+                    <img v-if="previewImageUrl" :src="previewImageUrl" alt="Uploaded case image" class="max-w-full max-h-full object-contain opacity-50" />
+                    <!-- Analyzing Overlay -->
+                    <div v-if="isAnalyzing" class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-emerald-500 mb-4"></div>
+                        <p class="text-white text-lg font-semibold tracking-wide drop-shadow-md">Analyzing Image...</p>
                     </div>
-                    <div><strong class="text-gray-600">Uploaded By ID:</strong> {{ caseData.uploadedById }}</div>
-                    <div><strong class="text-gray-600">Created At:</strong> {{ new
-                        Date(caseData.createdAt).toLocaleString() }}</div>
                 </div>
 
-                <div class="mt-4 pt-4 border-t">
-                    <strong class="text-gray-600 block mb-2">Image Path:</strong>
-                    <code class="bg-gray-100 px-2 py-1 rounded text-sm break-all">{{ caseData.imagePath }}</code>
-                </div>
+                 <!-- Annotated Image -->
+                 <div v-else-if="aiData && rawResults && caseData?.imageId" class="w-full h-full p-2 bg-gray-50 flex items-center justify-center">
+                    <AnnotatedImage :caseId="caseId" :imageId="caseData.imageId" :detections="rawResults" class="max-w-full max-h-[800px] object-contain rounded-lg shadow-inner" />
+                 </div>
+                 
+                 <!-- Fallback Preview -->
+                 <div v-else-if="caseData?.imageId" class="w-full h-full p-2 bg-gray-50 flex items-center justify-center">
+                    <img v-if="previewImageUrl" :src="previewImageUrl" alt="Preview" class="max-w-full max-h-[800px] object-contain rounded-lg shadow-inner"/>
+                 </div>
             </div>
 
+            <!-- RIGHT COLUMN: Interactive Panels -->
+            <div class="flex flex-col gap-6">
 
-            <!-- AI Result Section -->
-            <div class="bg-white p-6 rounded shadow border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2">AI Analysis Result</h2>
+                <!-- 1. Patient Info Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Patient Info.</h2>
+                        <button @click="togglePatientInfoEdit" class="text-gray-400 hover:text-gray-700 transition-colors p-1">
+                            <Pencil class="w-4 h-4" />
+                        </button>
+                    </div>
 
-                <div v-if="loadingAi" class="text-gray-500 italic">
-                    Fetching AI results...
+                    <div v-if="!isEditingPatientInfo" class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Patient ID:</span> <span class="text-gray-700">{{ caseData.patientCode || 'N/A' }}</span></div>
+                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Age:</span> <span class="text-gray-700">{{ patientData.age ? `${patientData.age} yrs` : '-' }}</span></div>
+                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Weight:</span> <span class="text-gray-700">{{ patientData.weight ? `${patientData.weight}kg` : '-' }}</span></div>
+                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Risk Factors:</span> <span class="text-gray-700">{{ patientData.riskFactors || 'None' }}</span></div>
+                        <div class="flex items-baseline col-span-2"><span class="font-bold text-gray-800 w-28">Fever Duration:</span> <span class="text-gray-700">{{ patientData.feverDuration ? `${patientData.feverDuration} days` : '-' }}</span></div>
+                    </div>
+                    
+                    <div v-else class="grid grid-cols-2 gap-4 text-sm mt-2">
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Patient Code</label>
+                            <input v-model="patientData.patientCode" type="text" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors" />
+                        </div>
+                        <div class="col-span-2 md:col-span-1 border-b pb-2 md:border-b-0 md:pb-0 border-gray-100">
+                             <!-- empty spacer -->
+                        </div>
+                        
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Age (yrs)</label>
+                            <select v-model="patientData.age" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
+                                <option value="">Select</option>
+                                <option v-for="n in 100" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Weight (kg)</label>
+                             <select v-model="patientData.weight" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
+                                <option value="">Select</option>
+                                <option v-for="n in 150" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Risk Factors</label>
+                            <select v-model="patientData.riskFactors" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
+                                <option value="None">None</option>
+                                <option value="Travel History">Travel History</option>
+                                <option value="Forest Entry">Forest Entry</option>
+                                <option value="Pregnancy">Pregnancy</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Fever Duration (days)</label>
+                            <select v-model="patientData.feverDuration" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
+                                <option value="">Select</option>
+                                <option v-for="n in 30" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-span-2 flex justify-end gap-2 mt-2 pt-2 border-t border-gray-100">
+                             <button @click="isEditingPatientInfo = false" class="px-4 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">Cancel</button>
+                             <button @click="savePatientInfo" class="px-4 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-sm transition-colors">Save</button>
+                        </div>
+                    </div>
                 </div>
 
-                <div v-else-if="aiNotFound" class="space-y-4">
-                    <!-- Uploaded Image Preview -->
-                    <div v-if="caseData?.imageId" class="relative">
-                        <h3 class="text-lg font-semibold mb-3">Uploaded Image</h3>
-                        <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                            <img v-if="previewImageUrl" :src="previewImageUrl" alt="Uploaded case image"
-                                class="w-full h-auto block" />
-                            <div v-else class="text-center py-10 text-gray-400 italic">Loading image preview...</div>
+                <!-- 2. Diagnostic Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-grow flex flex-col pt-5 tracking-tight">
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="text-2xl font-bold text-gray-900">Diagnostic Panel</h2>
+                        
+                        <div v-if="aiData && !aiNotFound" class="px-4 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Analyzed
                         </div>
+                        <button v-else-if="caseData?.imageId && !isAnalyzing" @click="triggerAnalysis" class="px-4 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition-colors shadow-sm">
+                            Analyze Now
+                        </button>
+                        <div v-else-if="isAnalyzing" class="px-4 py-1 rounded-full text-sm font-bold bg-gray-100 text-gray-600 border border-gray-200 flex items-center">
+                            <div class="animate-spin h-3 w-3 mr-2 border-2 border-gray-400 border-t-transparent rounded-full"></div> Analyzing
+                        </div>
+                    </div>
 
-                        <!-- Analyzing Overlay -->
-                        <div v-if="isAnalyzing"
-                            class="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg mt-9">
-                            <div
-                                class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-blue-400 mb-4">
+                    <div v-if="aiData && !aiNotFound" class="flex-grow flex flex-col gap-5">
+                        <!-- AI Suggestion -->
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-800 mb-2">AI Suggestion</h3>
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 shadow-sm relative overflow-hidden">
+                                <div class="font-bold text-gray-900 text-base">Detect Stage: <span class="capitalize">{{ formattedParasiteStage }}</span></div>
+                                <div class="text-gray-600 font-medium text-sm mt-1">
+                                    {{ (aiData.confidence * 100).toFixed(1) }}% Confidence
+                                </div>
                             </div>
-                            <p class="text-white text-lg font-semibold">🔬 AI is analyzing...</p>
-                            <p class="text-gray-300 text-sm mt-1">This may take a moment</p>
+                        </div>
+
+                        <!-- Recommended Treatment (Conditional) -->
+                        <div v-if="shouldShowTreatment">
+                            <h3 class="text-sm font-bold text-gray-800 mb-2 mt-2">Recommended Treatment</h3>
+                            <div class="pl-4 border-l-2 border-gray-300 text-sm text-gray-700 leading-relaxed font-medium">
+                                 Administer ACT immediately (e.g., Artemether-Lumefantrine) for 3 days.
+                            </div>
+                        </div>
+
+                        <!-- Next Steps (Conditional) -->
+                        <div v-if="shouldShowTreatment || verdictData.drugExposure !== 'None'">
+                             <h3 class="text-sm font-bold text-gray-800 mb-2 mt-2">Next Steps</h3>
+                             <div class="pl-4 border-l-2 border-gray-300 text-sm text-gray-700 leading-relaxed font-medium">
+                                 Schedule follow-up smears on Days 1, 2, 3, and 7
+                             </div>
                         </div>
                     </div>
-
-                    <!-- No Image Uploaded -->
-                    <div v-else
-                        class="bg-gray-50 border border-gray-300 text-gray-500 px-6 py-8 rounded text-center italic">
-                        No image uploaded for this case.
+                    <div v-else class="text-gray-400 text-center py-8 text-sm font-medium flex-grow flex items-center justify-center">
+                        Waiting for analysis...
                     </div>
+                    
+                    <!-- 3. Doctor's Verdict Section -->
+                    <div class="mt-8">
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 whitespace-nowrap">Doctor's Verdict</h3>
+                        
+                        <label class="flex items-center gap-2 mb-4 cursor-pointer w-fit group">
+                            <input type="checkbox" v-model="verdictData.isEditingResult" class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
+                            <span class="text-sm font-medium text-gray-800 group-hover:text-black">Edit Result</span>
+                        </label>
 
-                    <!-- Status & Analyze Button -->
-                    <div class="text-center py-4">
-                        <p class="text-gray-500 mb-4">No AI analysis performed yet.</p>
-                        <button v-if="caseData?.imageId" @click="triggerAnalysis"
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg shadow-md transition-all transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
-                            :disabled="isAnalyzing">
-                            {{ isAnalyzing ? '🔄 Analyzing...' : '🔬 Analyze Now' }}
-                        </button>
+                         <!-- Edit Form (when checkbox checked) -->
+                         <div v-if="verdictData.isEditingResult" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 w-3/4">
+                            
+                            <!-- Parasite Stage Radio -->
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900 mb-2">Parasite Stage</h4>
+                                <div class="grid grid-cols-2 gap-y-2 gap-x-4 pl-1">
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
+                                        <input type="radio" value="RING" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Ring
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
+                                        <input type="radio" value="SCHIZONTS" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Schizonts
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
+                                        <input type="radio" value="TROPHOZOITE" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Trophozoite
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
+                                        <input type="radio" value="NONE" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> None
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Drug Exposure Radio -->
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900 mb-2">Drug Exposure</h4>
+                                 <div class="grid grid-cols-2 gap-y-2 gap-x-4 pl-1">
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
+                                        <input type="radio" value="A" v-model="verdictData.drugExposure" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Drug A
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
+                                        <input type="radio" value="B" v-model="verdictData.drugExposure" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Drug B
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium col-span-2">
+                                        <input type="radio" value="None" v-model="verdictData.drugExposure" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> None
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Treatment Plan (conditional) -->
+                            <div v-if="verdictData.drugExposure === 'A' || verdictData.drugExposure === 'B'" class="animate-in fade-in duration-200">
+                                <h4 class="text-sm font-bold text-gray-900 mb-2">Treatment Plan <span class="text-xs text-gray-400 font-normal ml-1">(Optional)</span></h4>
+                                 <input type="text" v-model="verdictData.treatmentPlan" placeholder="Enter specific treatment plan..." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow" />
+                            </div>
+                        </div>
+
+                        <!-- Info display when NOT editing result -->
+                        <div v-else-if="aiData && !aiNotFound" class="grid grid-cols-2 gap-4 text-sm mb-4 px-1 opacity-80 pl-2 border-l-4 border-gray-200">
+                             <div><span class="font-bold text-gray-800">Stage:</span> <span class="capitalize text-gray-700 ml-1">{{ verdictData.parasiteStage || formattedParasiteStage || 'None' }}</span></div>
+                             <div><span class="font-bold text-gray-800">Drug:</span> <span class="capitalize text-gray-700 ml-1">{{ verdictData.drugExposure !== 'None' ? 'Drug ' + verdictData.drugExposure : 'None' }}</span></div>
+                        </div>
+
+                        <!-- Notes Textarea -->
+                        <div class="mt-4">
+                            <h4 class="text-sm font-bold text-gray-900 mb-2">Notes</h4>
+                            <textarea v-model="verdictData.notes" rows="3" class="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow resize-none" placeholder="Add clinical observations, reasons for edits, etc..."></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-between items-center mt-6">
+                            <button @click="resetVerdict" class="px-6 py-1.5 rounded-md border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm">
+                                Cancel
+                            </button>
+                            <button @click="saveVerdict" class="px-8 py-1.5 rounded-md bg-[#38a89d] hover:bg-[#2e8f85] text-white font-semibold text-sm transition-colors shadow-md flex items-center justify-center min-w-[120px]" :disabled="isSavingVerdict">
+                                <div v-if="isSavingVerdict" class="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                                {{ isSavingVerdict ? 'Saving...' : 'Save' }}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div v-else-if="aiError" class="text-red-600 italic">
-                    Failed to load AI results: {{ aiError }}
-                </div>
+            </div>
+        </div>
 
-                <div v-else-if="aiData">
-                    <!-- Annotated Image with Bounding Boxes -->
-                    <div v-if="caseData?.imageId" class="mb-6">
-                        <h3 class="text-lg font-semibold mb-3">Detection Visualization</h3>
-                        <AnnotatedImage :caseId="caseId" :imageId="caseData.imageId" :detections="rawResults" />
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><strong class="text-gray-600">Parasite Stage:</strong> {{ aiData.parasiteStage || 'N/A' }}
-                        </div>
-                        <div><strong class="text-gray-600">Drug Exposure:</strong> {{ aiData.drugExposure }} <span
-                                v-if="aiData.drugType">({{ aiData.drugType }})</span></div>
-                        <div><strong class="text-gray-600">Confidence:</strong> {{ (aiData.confidence * 100).toFixed(2)
-                        }}%
-                        </div>
-                        <div v-if="aiData.createdAt"><strong class="text-gray-600">Analyzed At:</strong> {{ new
-                            Date(aiData.createdAt).toLocaleString() }}</div>
-                    </div>
-
-                    <!-- All Detections from Array -->
-                    <div v-if="rawResults.length > 0" class="mt-8">
-                        <h3 class="text-lg font-semibold mb-3 border-b pb-1">All Detections</h3>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 border">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th
-                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Class ID</th>
-                                        <th
-                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Stage / Type</th>
-                                        <th
-                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Exposure</th>
-                                        <th
-                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Confidence</th>
-                                        <th
-                                            class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Box [x1, y1, x2, y2]</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="(res, idx) in rawResults" :key="idx" class="hover:bg-gray-50">
-                                        <td class="px-4 py-2 border-l">{{ res.class }}</td>
-                                        <td class="px-4 py-2 border-l">
-                                            <span v-if="res.mappedStage" class="text-indigo-600 font-medium">{{
-                                                res.mappedStage }}</span>
-                                            <span v-else-if="res.mappedDrugType" class="text-green-600 font-medium">Drug
-                                                {{ res.mappedDrugType }}</span>
-                                            <span v-else class="text-gray-400">Unknown</span>
-                                        </td>
-                                        <td class="px-4 py-2 border-l">
-                                            {{ res.mappedExposure ? 'Yes' : 'No' }}
-                                        </td>
-                                        <td class="px-4 py-2 border-l">{{ (res.confidence * 100).toFixed(2) }}%</td>
-                                        <td class="px-4 py-2 border-l text-xs font-mono text-gray-500">
-                                            <span v-if="res.box">[{{ res.box.x1.toFixed(0) }}, {{ res.box.y1.toFixed(0)
-                                            }}, {{ res.box.x2.toFixed(0) }}, {{ res.box.y2.toFixed(0) }}]</span>
-                                            <span v-else class="text-gray-300">N/A</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <!-- Custom Modal Popup -->
+        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+            <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ modalTitle }}</h3>
+                <p class="text-gray-700 whitespace-pre-line mb-6 text-sm leading-relaxed">{{ modalMessage }}</p>
+                <div class="flex justify-end gap-3">
+                    <button v-if="modalType === 'confirm'" @click="handleModalClose(false)" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button @click="handleModalClose(true)" class="px-5 py-2 bg-indigo-600 text-white rounded-md font-medium text-sm hover:bg-indigo-700 shadow-sm transition-colors">OK</button>
                 </div>
             </div>
-
-            <!-- Diagnostic Notes Section -->
-            <div v-if="notes.length > 0 || !loadingClinical" class="bg-white p-6 rounded shadow border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2">Diagnostic Notes</h2>
-
-                <!-- Notes List -->
-                <div class="space-y-4 mb-6 max-h-80 overflow-y-auto pr-2">
-                    <div v-for="note in notes" :key="note.id" class="bg-gray-50 p-4 rounded border border-gray-100">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="font-bold text-gray-700 text-sm">{{ note.authorName }}</span>
-                            <span class="text-gray-400 text-xs">{{ formatDate(note.createdAt) }}</span>
-                        </div>
-                        <p class="text-gray-800 whitespace-pre-wrap">{{ note.note }}</p>
-                    </div>
-                    <p v-if="notes.length === 0" class="text-gray-500 italic text-center py-4">No diagnostic notes added
-                        yet.</p>
-                </div>
-
-                <!-- Add Note Form -->
-                <div class="mt-6 pt-4 border-t">
-                    <textarea v-model="newNote" placeholder="Add clinical observation or diagnostic note..."
-                        class="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all h-24 resize-none"
-                        :disabled="isSavingNote"></textarea>
-                    <div class="mt-3 flex justify-end">
-                        <button @click="saveNote"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded font-semibold transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            :disabled="!newNote.trim() || isSavingNote">
-                            {{ isSavingNote ? 'Saving...' : 'Save Note' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Image Upload Section -->
-
-            <CaseImageUpload :caseId="caseId" :existingFilename="caseData.imageFilename" :imageId="caseData.imageId"
-                @upload-success="fetchCaseDetail" />
-
-            <!-- Debug Pre Blocks (Optional) -->
-            <details class="text-sm text-gray-500 mt-8">
-                <summary class="cursor-pointer font-semibold">Show Raw JSON Data (Debug)</summary>
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-gray-800 text-green-400 p-4 rounded overflow-auto h-64">
-                        <h3 class="text-white mb-2 pb-1 border-b border-gray-600">caseData</h3>
-                        <pre>{{ JSON.stringify(caseData, null, 2) }}</pre>
-                    </div>
-                    <div class="bg-gray-800 text-blue-400 p-4 rounded overflow-auto h-64">
-                        <h3 class="text-white mb-2 pb-1 border-b border-gray-600">aiData</h3>
-                        <pre>{{ JSON.stringify(aiData, null, 2) }}</pre>
-                    </div>
-                </div>
-            </details>
-
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/services/http';
 import AnnotatedImage from '@/components/AnnotatedImage.vue';
-import CaseImageUpload from '../components/CaseImageUpload.vue';
 import ClinicalService from '@/features/clinical/services/clinical.service';
+import { ChevronLeft, ChevronRight, Pencil, Download } from 'lucide-vue-next';
 
 const route = useRoute();
 const router = useRouter();
 
 // Derived ID — treat as string to support both numeric and UUID backends
 const caseId = computed(() => route.params.id);
+
+// Custom Modal State
+const showModal = ref(false);
+const modalTitle = ref('');
+const modalMessage = ref('');
+const modalType = ref('alert');
+let confirmResolve = null;
+
+const customAlert = (title, message) => {
+    modalTitle.value = title;
+    modalMessage.value = message;
+    modalType.value = 'alert';
+    showModal.value = true;
+};
+
+const customConfirm = (title, message) => {
+    modalTitle.value = title;
+    modalMessage.value = message;
+    modalType.value = 'confirm';
+    showModal.value = true;
+    return new Promise((resolve) => {
+        confirmResolve = resolve;
+    });
+};
+
+const handleModalClose = (result) => {
+    showModal.value = false;
+    if (confirmResolve) {
+        confirmResolve(result);
+        confirmResolve = null;
+    }
+};
+
+// Edit states and local form data
+const isEditingPatientInfo = ref(false);
+const patientData = ref({
+    patientCode: '',
+    age: '',
+    weight: '',
+    riskFactors: 'None',
+    feverDuration: ''
+});
+
+const verdictData = ref({
+    isEditingResult: false,
+    parasiteStage: '',
+    drugExposure: 'None',
+    treatmentPlan: '',
+    notes: ''
+});
+const isSavingVerdict = ref(false);
+
+const togglePatientInfoEdit = () => {
+    isEditingPatientInfo.value = !isEditingPatientInfo.value;
+};
+
+const savePatientInfo = async () => {
+    try {
+        const hasMetadata = patientData.value.age || patientData.value.weight || 
+                           (patientData.value.riskFactors && patientData.value.riskFactors !== 'None') || 
+                           patientData.value.feverDuration;
+        
+        let metadataStr = null;
+        if (hasMetadata) {
+            metadataStr = JSON.stringify({
+                age: patientData.value.age,
+                weight: patientData.value.weight,
+                riskFactors: patientData.value.riskFactors,
+                feverDuration: patientData.value.feverDuration
+            });
+        }
+
+        const payload = {
+            patientCode: patientData.value.patientCode ? Number(patientData.value.patientCode) : null,
+            patientMetadata: metadataStr
+        };
+        
+        await ClinicalService.updatePatientInfo(caseId.value, payload);
+        
+        // Refresh local data to ensure sync
+        await fetchCaseDetail();
+        
+        isEditingPatientInfo.value = false;
+        customAlert("Success", "Patient information saved successfully!");
+    } catch (err) {
+        const errorMessage = err.response?.data?.message || err.message || "An unknown error occurred.";
+        customAlert("Error", `Failed to save patient info:\n${errorMessage}`);
+        console.error("Save Patient Info Error:", err);
+    }
+};
+
+const resetVerdict = () => {
+    verdictData.value.isEditingResult = false;
+    verdictData.value.parasiteStage = formattedParasiteStage.value || '';
+    verdictData.value.drugExposure = aiData.value?.drugExposure ? aiData.value.drugType : 'None';
+    verdictData.value.treatmentPlan = '';
+    verdictData.value.notes = '';
+};
+
+const saveVerdict = async () => {
+    isSavingVerdict.value = true;
+    try {
+        const payload = JSON.stringify({
+            parasiteStage: verdictData.value.parasiteStage || formattedParasiteStage.value,
+            drugExposure: verdictData.value.drugExposure || 'None',
+            treatmentPlan: verdictData.value.treatmentPlan,
+            notes: verdictData.value.notes
+        });
+        
+        await ClinicalService.addNote(caseId.value, payload);
+        verdictData.value.isEditingResult = false;
+        
+        const wantsExport = await customConfirm("Success", "Verdict saved successfully!\n\nDo you want to export this case as a PDF report?\n(Click OK to Export, or Cancel to return to the Main Page.)");
+        if (wantsExport) {
+            await exportCase();
+        } else {
+            router.push('/data-use/cases');
+        }
+    } catch (err) {
+        customAlert("Error", "Failed to save doctor's verdict: " + (err.response?.data?.message || err.message));
+        console.error(err);
+    } finally {
+        isSavingVerdict.value = false;
+    }
+};
+
+const exportCase = async () => {
+    try {
+        const response = await ClinicalService.exportPdf(caseId.value);
+        
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Case_Report_${caseData.value?.patientCode || caseId.value}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("Export Error:", err);
+        customAlert("Error", "Failed to export case report.");
+    }
+};
+
+// Computed properties for display logic
+const formattedParasiteStage = computed(() => {
+    if (!aiData.value) return '';
+    return aiData.value.parasiteStage || 'None';
+});
+
+const shouldShowTreatment = computed(() => {
+    const stage = verdictData.value.isEditingResult ? verdictData.value.parasiteStage : formattedParasiteStage.value;
+    return ['RING', 'SCHIZONTS', 'TROPHOZOITE'].includes(stage);
+});
 
 // State: Case
 const caseData = ref(null);
@@ -388,6 +579,23 @@ const fetchCaseDetail = async () => {
     try {
         const response = await http.get(`/cases/${caseId.value}`);
         caseData.value = response.data;
+        
+        // Initialize patient data from case data
+        if (caseData.value) {
+            patientData.value.patientCode = caseData.value.patientCode || '';
+            if (caseData.value.patientMetadata) {
+                try {
+                    const meta = JSON.parse(caseData.value.patientMetadata);
+                    patientData.value.age = meta.age || '';
+                    patientData.value.weight = meta.weight || '';
+                    patientData.value.riskFactors = meta.riskFactors || 'None';
+                    patientData.value.feverDuration = meta.feverDuration || '';
+                } catch(e) {
+                     console.warn("Could not parse patient metadata", e);
+                }
+            }
+        }
+
         // Load image preview if available (for pre-analysis display)
         if (response.data?.imageId) {
             loadPreviewImage();
@@ -448,20 +656,6 @@ const fetchNotes = async () => {
     }
 };
 
-const saveNote = async () => {
-    if (!newNote.value.trim()) return;
-    isSavingNote.value = true;
-    try {
-        await ClinicalService.addNote(caseId.value, newNote.value);
-        newNote.value = '';
-        await fetchNotes();
-    } catch (err) {
-        alert("Error saving note. Please try again later.");
-    } finally {
-        isSavingNote.value = false;
-    }
-};
-
 const exportPdf = async () => {
     isExporting.value = true;
     try {
@@ -495,9 +689,6 @@ onUnmounted(() => {
         URL.revokeObjectURL(previewImageUrl.value);
     }
 });
-
-// Derived ID reactive — so template and logic updates automatically
-import { computed, watch } from 'vue';
 
 const loadAllData = () => {
     if (!caseId.value) {

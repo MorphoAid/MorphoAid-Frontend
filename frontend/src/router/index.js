@@ -48,13 +48,13 @@ const Forbidden = () => import('@/features/auth/views/Forbidden.vue')
 
 function getRoleHome(role) {
   if (role === 'ADMIN') return '/admin/dashboard'
-  if (role === 'DATA_PREP') return '/dataprep/cases/new'
+  if (role === 'DATA_PREP') return '/dataprep'
   if (role === 'DATA_USE') return '/data-use'
   return '/__auth'
 }
 
 const routes = [
-  { path: '/', redirect: '/__auth' },
+  { path: '/', redirect: '/login' },
 
   // PUBLIC
   {

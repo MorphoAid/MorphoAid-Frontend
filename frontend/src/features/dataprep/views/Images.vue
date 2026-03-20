@@ -17,8 +17,27 @@
                 class="flex-1 text-sm bg-transparent focus:outline-none text-[#2E2E2E] placeholder-[#5C5C5C]/60" />
         </div>
 
+        <!-- Action Button -->
+        <div class="flex justify-end">
+            <button @click="$router.push('/dataprep/cases/new')"
+                class="bg-[#368998] hover:bg-[#2B6E7A] text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Upload Image
+            </button>
+        </div>
+
         <!-- Image Table -->
-        <div class="bg-white rounded-xl border border-[#368998]/20 overflow-hidden">
+        <div class="bg-white rounded-xl border border-[#368998]/20 overflow-hidden relative min-h-[300px]">
+            <!-- Loading Overlay -->
+            <div v-if="loading" class="absolute inset-0 bg-white/60 flex items-center justify-center z-10 backdrop-blur-[2px]">
+                <svg class="animate-spin h-8 w-8 text-[#368998]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-[#F8F8F8] text-[#5C5C5C] border-b border-[#368998]/10">
@@ -31,14 +50,14 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#368998]/10 text-[#2E2E2E]">
-                        <tr v-if="filteredImages.length === 0">
+                        <tr v-if="!loading && filteredImages.length === 0">
                             <td colspan="5" class="py-10 text-center text-[#5C5C5C] text-sm italic">No cases found.</td>
                         </tr>
                         <tr v-for="row in filteredImages" :key="row.id" class="hover:bg-[#F8F8F8]/50 transition-colors">
                             <td class="py-3 px-6 font-mono text-xs text-[#368998]">#{{ row.id }}</td>
-                            <td class="py-3 px-6 text-[#5C5C5C]">{{ row.uploaded }}</td>
+                            <td class="py-3 px-6 text-[#5C5C5C]">{{ formatDate(row.uploaded) }}</td>
                             <td class="py-3 px-6">
-                                <span :class="statusStyle(row.status)" class="px-2 py-0.5 rounded text-xs font-medium">
+                                <span :class="statusStyle(row.status)" class="px-2 py-0.5 rounded text-xs font-medium uppercase">
                                     {{ row.status }}
                                 </span>
                             </td>
@@ -59,29 +78,69 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { fetchCases as apiFetchCases } from '@/features/case-management/services/case.service'
+import { useAuthStore } from '@/store/auth.store'
 
 const searchQuery = ref('')
+const images = ref([])
+const loading = ref(false)
+const authStore = useAuthStore()
 
-const images = [
-    { id: '1042', uploaded: '03 Mar 2026, 14:22', status: 'Completed', source: 'Clinic A' },
-    { id: '1041', uploaded: '03 Mar 2026, 11:05', status: 'Pending', source: 'Hospital B' },
-    { id: '1040', uploaded: '03 Mar 2026, 09:48', status: 'Completed', source: 'Clinic A' },
-    { id: '1039', uploaded: '02 Mar 2026, 16:30', status: 'Failed', source: 'Lab C' },
-    { id: '1038', uploaded: '02 Mar 2026, 14:10', status: 'Completed', source: 'Hospital B' },
-    { id: '1037', uploaded: '02 Mar 2026, 10:55', status: 'Pending', source: 'Clinic D' },
-    { id: '1036', uploaded: '01 Mar 2026, 17:00', status: 'Completed', source: 'Clinic A' },
-]
+const fetchUserCases = async () => {
+    loading.value = true
+    try {
+        const response = await apiFetchCases()
+        const allCases = response.data || []
+        
+        // Filter by current technician (DATA_PREP user)
+        images.value = allCases
+            .filter(c => c.technicianId === authStore.user?.id)
+            .map(c => ({
+                id: c.id.toString(),
+                uploaded: c.createdAt,
+                status: c.status || 'PENDING',
+                source: c.location || 'Unknown'
+            }))
+            
+        // Sort by newest
+        images.value.sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded))
+    } catch (error) {
+        console.error('Failed to fetch cases:', error)
+    } finally {
+        loading.value = false
+    }
+}
 
 const filteredImages = computed(() => {
     const q = searchQuery.value.trim().toLowerCase()
-    if (!q) return images
-    return images.filter(img => img.id.includes(q))
+    if (!q) return images.value
+    return images.value.filter(img => img.id.includes(q))
 })
 
+const formatDate = (dateString) => {
+    if (!dateString) return '-'
+    const d = new Date(dateString)
+    return d.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
+}
+
 function statusStyle(status) {
-    if (status === 'Completed') return 'bg-[#407533]/10 text-[#407533]'
-    if (status === 'Pending') return 'bg-[#FF4C38]/10 text-[#FF4C38]'
+    const s = status?.toUpperCase()
+    if (s === 'COMPLETED' || s === 'ANALYZED') return 'bg-[#407533]/10 text-[#407533]'
+    if (s === 'PENDING' || s === 'UPLOADING') return 'bg-[#FF4C38]/10 text-[#FF4C38]'
     return 'bg-[#A92222]/10 text-[#A92222]'
 }
+
+onMounted(async () => {
+    if (!authStore.isHydrated) {
+        await authStore.init()
+    }
+    fetchUserCases()
+})
 </script>

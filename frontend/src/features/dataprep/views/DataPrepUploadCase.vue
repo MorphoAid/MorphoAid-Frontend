@@ -1,6 +1,12 @@
 <template>
   <div class="p-8 max-w-2xl mx-auto w-full">
     <div class="mb-8">
+      <button @click="$router.back()" class="flex items-center gap-2 text-[#5C5C5C] hover:text-[#368998] transition-colors mb-4 group">
+        <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        <span class="text-sm font-medium">Back</span>
+      </button>
       <h1 class="text-3xl font-bold text-[#2E2E2E] mb-2">Upload New Case</h1>
       <p class="text-[#5C5C5C]">Upload a blood smear image for AI analysis. Patient information is strictly anonymized.</p>
     </div>
