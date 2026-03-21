@@ -33,6 +33,7 @@ const CaseList = () => import('@/features/case-management/views/CaseListTest.vue
 const CaseDetail = () => import('@/features/case-management/views/CaseDetailTest.vue')
 const ResultDetail = () => import('@/features/case-management/views/ResultDetail.vue')
 const Insight = () => import('@/features/visualization/views/Insight.vue')
+const AccountManagement = () => import('@/features/case-management/views/AccountManagement.vue')
 
 // CLINICAL (Feature 2)
 const ClinicalUpload = () => import('@/features/clinical/views/ClinicalUpload.vue')
@@ -160,7 +161,8 @@ const routes = [
       // { path: 'clinical/cases/:id', name: 'ClinicalCaseDetail', component: ClinicalCaseDetail },
 
       { path: 'result/:id', component: ResultDetail, props: true },
-      { path: 'insights', component: Insight }
+      { path: 'insights', component: Insight },
+      { path: 'account', component: AccountManagement }
     ]
   },
 

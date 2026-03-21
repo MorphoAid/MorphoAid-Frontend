@@ -45,7 +45,10 @@ export const useAuthStore = defineStore('auth', {
                 this.user = response.data;
                 this.role = response.data.role; // e.g. 'DATA_USE', 'DATA_PREP', 'ADMIN'
             } catch (error) {
-                this.logout();
+                // Only logout on 401 Unauthorized — not on network errors (connection refused, timeout, etc.)
+                if (error?.response?.status === 401) {
+                    this.logout();
+                }
                 throw error;
             }
         },
