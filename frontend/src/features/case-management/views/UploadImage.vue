@@ -110,6 +110,21 @@
         </button>
       </div>
     </form>
+
+    <!-- Custom Modal Popup -->
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity p-4">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-auto shadow-2xl relative">
+          <h3 class="text-lg font-bold text-gray-900 mb-2">{{ modalTitle }}</h3>
+          <p class="text-gray-700 whitespace-pre-line mb-6 text-sm leading-relaxed max-h-[60vh] overflow-y-auto">{{ modalMessage }}</p>
+          <div class="flex justify-end gap-3">
+            <button @click="handleModalClose" class="px-5 py-2 bg-[#48B7CB] hover:bg-[#368998] text-white rounded-md font-medium text-sm shadow-sm transition-colors">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -128,6 +143,27 @@ const previewUrl = ref('')
 const isSubmitting = ref(false)
 
 const provinceSearch = ref('')
+
+const showModal = ref(false)
+const modalTitle = ref('')
+const modalMessage = ref('')
+let modalCallback = null
+
+const customAlert = (title, message, callback = null) => {
+  modalTitle.value = title
+  modalMessage.value = message
+  showModal.value = true
+  modalCallback = callback
+}
+
+const handleModalClose = () => {
+  showModal.value = false
+  if (modalCallback) {
+    modalCallback()
+    modalCallback = null
+  }
+}
+
 
 const form = reactive({
   patientCode: '',
@@ -254,7 +290,7 @@ const analyzeError = ref('')
 
 const handleSubmit = async () => {
   if (!previewUrl.value) {
-    alert('Please select an image file first.')
+    customAlert('Warning', 'Please select an image file first.')
     return
   }
 
@@ -293,12 +329,21 @@ const handleSubmit = async () => {
         : `AI analysis failed: ${analyzeErr.response?.data?.message || analyzeErr.message}`
     }
 
-    router.push(`/data-use/cases/${caseId}`)
+    isSubmitting.value = false
+
+    customAlert('Success', 'Image is valid and meets the criteria. Click OK to proceed to analysis.', () => {
+      router.push(`/data-use/cases/${caseId}`)
+    })
+
   } catch (error) {
     console.error('Upload error:', error)
-    alert('Upload failed: ' + (error.response?.data?.message || error.message))
-  } finally {
     isSubmitting.value = false
+
+    if (error.response?.data?.type === 'ImageValidationFailed') {
+      customAlert('Upload Rejected', error.response.data.message)
+    } else {
+      customAlert('Upload Failed', error.response?.data?.message || error.message)
+    }
   }
 }
 </script>

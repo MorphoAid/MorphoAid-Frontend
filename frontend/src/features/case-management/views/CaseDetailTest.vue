@@ -278,6 +278,7 @@ import { useRoute, useRouter } from 'vue-router';
 import http from '@/services/http';
 import AnnotatedImage from '@/components/AnnotatedImage.vue';
 import ClinicalService from '@/features/clinical/services/clinical.service';
+import CaseImageUpload from '../components/CaseImageUpload.vue';
 import { ChevronLeft, ChevronRight, Pencil, Download } from 'lucide-vue-next';
 
 const route = useRoute();

@@ -86,6 +86,21 @@
         </button>
       </div>
     </form>
+
+    <!-- Custom Modal Popup -->
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+          <h3 class="text-lg font-bold text-gray-900 mb-2">{{ modalTitle }}</h3>
+          <p class="text-gray-700 whitespace-pre-line mb-6 text-sm leading-relaxed">{{ modalMessage }}</p>
+          <div class="flex justify-end gap-3">
+            <button @click="handleModalClose" class="px-5 py-2 bg-[#48B7CB] hover:bg-[#368998] text-white rounded-md font-medium text-sm shadow-sm transition-colors">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -101,6 +116,26 @@ const selectedFileSize = ref('')
 const previewUrl = ref('')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
+
+const showModal = ref(false)
+const modalTitle = ref('')
+const modalMessage = ref('')
+let modalCallback = null
+
+const customAlert = (title, message, callback = null) => {
+  modalTitle.value = title
+  modalMessage.value = message
+  showModal.value = true
+  modalCallback = callback
+}
+
+const handleModalClose = () => {
+  showModal.value = false
+  if (modalCallback) {
+    modalCallback()
+    modalCallback = null
+  }
+}
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png']
@@ -196,24 +231,27 @@ const handleSubmit = async () => {
     const caseFormData = new FormData()
     caseFormData.append('image', fileInputRef.value.files[0])
 
-    // Wait an artificial delay to simulate processing visibility if desired
-    await new Promise(resolve => setTimeout(resolve, 800))
-
     const res = await uploadDataPrepCase(caseFormData)
     const caseId = res.data.id
 
-    // AI analysis is triggered server-side by the DataPrepCaseController.
-    // Navigate directly into result view.
-    router.push(`/dataprep/cases/${caseId}/result`)
+    isSubmitting.value = false
+
+    customAlert('Success', 'Image is valid and meets the criteria. Click OK to proceed to analysis.', () => {
+      // AI analysis is triggered server-side by the DataPrepCaseController.
+      // Navigate directly into result view.
+      router.push(`/dataprep/cases/${caseId}/result`)
+    })
   } catch (error) {
     console.error('Upload error:', error)
-    if (error.response?.data?.message) {
+    isSubmitting.value = false
+
+    if (error.response?.data?.type === 'ImageValidationFailed') {
+      customAlert('Upload Rejected', error.response.data.message)
+    } else if (error.response?.data?.message) {
       errorMessage.value = `Upload failed: ${error.response.data.message}`
     } else {
       errorMessage.value = 'An unexpected error occurred during upload. Please try again.'
     }
-  } finally {
-    isSubmitting.value = false
   }
 }
 </script>

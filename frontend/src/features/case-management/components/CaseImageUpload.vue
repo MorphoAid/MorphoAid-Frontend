@@ -135,6 +135,21 @@
         </div>
       </div>
     </div>
+
+    <!-- Custom Modal Popup -->
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+          <h3 class="text-lg font-bold text-gray-900 mb-2">{{ modalTitle }}</h3>
+          <p class="text-gray-700 whitespace-pre-line mb-6 text-sm leading-relaxed">{{ modalMessage }}</p>
+          <div class="flex justify-end gap-3">
+            <button @click="handleModalClose" class="px-5 py-2 bg-blue-600 text-white rounded-md font-medium text-sm hover:bg-blue-700 shadow-sm transition-colors">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -167,6 +182,26 @@ const errorMessage = ref('');
 const isUploading = ref(false);
 const isEditing = ref(false);
 const imageUrl = ref('');
+
+const showModal = ref(false);
+const modalTitle = ref('');
+const modalMessage = ref('');
+let modalCallback = null;
+
+const customAlert = (title, message, callback = null) => {
+  modalTitle.value = title;
+  modalMessage.value = message;
+  showModal.value = true;
+  modalCallback = callback;
+};
+
+const handleModalClose = () => {
+  showModal.value = false;
+  if (modalCallback) {
+    modalCallback();
+    modalCallback = null;
+  }
+};
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -244,15 +279,23 @@ const uploadImage = async () => {
       imageUrl.value = URL.createObjectURL(blob);
     }
 
-    emit('upload-success', uploadResult);
+    isUploading.value = false;
+    errorMessage.value = '';
 
-    selectedFile.value = null;
-    isEditing.value = false;
+    customAlert('Success', 'Image is valid and meets the criteria. Click OK to proceed.', () => {
+      emit('upload-success', uploadResult);
+      selectedFile.value = null;
+      isEditing.value = false;
+    });
   } catch (err) {
     console.error('Upload failed:', err);
-    errorMessage.value = err?.response?.data?.message || err.message || 'Server error occurred during upload.';
-  } finally {
     isUploading.value = false;
+    
+    if (err?.response?.data?.type === 'ImageValidationFailed') {
+      customAlert('Upload Rejected', err.response.data.message);
+    } else {
+      errorMessage.value = err?.response?.data?.message || err.message || 'Server error occurred during upload.';
+    }
   }
 };
 
