@@ -13,12 +13,12 @@
         Register as Data Use
       </RouterLink>
 
-      <RouterLink
+      <!-- <RouterLink
         to="/register/data-prep"
         class="bg-green-600 text-white px-4 py-2 rounded"
       >
         Register as Data Prep
-      </RouterLink>
+      </RouterLink> -->
     </div>
   </div>
 </template>

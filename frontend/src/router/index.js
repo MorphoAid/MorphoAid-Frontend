@@ -4,8 +4,8 @@ import { useAuthStore } from '@/store/auth.store'
 // Layouts (มีจริงตาม tree)
 const PublicLayout = () => import('@/layouts/PublicLayout.vue')
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
-const DataPrepLayout = () => import('@/layouts/DataPrepLayout.vue')
-const SimplifiedDataPrepLayout = () => import('@/layouts/SimplifiedDataPrepLayout.vue')
+// const DataPrepLayout = () => import('@/layouts/DataPrepLayout.vue')
+// const SimplifiedDataPrepLayout = () => import('@/layouts/SimplifiedDataPrepLayout.vue')
 const DataUseLayout = () => import('@/layouts/DataUseLayout.vue')
 const TestLayout = () => import('@/layouts/TestLayout.vue')
 
@@ -14,17 +14,18 @@ const AdminDashboard = () => import('@/features/admin/views/AdminDashboard.vue')
 const UserManagement = () => import('@/features/admin/views/UserManagement.vue')
 const ActivityLog = () => import('@/features/admin/views/ActivityLog.vue')
 const InvitationManagement = () => import('@/features/admin/views/InvitationManagement.vue')
+const UserApprovals = () => import('@/features/admin/views/UserApprovals.vue')
 
-// DATA PREP
-const DataPrepDashboard = () => import('@/features/dataprep/views/DataPrepDashboard.vue')
-const DataPrepImages = () => import('@/features/dataprep/views/Images.vue')
-const DataPrepImageDetail = () => import('@/features/dataprep/views/ImageDetail.vue')
-const DataPrepSettings = () => import('@/features/dataprep/views/Settings.vue')
-const DataPrepExport = () => import('@/features/dataprep/views/Export.vue')
-// LAB module (dedicated components)
-const ReviewQueue = () => import('@/features/dataprep/views/ReviewQueue.vue')
-const ReviewDetail = () => import('@/features/dataprep/views/ReviewDetail.vue')
-const ExportPage = () => import('@/features/dataprep/views/ExportPage.vue')
+// // DATA PREP
+// const DataPrepDashboard = () => import('@/features/dataprep/views/DataPrepDashboard.vue')
+// const DataPrepImages = () => import('@/features/dataprep/views/Images.vue')
+// const DataPrepImageDetail = () => import('@/features/dataprep/views/ImageDetail.vue')
+// const DataPrepSettings = () => import('@/features/dataprep/views/Settings.vue')
+// const DataPrepExport = () => import('@/features/dataprep/views/Export.vue')
+// // LAB module (dedicated components)
+// const ReviewQueue = () => import('@/features/dataprep/views/ReviewQueue.vue')
+// const ReviewDetail = () => import('@/features/dataprep/views/ReviewDetail.vue')
+// const ExportPage = () => import('@/features/dataprep/views/ExportPage.vue')
 
 // DATA USE (อยู่ใน case-management)
 const TestHub = () => import('@/features/case-management/views/TestHub.vue')
@@ -43,13 +44,14 @@ const ClinicalCaseDetail = () => import('@/features/clinical/views/ClinicalCaseD
 const AuthLanding = () => import('@/features/auth/views/AuthLanding.vue')
 const Login = () => import('@/features/auth/views/Login.vue')
 const RegisterDataUse = () => import('@/features/auth/views/RegisterDataUse.vue')
-const RegisterDataPrep = () => import('@/features/auth/views/RegisterDataPrep.vue')
+// const RegisterDataPrep = () => import('@/features/auth/views/RegisterDataPrep.vue')
 const RegisterSelection = () => import('@/features/auth/views/RegisterSelection.vue')
 const Forbidden = () => import('@/features/auth/views/Forbidden.vue')
+const VerificationPending = () => import('@/features/auth/views/VerificationPending.vue')
 
 function getRoleHome(role) {
   if (role === 'ADMIN') return '/admin/dashboard'
-  if (role === 'DATA_PREP') return '/dataprep'
+  if (role === 'DATA_PREP') return '/forbidden'
   if (role === 'DATA_USE') return '/data-use'
   return '/__auth'
 }
@@ -76,7 +78,7 @@ const routes = [
     meta: { guestOnly: true },
     children: [
       { path: 'data-use', component: RegisterDataUse },
-      { path: 'data-prep', component: RegisterDataPrep },
+      // { path: 'data-prep', component: RegisterDataPrep },
       { path: 'selection', component: RegisterSelection }
     ]
   },
@@ -85,6 +87,10 @@ const routes = [
     component: PublicLayout,
     meta: { requiresAuth: true },
     children: [{ path: '', component: Forbidden }]
+  },
+  {
+    path: '/verification-pending',
+    component: VerificationPending,
   },
 
   // ADMIN (wrap ด้วย AdminLayout)
@@ -97,46 +103,47 @@ const routes = [
       { path: 'dashboard', component: AdminDashboard },
       { path: 'users', component: UserManagement },
       { path: 'invitations', component: InvitationManagement },
-      { path: 'activity-log', component: ActivityLog }
+      { path: 'activity-log', component: ActivityLog },
+      { path: 'approvals', component: UserApprovals },
     ]
   },
 
   // DATA PREP (/dataprep — legacy, kept intact)
-  {
-    path: '/dataprep',
-    component: DataPrepLayout,
-    meta: { requiresAuth: true, roles: ['DATA_PREP', 'ADMIN'] },
-    children: [
-      { path: '', component: DataPrepDashboard },
-      { path: 'images', component: DataPrepImages },
-      { path: 'images/:id', component: DataPrepImageDetail, props: true },
-      { path: 'settings', component: DataPrepSettings },
-    ]
-  },
+  // {
+  //   path: '/dataprep',
+  //   component: DataPrepLayout,
+  //   meta: { requiresAuth: true, roles: ['DATA_PREP', 'ADMIN'] },
+  //   children: [
+  //     { path: '', component: DataPrepDashboard },
+  //     { path: 'images', component: DataPrepImages },
+  //     { path: 'images/:id', component: DataPrepImageDetail, props: true },
+  //     { path: 'settings', component: DataPrepSettings },
+  //   ]
+  // },
 
   // DATA PREP SIMPLIFIED UPLOAD (Isolated Flow)
-  {
-    path: '/dataprep/cases',
-    component: SimplifiedDataPrepLayout,
-    meta: { requiresAuth: true, roles: ['DATA_PREP', 'ADMIN'] },
-    children: [
-      { path: 'new', component: () => import('@/features/dataprep/views/DataPrepUploadCase.vue') },
-      { path: ':id/result', component: () => import('@/features/dataprep/views/DataPrepResult.vue'), props: true }
-    ]
-  },
+  // {
+  //   path: '/dataprep/cases',
+  //   component: SimplifiedDataPrepLayout,
+  //   meta: { requiresAuth: true, roles: ['DATA_PREP', 'ADMIN'] },
+  //   children: [
+  //     { path: 'new', component: () => import('@/features/dataprep/views/DataPrepUploadCase.vue') },
+  //     { path: ':id/result', component: () => import('@/features/dataprep/views/DataPrepResult.vue'), props: true }
+  //   ]
+  // },
 
   // LAB (/lab — aligned with SRS, DATA_PREP only)
-  {
-    path: '/lab',
-    component: DataPrepLayout,
-    meta: { requiresAuth: true, roles: ['DATA_PREP'] },
-    redirect: '/lab/review',
-    children: [
-      { path: 'review', component: ReviewQueue },
-      { path: 'review/:id', component: ReviewDetail, props: true },
-      { path: 'export', component: ExportPage },
-    ]
-  },
+  // {
+  //   path: '/lab',
+  //   component: DataPrepLayout,
+  //   meta: { requiresAuth: true, roles: ['DATA_PREP'] },
+  //   redirect: '/lab/review',
+  //   children: [
+  //     { path: 'review', component: ReviewQueue },
+  //     { path: 'review/:id', component: ReviewDetail, props: true },
+  //     { path: 'export', component: ExportPage },
+  //   ]
+  // },
 
   // DATA USE (ใช้ case-management views)
   {
@@ -201,6 +208,14 @@ router.beforeEach(async (to) => {
 
   if (to.meta?.requiresAuth && !isAuthed) {
     return { path: '/login', query: { redirect: to.fullPath } }
+  }
+
+  // Redirect unapproved DATA_USE users to verification pending page
+  if (isAuthed && role === 'DATA_USE' && authStore.user?.approved === false) {
+    if (to.path !== '/verification-pending') {
+      return '/verification-pending'
+    }
+    return true
   }
 
   const roles = to.meta?.roles

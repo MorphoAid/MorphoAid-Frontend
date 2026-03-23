@@ -57,7 +57,6 @@
               <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="{
                 'bg-purple-100 text-purple-800': user.role === 'ADMIN',
                 'bg-green-100 text-green-800': user.role === 'DATA_USE',
-                'bg-blue-100 text-blue-800': user.role === 'DATA_PREP'
               }">
                 {{ user.role }}
               </span>
@@ -100,7 +99,6 @@
                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
                 <option value="ADMIN">ADMIN</option>
                 <option value="DATA_USE">DATA_USE</option>
-                <option value="DATA_PREP">DATA_PREP</option>
               </select>
             </div>
           </div>

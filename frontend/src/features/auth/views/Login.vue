@@ -92,16 +92,7 @@
         </p>
       </div>
 
-      <div class="flex items-center justify-between gap-4">
-        <label class="flex items-center gap-2 text-sm text-[#2E2E2E]">
-          <input
-            v-model="form.rememberMe"
-            type="checkbox"
-            class="h-4 w-4 rounded border-zinc-300 text-[#48B7CB] focus:ring-[#48B7CB]"
-          />
-          <span>Remember me</span>
-        </label>
-
+      <div class="flex items-center justify-end">
         <button
           type="button"
           class="text-sm font-medium text-[#2F8EA2] transition hover:text-[#368998]"
@@ -138,7 +129,7 @@
         {{ loading ? 'Signing in...' : 'Sign in' }}
       </button>
 
-      <div class="flex items-center justify-between pt-2 text-sm">
+      <div class="flex items-center justify-center pt-2 text-sm">
         <router-link
           to="/register/data-use"
           class="font-medium text-[#2F8EA2] transition hover:text-[#368998]"
@@ -146,12 +137,12 @@
           Register (Data Use)
         </router-link>
 
-        <router-link
+        <!-- <router-link
           to="/register/data-prep"
           class="font-medium text-[#2F8EA2] transition hover:text-[#368998]"
         >
           Join (Data Prep)
-        </router-link>
+        </router-link> -->
       </div>
     </form>
   </div>
@@ -172,7 +163,6 @@ const isDev = import.meta.env.DEV
 const form = reactive({
   email: '',
   password: '',
-  rememberMe: false,
 })
 
 const errors = reactive({
@@ -225,7 +215,7 @@ async function handleLogin() {
     loading.value = true
     errorMsg.value = ''
 
-    await authStore.login(form.email, form.password, form.rememberMe)
+    await authStore.login(form.email, form.password)
 
     if (authStore.token) {
       localStorage.setItem('access_token', authStore.token)

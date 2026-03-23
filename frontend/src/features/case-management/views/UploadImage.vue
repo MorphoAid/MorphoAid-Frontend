@@ -5,15 +5,26 @@
       <p class="text-[#5C5C5C]">Upload a blood smear image for AI analysis and tracking.</p>
     </div>
 
+    <div v-if="aiStatus === 'Offline'" class="mb-8 bg-red-50 border border-red-200 p-4 rounded-xl flex items-start gap-4 shadow-sm">
+      <div class="mt-0.5 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+        <span class="material-symbols-outlined text-lg">cloud_off</span>
+      </div>
+      <div>
+        <h3 class="font-bold text-red-800 tracking-tight">Diagnostic AI is Offline</h3>
+        <p class="text-sm text-red-600 mt-0.5">The AI parsing engine is temporarily disconnected or disabled by an administrator. You cannot upload new images for analysis at this time.</p>
+      </div>
+    </div>
+
     <form @submit.prevent="handleSubmit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
 
       <!-- Drag & Drop Area -->
       <div
-        class="border-2 border-dashed border-[#C6E9EF] rounded-xl text-center hover:bg-[#F8F8F8] transition-colors cursor-pointer mb-8 relative"
-        @click="triggerFileInput" @dragover.prevent @drop.prevent="handleDrop"
-        :class="{ 'p-10': !previewUrl, 'p-4': previewUrl }">
+        class="border-2 rounded-xl text-center transition-colors mb-8 relative"
+        :class="aiStatus === 'Offline' ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : 'border-dashed border-[#C6E9EF] hover:bg-[#F8F8F8] cursor-pointer'"
+        @click="aiStatus !== 'Offline' && triggerFileInput()" @dragover.prevent @drop.prevent="aiStatus !== 'Offline' && handleDrop($event)">
+        
         <input id="fileInput" type="file" ref="fileInputRef" class="hidden" accept=".png, .jpg, .jpeg"
-          @change="handleFileChange" />
+          @change="handleFileChange" :disabled="aiStatus === 'Offline'" />
 
         <div v-if="previewUrl" class="w-full flex flex-col items-center">
           <img :src="previewUrl" alt="Preview"
@@ -92,11 +103,11 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-        <button type="button" @click="$router.push('/data-use/dashboard')" :disabled="isSubmitting"
+        <button type="button" @click="$router.push('/data-use')" :disabled="isSubmitting"
           class="px-5 py-2 text-[#5C5C5C] hover:bg-gray-100 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           Cancel
         </button>
-        <button type="submit" :disabled="isSubmitting"
+        <button type="submit" :disabled="isSubmitting || aiStatus === 'Offline'"
           class="px-6 py-2 bg-[#48B7CB] hover:bg-[#368998] text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center min-w-[140px] disabled:opacity-70 disabled:cursor-not-allowed">
           <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
             fill="none" viewBox="0 0 24 24">
@@ -133,9 +144,11 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { uploadCase, analyzeCase, fetchNextPatientCode } from '@/features/case-management/services/case.service'
 import { uploadCaseImage } from '@/features/case-management/services/caseImage.service'
+import { systemService } from '@/services/system.service'
 import http from '@/services/http'
 
 const router = useRouter()
+const aiStatus = ref('Checking...')
 const fileInputRef = ref(null)
 const selectedFileName = ref('')
 const selectedFileSize = ref('')
@@ -222,6 +235,13 @@ const englishProvinces = [
 
 onMounted(async () => {
   try {
+    try {
+      const aiRes = await systemService.getAiStatus();
+      aiStatus.value = aiRes.aiStatus === 'ONLINE' ? 'Online' : 'Offline';
+    } catch (e) {
+      aiStatus.value = 'Offline';
+    }
+
     const nextCodeRes = await fetchNextPatientCode();
     form.patientCode = nextCodeRes.data;
 

@@ -67,7 +67,12 @@
                 <!-- 1. Patient Info Panel -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative">
                     <div class="flex justify-between items-start mb-4">
-                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Patient Info.</h2>
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Patient Info.</h2>
+                            <span :class="patientInfoStatus.class" class="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border shadow-sm">
+                                {{ patientInfoStatus.label }}
+                            </span>
+                        </div>
                         <button @click="togglePatientInfoEdit" class="text-gray-400 hover:text-gray-700 transition-colors p-1">
                             <Pencil class="w-4 h-4" />
                         </button>
@@ -76,9 +81,10 @@
                     <div v-if="!isEditingPatientInfo" class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                         <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Patient ID:</span> <span class="text-gray-700">{{ caseData.patientCode || 'N/A' }}</span></div>
                         <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Age:</span> <span class="text-gray-700">{{ patientData.age ? `${patientData.age} yrs` : '-' }}</span></div>
+                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Gender:</span> <span class="text-gray-700">{{ patientData.gender || '-' }}</span></div>
                         <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Weight:</span> <span class="text-gray-700">{{ patientData.weight ? `${patientData.weight}kg` : '-' }}</span></div>
                         <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Risk Factors:</span> <span class="text-gray-700">{{ patientData.riskFactors || 'None' }}</span></div>
-                        <div class="flex items-baseline col-span-2"><span class="font-bold text-gray-800 w-28">Fever Duration:</span> <span class="text-gray-700">{{ patientData.feverDuration ? `${patientData.feverDuration} days` : '-' }}</span></div>
+                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Fever Duration:</span> <span class="text-gray-700">{{ patientData.feverDuration ? `${patientData.feverDuration} days` : '-' }}</span></div>
                     </div>
                     
                     <div v-else class="grid grid-cols-2 gap-4 text-sm mt-2">
@@ -98,26 +104,35 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Gender</label>
+                            <select v-model="patientData.gender" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Weight (kg)</label>
                              <select v-model="patientData.weight" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
                                 <option value="">Select</option>
                                 <option v-for="n in 150" :key="n" :value="n">{{ n }}</option>
                             </select>
                         </div>
-                        <div class="col-span-2 md:col-span-1">
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Fever Duration (days)</label>
+                            <select v-model="patientData.feverDuration" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
+                                <option value="">Select</option>
+                                <option v-for="n in 30" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
                             <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Risk Factors</label>
                             <select v-model="patientData.riskFactors" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
                                 <option value="None">None</option>
                                 <option value="Travel History">Travel History</option>
                                 <option value="Forest Entry">Forest Entry</option>
                                 <option value="Pregnancy">Pregnancy</option>
-                            </select>
-                        </div>
-                        <div class="col-span-2 md:col-span-1">
-                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Fever Duration (days)</label>
-                            <select v-model="patientData.feverDuration" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
-                                <option value="">Select</option>
-                                <option v-for="n in 30" :key="n" :value="n">{{ n }}</option>
                             </select>
                         </div>
                         
@@ -324,9 +339,18 @@ const isEditingPatientInfo = ref(false);
 const patientData = ref({
     patientCode: '',
     age: '',
+    gender: '',
     weight: '',
     riskFactors: 'None',
     feverDuration: ''
+});
+
+const patientInfoStatus = computed(() => {
+    const p = patientData.value;
+    const hasAnyData = p.age || p.gender || p.weight || (p.riskFactors && p.riskFactors !== 'None') || p.feverDuration;
+    return hasAnyData 
+       ? { label: 'Filled', class: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
+       : { label: 'Not Filled', class: 'bg-red-50 text-red-600 border-red-200' };
 });
 
 const verdictData = ref({
@@ -344,7 +368,7 @@ const togglePatientInfoEdit = () => {
 
 const savePatientInfo = async () => {
     try {
-        const hasMetadata = patientData.value.age || patientData.value.weight || 
+        const hasMetadata = patientData.value.age || patientData.value.gender || patientData.value.weight || 
                            (patientData.value.riskFactors && patientData.value.riskFactors !== 'None') || 
                            patientData.value.feverDuration;
         
@@ -352,6 +376,7 @@ const savePatientInfo = async () => {
         if (hasMetadata) {
             metadataStr = JSON.stringify({
                 age: patientData.value.age,
+                gender: patientData.value.gender,
                 weight: patientData.value.weight,
                 riskFactors: patientData.value.riskFactors,
                 feverDuration: patientData.value.feverDuration
@@ -588,6 +613,7 @@ const fetchCaseDetail = async () => {
                 try {
                     const meta = JSON.parse(caseData.value.patientMetadata);
                     patientData.value.age = meta.age || '';
+                    patientData.value.gender = meta.gender || '';
                     patientData.value.weight = meta.weight || '';
                     patientData.value.riskFactors = meta.riskFactors || 'None';
                     patientData.value.feverDuration = meta.feverDuration || '';

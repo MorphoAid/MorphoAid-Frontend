@@ -7,16 +7,16 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15 19l-7-7 7-7" />
                 </svg>
-                ย้อนกลับ
+                Back
             </button>
-            <h1 class="page-title">จัดการบัญชี</h1>
+            <h1 class="page-title">Manage Account</h1>
         </div>
 
         <!-- Card -->
         <div class="account-card">
             <!-- Profile Picture Area -->
             <div class="avatar-section">
-                <div class="avatar-wrapper" @click="triggerUpload" :title="'คลิกเพื่อเปลี่ยนรูปโปรไฟล์'">
+                <div class="avatar-wrapper" @click="triggerUpload" :title="'Click to change profile picture'">
                     <img v-if="profilePictureUrl" :src="profilePictureUrl" alt="Profile Picture"
                         class="avatar-img" />
                     <div v-else class="avatar-placeholder">
@@ -40,8 +40,8 @@
                     class="hidden-file-input" @change="handleFileChange" />
 
                 <button class="upload-btn" @click="triggerUpload" :disabled="isUploading">
-                    <span v-if="isUploading">กำลังอัพโหลด...</span>
-                    <span v-else>{{ profilePictureUrl ? 'เปลี่ยนรูปโปรไฟล์' : 'อัพโหลดรูปโปรไฟล์' }}</span>
+                    <span v-if="isUploading">Uploading...</span>
+                    <span v-else>{{ profilePictureUrl ? 'Change Profile Picture' : 'Upload Profile Picture' }}</span>
                 </button>
 
                 <!-- Messages -->
@@ -52,19 +52,19 @@
             <!-- User Info -->
             <div class="info-section">
                 <div class="info-row">
-                    <span class="info-label">ชื่อ</span>
+                    <span class="info-label">First Name</span>
                     <span class="info-value">{{ user?.firstName || '—' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">นามสกุล</span>
+                    <span class="info-label">Last Name</span>
                     <span class="info-value">{{ user?.lastName || '—' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">อีเมล</span>
+                    <span class="info-label">Email</span>
                     <span class="info-value">{{ user?.email || '—' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">บทบาท</span>
+                    <span class="info-label">Role</span>
                     <span class="info-value role-badge">{{ roleLabel }}</span>
                 </div>
             </div>
@@ -90,9 +90,9 @@ const user = computed(() => authStore.user)
 const profilePictureUrl = computed(() => authStore.user?.profilePictureUrl || null)
 const roleLabel = computed(() => {
     const roleMap = {
-        DATA_USE: 'ผู้ใช้ข้อมูล',
-        DATA_PREP: 'ผู้เตรียมข้อมูล',
-        ADMIN: 'ผู้ดูแลระบบ',
+        DATA_USE: 'Data User',
+        DATA_PREP: 'Data Prep',
+        ADMIN: 'Admin',
     }
     return roleMap[authStore.user?.role] || authStore.user?.role || '—'
 })
@@ -126,10 +126,10 @@ async function handleFileChange(event) {
                 authStore.user = { ...authStore.user, profilePictureUrl: response.data.profilePictureUrl }
             }
         }
-        successMsg.value = 'อัพโหลดรูปโปรไฟล์สำเร็จ!'
+        successMsg.value = 'Profile picture uploaded successfully!'
     } catch (err) {
         console.error('Upload failed:', err)
-        errorMsg.value = err?.response?.data || 'เกิดข้อผิดพลาดในการอัพโหลด กรุณาลองใหม่อีกครั้ง'
+        errorMsg.value = err?.response?.data || 'Failed to upload. Please try again.'
     } finally {
         isUploading.value = false
         // Reset the file input so the same file can be re-selected if needed

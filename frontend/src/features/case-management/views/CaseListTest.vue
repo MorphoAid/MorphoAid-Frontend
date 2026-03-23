@@ -40,8 +40,68 @@
             </div>
         </div>
 
+        <!-- Summary Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Cases -->
+            <div @click="setFilter('all')" class="bg-white rounded-xl shadow-sm border p-6 flex items-center justify-between transition-all cursor-pointer"
+                :class="filterType === 'all' ? 'border-[#48B7CB] ring-2 ring-[#48B7CB]/50' : 'border-gray-100 hover:border-gray-300 hover:scale-[1.02]'">
+                <div>
+                    <p class="text-[#5C5C5C] font-medium text-sm mb-1 uppercase tracking-wider">Total Cases</p>
+                    <h3 class="text-3xl font-bold text-[#2E2E2E]">{{ summaryStats.total }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+            </div>
+
+            <!-- Need Review -->
+            <div @click="setFilter('needReview')" class="bg-white rounded-xl shadow-sm border p-6 flex items-center justify-between transition-all cursor-pointer"
+                :class="filterType === 'needReview' ? 'border-amber-500 ring-2 ring-amber-500/50' : 'border-gray-100 hover:border-gray-300 hover:scale-[1.02]'">
+                <div>
+                    <p class="text-[#5C5C5C] font-medium text-sm mb-1 uppercase tracking-wider">Needs Review</p>
+                    <h3 class="text-3xl font-bold text-[#2E2E2E]">{{ summaryStats.needReview }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+                </div>
+            </div>
+
+            <!-- New Cases Today -->
+            <div @click="setFilter('newToday')" class="bg-white rounded-xl shadow-sm border p-6 flex items-center justify-between transition-all cursor-pointer"
+                 :class="filterType === 'newToday' ? 'border-emerald-500 ring-2 ring-emerald-500/50' : 'border-gray-100 hover:border-gray-300 hover:scale-[1.02]'">
+                <div>
+                    <p class="text-[#5C5C5C] font-medium text-sm mb-1 uppercase tracking-wider">New Today</p>
+                    <h3 class="text-3xl font-bold text-[#2E2E2E]">{{ summaryStats.newToday }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
         <!-- Data Table Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative min-h-[400px]">
+            <!-- Table Toolbar -->
+            <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between bg-white z-10 relative gap-4">
+                <h3 class="font-bold text-[#2E2E2E]">Case Records</h3>
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <!-- Sort -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-[#5C5C5C] whitespace-nowrap">Sort by:</span>
+                        <div class="relative">
+                            <select v-model="sortOption" class="appearance-none bg-gray-50 border border-gray-200 text-[#2E2E2E] text-sm rounded-lg focus:ring-[#48B7CB] focus:border-[#48B7CB] block w-full pl-3 pr-8 py-2 cursor-pointer outline-none transition-colors hover:border-gray-300">
+                                <option value="date-desc">Newest First</option>
+                                <option value="date-asc">Oldest First</option>
+                                <option value="id-desc">ID (Highest)</option>
+                                <option value="id-asc">ID (Lowest)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#5C5C5C]">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Loading Overlay -->
             <div v-if="loading && !cases.length"
@@ -55,7 +115,7 @@
             </div>
 
             <!-- Empty State -->
-            <div v-if="!loading && cases.length === 0"
+            <div v-if="!loading && filteredCases.length === 0"
                 class="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                 <div class="w-16 h-16 bg-[#F8F8F8] rounded-full flex items-center justify-center mb-4 text-[#5C5C5C]">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,37 +124,54 @@
                         </path>
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-[#2E2E2E] mb-1">No Cases Found</h3>
-                <p class="text-[#5C5C5C] mb-6 max-w-sm">There are currently no cases uploaded to this system. Upload a
-                    new case to get started.</p>
-                <RouterLink to="/data-use/cases/new"
-                    class="text-[#48B7CB] font-medium hover:text-[#368998] transition-colors flex items-center gap-1">
-                    Upload first case <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                            d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                </RouterLink>
+                <!-- Logic differs if database is completely empty vs active filter -->
+                <template v-if="cases.length === 0">
+                    <h3 class="text-lg font-bold text-[#2E2E2E] mb-1">No Cases Found</h3>
+                    <p class="text-[#5C5C5C] mb-6 max-w-sm">There are currently no cases uploaded to this system. Upload a
+                        new case to get started.</p>
+                    <RouterLink to="/data-use/cases/new"
+                        class="text-[#48B7CB] font-medium hover:text-[#368998] transition-colors flex items-center gap-1">
+                        Upload first case <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                    </RouterLink>
+                </template>
+                <template v-else>
+                    <h3 class="text-lg font-bold text-[#2E2E2E] mb-1">No matches found</h3>
+                    <p class="text-[#5C5C5C] mb-6 max-w-sm">There are no cases matching the selected filter.</p>
+                    <button @click="setFilter('all')"
+                        class="text-[#48B7CB] font-medium hover:text-[#368998] transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        Clear Filter
+                    </button>
+                </template>
             </div>
 
             <!-- Table -->
-            <div class="overflow-x-auto" v-show="cases.length > 0">
+            <div class="overflow-x-auto" v-show="filteredCases.length > 0">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-gray-50/50 border-b border-gray-100">
                             <th class="py-4 px-6 font-semibold text-[#5C5C5C]">Case ID</th>
                             <th class="py-4 px-6 font-semibold text-[#5C5C5C]">Upload Date</th>
-                            <th class="py-4 px-6 font-semibold text-[#5C5C5C]">AI Summary</th>
+                            <th class="py-4 px-6 font-semibold text-[#5C5C5C]">Patient Info</th>
                             <th class="py-4 px-6 font-semibold text-[#5C5C5C]">Status</th>
                             <th class="py-4 px-6 font-semibold text-[#5C5C5C]">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr v-for="c in cases" :key="c.id" class="hover:bg-gray-50/50 transition-colors">
+                        <tr v-for="c in filteredCases" :key="c.id" class="hover:bg-gray-50/50 transition-colors">
                             <td class="py-4 px-6 font-medium text-[#2E2E2E]">CAS-0{{ c.id }}</td>
                             <td class="py-4 px-6 text-[#5C5C5C]">{{ formatDate(c.createdAt) }}</td>
-                            <td class="py-4 px-6 text-[#5C5C5C]">
-                                {{ getMockSummary(c.status) }}
+                            <td class="py-4 px-6">
+                                <span v-if="c.isReviewed" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm whitespace-nowrap">
+                                    Reviewed
+                                </span>
+                                <span v-else class="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-200 shadow-sm whitespace-nowrap">
+                                    Not Reviewed
+                                </span>
                             </td>
                             <td class="py-4 px-6">
                                 <StatusPill :status="c.status" :label="c.status" />
@@ -176,28 +253,86 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import StatusPill from '@/components/datause/StatusPill.vue'
 import { useAuthStore } from '@/store/auth.store'
+import { useSearchStore } from '@/store/search.store'
 import { fetchCases as apiFetchCases, deleteCase as apiDeleteCase } from '@/features/case-management/services/case.service'
 
+const searchStore = useSearchStore()
+
 const cases = ref([])
+const filterType = ref('all') // 'all', 'needReview', 'newToday'
+const sortOption = ref('date-desc') // 'date-desc', 'date-asc', 'id-desc', 'id-asc'
 const loading = ref(false)
 const error = ref(null)
+
+const setFilter = (type) => {
+    // toggle off if already active
+    filterType.value = filterType.value === type ? 'all' : type;
+}
+
+const filteredCases = computed(() => {
+    let result = cases.value;
+
+    // Apply text search from global store
+    const q = searchStore.query.trim().toLowerCase().replace('cas-0', '');
+    if (q) {
+        result = result.filter(c => c.id.toString().includes(q));
+    }
+    
+    // Apply filters
+    if (filterType.value === 'needReview') {
+        result = result.filter(c => !c.isReviewed)
+    } else if (filterType.value === 'newToday') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        result = result.filter(c => {
+            if (!c.createdAt) return false;
+            return new Date(c.createdAt) >= today;
+        })
+    }
+    
+    // Apply sorting
+    result = [...result].sort((a, b) => {
+        if (sortOption.value === 'date-desc') {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        } else if (sortOption.value === 'date-asc') {
+            return new Date(a.createdAt) - new Date(b.createdAt);
+        } else if (sortOption.value === 'id-desc') {
+            return b.id - a.id;
+        } else if (sortOption.value === 'id-asc') {
+            return a.id - b.id;
+        }
+        return 0;
+    });
+
+    return result;
+})
 const deleting = ref(null)
 const showDeleteDialog = ref(false)
 const caseToDelete = ref(null)
 
+const summaryStats = computed(() => {
+    const total = cases.value.length;
+    const needReview = cases.value.filter(c => !c.isReviewed).length;
+    
+    // Calculate start of today for date comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const newToday = cases.value.filter(c => {
+        if (!c.createdAt) return false;
+        const caseDate = new Date(c.createdAt);
+        return caseDate >= today;
+    }).length;
+
+    return { total, needReview, newToday };
+});
+
 const formatDate = (dateString) => {
     const d = new Date(dateString)
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-const getMockSummary = (status) => {
-    if (status === 'COMPLETED') return 'P. falciparum detected'
-    if (status === 'FAILED') return 'Image artifact detected. Unreadable.'
-    if (status === 'PENDING') return 'Pending computational analysis'
-    return 'Processing...'
 }
 
 const confirmDelete = (caseItem) => {
@@ -236,14 +371,32 @@ const fetchCases = async () => {
     try {
         const response = await apiFetchCases()
         // Map into UI table safely
-        cases.value = (response.data || []).map(c => ({
-            id: c.id,
-            patientCode: c.patientCode || 'N/A',
-            technicianId: c.technicianId || 'N/A',
-            location: c.location || 'N/A',
-            status: c.status || 'UNKNOWN',
-            createdAt: c.createdAt || new Date().toISOString()
-        }))
+        cases.value = (response.data || []).map(c => {
+            let isReviewed = false;
+            
+            if (c.patientMetadata) {
+                try {
+                    const meta = JSON.parse(c.patientMetadata);
+                    if (meta.age || meta.gender || meta.weight || (meta.riskFactors && meta.riskFactors !== 'None') || meta.feverDuration) {
+                        isReviewed = true;
+                    }
+                } catch(e) {}
+            }
+            
+            return {
+                id: c.id,
+                patientCode: c.patientCode || 'N/A',
+                technicianId: c.technicianId || 'N/A',
+                location: c.location || 'N/A',
+                status: c.status || 'UNKNOWN',
+                isReviewed: isReviewed,
+                createdAt: c.createdAt || new Date().toISOString()
+            };
+        })
+        
+        // Expose to store for Contextual Navbar dropdowns
+        searchStore.setGlobalCases(cases.value);
+        
         // sort by newest
         cases.value.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     } catch (err) {
