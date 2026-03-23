@@ -1,172 +1,267 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
-      <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Register for Data Use
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-600">
-          Create an account to access the MorphoAid platform.
-        </p>
-      </div>
-      <form class="mt-8 space-y-6" @submit.prevent="handleRegister">
+  <div
+class="w-full max-w-md sm:max-w-2xl rounded-[24px] border border-white/60 bg-stone-50/85 px-6 py-8 shadow-[0_12px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:px-10 sm:py-10"  >
+    <!-- Header -->
+    <div class="text-center">
+      <h1 class="text-[42px] font-bold leading-tight text-[#2E2E2E]">
+        Register
+      </h1>
+      <p class="mt-3 text-[18px] leading-7 text-[#5C5C5C]">
+        Let’s get you all set up so you can access your personal account.
+      </p>
+    </div>
 
-        <div v-if="globalErrorMsg" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert">
-          <span class="block sm:inline">{{ globalErrorMsg }}</span>
-        </div>
-        <div v-if="successMsg" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
-          role="alert">
-          <span class="block sm:inline">{{ successMsg }}</span>
-        </div>
-
-        <div class="rounded-md shadow-sm space-y-4">
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
-              <input id="firstName" name="firstName" type="text" required v-model="form.firstName"
-                class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                :class="{ 'border-red-500': fieldErrors.firstName }" placeholder="First Name">
-              <p v-if="fieldErrors.firstName" class="mt-1 text-xs text-red-600">{{ fieldErrors.firstName }}</p>
-            </div>
-            <div>
-              <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
-              <input id="lastName" name="lastName" type="text" required v-model="form.lastName"
-                class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                :class="{ 'border-red-500': fieldErrors.lastName }" placeholder="Last Name">
-              <p v-if="fieldErrors.lastName" class="mt-1 text-xs text-red-600">{{ fieldErrors.lastName }}</p>
-            </div>
-          </div>
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
-            <input id="email" name="email" type="email" required v-model="form.email"
-              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              :class="{ 'border-red-500': fieldErrors.email }" placeholder="Email address">
-            <p v-if="fieldErrors.email" class="mt-1 text-xs text-red-600">{{ fieldErrors.email }}</p>
-          </div>
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-            <input id="password" name="password" type="password" required v-model="form.password"
-              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              :class="{ 'border-red-500': fieldErrors.password }" placeholder="Password">
-            <p v-if="fieldErrors.password" class="mt-1 text-xs text-red-600">{{ fieldErrors.password }}</p>
-          </div>
-          <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-            <input id="confirmPassword" name="confirmPassword" type="password" required v-model="form.confirmPassword"
-              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              :class="{ 'border-red-500': fieldErrors.confirmPassword }" placeholder="Confirm Password">
-            <p v-if="fieldErrors.confirmPassword" class="mt-1 text-xs text-red-600">{{ fieldErrors.confirmPassword }}
-            </p>
-          </div>
-          <div class="flex items-center">
-            <input id="agreeTerms" name="agreeTerms" type="checkbox" required v-model="form.agreeTerms"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              :class="{ 'border-red-500': fieldErrors.agreeTerms }">
-            <label for="agreeTerms" class="ml-2 block text-sm text-gray-900">
-              I agree to the Terms and Conditions
-            </label>
-          </div>
-          <p v-if="fieldErrors.agreeTerms" class="mt-1 text-xs text-red-600">{{ fieldErrors.agreeTerms }}</p>
+    <!-- Form -->
+    <form class="mt-10 space-y-4" @submit.prevent="handleSubmit">
+      <!-- Name Row -->
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div>
+          <label
+            for="firstName"
+            class="mb-2 block text-[16px] font-medium text-[#2E2E2E]"
+          >
+            Name
+          </label>
+          <input
+            id="firstName"
+            v-model.trim="form.firstName"
+            type="text"
+            placeholder="Text"
+            class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
+            :class="errors.firstName ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
+          />
+          <p v-if="errors.firstName" class="mt-2 text-sm text-red-500">
+            {{ errors.firstName }}
+          </p>
         </div>
 
         <div>
-          <button type="submit" :disabled="loading"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
-            {{ loading ? 'Registering...' : 'Register' }}
-          </button>
+          <label
+            for="lastName"
+            class="mb-2 block text-[16px] font-medium text-[#2E2E2E]"
+          >
+            Lastname
+          </label>
+          <input
+            id="lastName"
+            v-model.trim="form.lastName"
+            type="text"
+            placeholder="Text"
+            class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
+            :class="errors.lastName ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
+          />
+          <p v-if="errors.lastName" class="mt-2 text-sm text-red-500">
+            {{ errors.lastName }}
+          </p>
         </div>
+      </div>
 
-        <div class="text-center text-sm">
-          <router-link to="/login" class="font-medium text-blue-600 hover:text-blue-500">
-            Already have an account? Log in
-          </router-link>
-        </div>
-      </form>
-    </div>
+      <!-- Email -->
+      <div>
+        <label
+          for="email"
+          class="mb-2 block text-[16px] font-medium text-[#2E2E2E]"
+        >
+          Email
+        </label>
+        <input
+          id="email"
+          v-model.trim="form.email"
+          type="email"
+          placeholder="Morphoaid@gmail.com"
+          class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
+          :class="errors.email ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
+        />
+        <p v-if="errors.email" class="mt-2 text-sm text-red-500">
+          {{ errors.email }}
+        </p>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label
+          for="password"
+          class="mb-2 block text-[16px] font-medium text-[#2E2E2E]"
+        >
+          Password
+        </label>
+        <input
+          id="password"
+          v-model="form.password"
+          type="password"
+          placeholder="Text"
+          class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
+          :class="errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
+        />
+        <p class="mt-2 text-[13px] italic text-[#7A8594]">
+          Password must be contain with
+          <span class="font-semibold">alphabet and number</span>
+        </p>
+        <p v-if="errors.password" class="mt-2 text-sm text-red-500">
+          {{ errors.password }}
+        </p>
+      </div>
+
+      <!-- Confirm Password -->
+      <div>
+        <label
+          for="confirmPassword"
+          class="mb-2 block text-[16px] font-medium text-[#2E2E2E]"
+        >
+          Confirm Password
+        </label>
+        <input
+          id="confirmPassword"
+          v-model="form.confirmPassword"
+          type="password"
+          placeholder="Text"
+          class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
+          :class="errors.confirmPassword ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
+        />
+        <p v-if="errors.confirmPassword" class="mt-2 text-sm text-red-500">
+          {{ errors.confirmPassword }}
+        </p>
+      </div>
+
+      <!-- Terms -->
+      <div>
+        <label class="flex items-start gap-3 text-[15px] text-[#2E2E2E]">
+          <input
+            v-model="form.agree"
+            type="checkbox"
+            class="mt-1 h-5 w-5 rounded border-gray-300 text-[#48B7CB] focus:ring-[#48B7CB]"
+          />
+          <span>
+            I agree to all the
+            <a href="#" class="font-semibold underline underline-offset-2">
+              Terms
+            </a>
+            and
+            <a href="#" class="font-semibold underline underline-offset-2">
+              Privacy Policies
+            </a>
+          </span>
+        </label>
+        <p v-if="errors.agree" class="mt-2 text-sm text-red-500">
+          {{ errors.agree }}
+        </p>
+      </div>
+
+      <!-- Submit -->
+      <div class="pt-2">
+        <button
+          type="submit"
+          class="h-[54px] w-full rounded-[10px] bg-[#48B7CB] text-[22px] font-bold text-white shadow-sm transition hover:bg-[#3aa8bc] disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="loading"
+        >
+          <span v-if="!loading">Sign Up</span>
+          <span v-else>Creating account...</span>
+        </button>
+      </div>
+
+      <!-- Bottom Link -->
+      <div class="text-center text-[15px] text-[#2E2E2E]">
+        Already have an account?
+        <router-link
+          to="/login"
+          class="font-semibold text-[#2F8EA2] hover:underline"
+        >
+          Log in
+        </router-link>
+      </div>
+    </form>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { authService } from '@/services/auth.service';
-import { useRouter } from 'vue-router';
+import { reactive, ref } from 'vue'
 
-const router = useRouter();
+const loading = ref(false)
+
 const form = reactive({
-  username: '',
   firstName: '',
   lastName: '',
   email: '',
   password: '',
   confirmPassword: '',
-  agreeTerms: false
-});
+  agree: false,
+})
 
-const fieldErrors = reactive({});
-const globalErrorMsg = ref('');
-const successMsg = ref('');
-const loading = ref(false);
+const errors = reactive({
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  agree: '',
+})
 
-const validateForm = () => {
-  let isValid = true;
-  Object.keys(fieldErrors).forEach(key => delete fieldErrors[key]);
+function validateForm() {
+  errors.firstName = ''
+  errors.lastName = ''
+  errors.email = ''
+  errors.password = ''
+  errors.confirmPassword = ''
+  errors.agree = ''
 
+  let isValid = true
 
-
-  const alphaRegex = /^[A-Za-z]+$/;
-  if (!alphaRegex.test(form.firstName)) {
-    fieldErrors.firstName = "First name must contain only alphabetic characters.";
-    isValid = false;
+  if (!form.firstName) {
+    errors.firstName = 'Please enter your first name.'
+    isValid = false
   }
 
-  if (!alphaRegex.test(form.lastName)) {
-    fieldErrors.lastName = "Last name must contain only alphabetic characters.";
-    isValid = false;
+  if (!form.lastName) {
+    errors.lastName = 'Please enter your last name.'
+    isValid = false
   }
 
-  if (form.password !== form.confirmPassword) {
-    fieldErrors.confirmPassword = "Passwords do not match.";
-    isValid = false;
+  if (!form.email) {
+    errors.email = 'Please enter your email.'
+    isValid = false
+  } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+    errors.email = 'Please enter a valid email address.'
+    isValid = false
   }
 
-  if (!form.agreeTerms) {
-    fieldErrors.agreeTerms = "You must agree to the terms.";
-    isValid = false;
+  if (!form.password) {
+    errors.password = 'Please enter your password.'
+    isValid = false
+  } else if (!/^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(form.password)) {
+    errors.password = 'Password must contain letters and numbers.'
+    isValid = false
   }
 
-  return isValid;
-};
-
-const handleRegister = async () => {
-  globalErrorMsg.value = '';
-  successMsg.value = '';
-
-  if (!validateForm()) {
-    return;
+  if (!form.confirmPassword) {
+    errors.confirmPassword = 'Please confirm your password.'
+    isValid = false
+  } else if (form.confirmPassword !== form.password) {
+    errors.confirmPassword = 'Passwords do not match.'
+    isValid = false
   }
 
-  loading.value = true;
+  if (!form.agree) {
+    errors.agree = 'You must agree to the terms and privacy policies.'
+    isValid = false
+  }
+
+  return isValid
+}
+
+async function handleSubmit() {
+  if (!validateForm()) return
+
   try {
-    await authService.registerDataUse(form);
-    successMsg.value = "Registration successful! You can now log in.";
-    Object.keys(form).forEach(key => {
-      if (typeof form[key] === 'boolean') form[key] = false;
-      else form[key] = '';
-    });
-    setTimeout(() => {
-      router.push('/login');
-    }, 2000);
-  } catch (err) {
-    if (err.response?.data?.errors) {
-      // Backend returned field-level errors
-      Object.assign(fieldErrors, err.response.data.errors);
-    } else {
-      globalErrorMsg.value = err.response?.data?.message || err.message || "Registration failed.";
-    }
+    loading.value = true
+
+    // TODO: replace with your real register API call
+    console.log('Register Data Use:', { ...form })
+
+
+  } catch (error) {
+    console.error(error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 </script>

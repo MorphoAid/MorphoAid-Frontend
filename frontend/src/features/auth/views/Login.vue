@@ -1,147 +1,260 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
-      <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
-        </h2>
-      </div>
-
-      <!-- Dev Quick Login (Only in development mode) -->
-      <div v-if="isDev" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-sm mb-4">
-        <p class="font-semibold text-yellow-800 mb-2">Dev Quick Login</p>
-        <div class="flex gap-2 justify-center">
-          <button @click="fillDevAdmin" type="button"
-            class="bg-purple-100 text-purple-700 font-medium px-3 py-1 rounded hover:bg-purple-200 transition">Admin</button>
-          <button @click="fillDevDataUse" type="button"
-            class="bg-green-100 text-green-700 font-medium px-3 py-1 rounded hover:bg-green-200 transition">DataUse</button>
-        </div>
-      </div>
-
-      <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
-
-        <div v-if="errorMsg" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert">
-          <span class="block sm:inline">{{ errorMsg }}</span>
-        </div>
-
-        <div class="rounded-md shadow-sm -space-y-px">
-          <div>
-            <label for="email" class="sr-only">Email address</label>
-            <input id="email" name="email" type="email" required v-model="form.email"
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Email address">
-          </div>
-          <div>
-            <label for="password" class="sr-only">Password</label>
-            <input id="password" name="password" type="password" required v-model="form.password"
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Password">
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between mb-4 mt-2">
-          <div class="flex items-center">
-            <input id="rememberMe" name="rememberMe" type="checkbox" v-model="form.rememberMe"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-            <label for="rememberMe" class="ml-2 block text-sm text-gray-900">
-              Remember me
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <button type="submit" :disabled="loading"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
-            {{ loading ? 'Signing in...' : 'Sign in' }}
-          </button>
-        </div>
-
-        <div class="flex items-center justify-between mt-4">
-          <div class="text-sm">
-            <router-link to="/register/data-use" class="font-medium text-blue-600 hover:text-blue-500">
-              Register (Data Use)
-            </router-link>
-          </div>
-          <div class="text-sm">
-            <router-link to="/register/data-prep" class="font-medium text-blue-600 hover:text-blue-500">
-              Join (Data Prep)
-            </router-link>
-          </div>
-        </div>
-      </form>
+  <div
+    class="w-full max-w-md rounded-2xl border border-white/60 bg-stone-50/90 px-6 py-8 shadow-[0_12px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:px-8 sm:py-9"
+  >
+    <div class="text-center">
+      <h1 class="text-3xl font-bold leading-tight text-[#2E2E2E] sm:text-4xl">
+        Login
+      </h1>
+      <p class="mt-3 text-sm leading-6 text-[#5C5C5C] sm:text-base">
+        Welcome back to MorphoAid.
+      </p>
     </div>
+
+    <!-- Dev Quick Login -->
+    <div
+      v-if="isDev"
+      class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4"
+    >
+      <p class="mb-3 text-sm font-semibold text-amber-800">Dev Quick Login</p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <button
+          type="button"
+          @click="fillDevAdmin"
+          class="rounded-lg bg-purple-100 px-3 py-1.5 text-sm font-medium text-purple-700 transition hover:bg-purple-200"
+        >
+          Admin
+        </button>
+        <button
+          type="button"
+          @click="fillDevDataUse"
+          class="rounded-lg bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-200"
+        >
+          DataUse
+        </button>
+        <button
+          type="button"
+          @click="fillDevDataPrep"
+          class="rounded-lg bg-sky-100 px-3 py-1.5 text-sm font-medium text-sky-700 transition hover:bg-sky-200"
+        >
+          DataPrep
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="errorMsg"
+      class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+    >
+      {{ errorMsg }}
+    </div>
+
+    <form class="mt-6 space-y-4" @submit.prevent="handleLogin">
+      <div>
+        <label
+          for="email"
+          class="mb-2 block text-sm font-medium text-[#2E2E2E]"
+        >
+          Email
+        </label>
+        <input
+          id="email"
+          v-model.trim="form.email"
+          type="email"
+          autocomplete="email"
+          placeholder="Email address"
+          class="h-12 w-full rounded-[10px] border border-neutral-200 bg-white px-4 text-sm text-zinc-800 shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
+          :class="errors.email ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
+        />
+        <p v-if="errors.email" class="mt-2 text-sm text-red-500">
+          {{ errors.email }}
+        </p>
+      </div>
+
+      <div>
+        <label
+          for="password"
+          class="mb-2 block text-sm font-medium text-[#2E2E2E]"
+        >
+          Password
+        </label>
+        <input
+          id="password"
+          v-model="form.password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Password"
+          class="h-12 w-full rounded-[10px] border border-neutral-200 bg-white px-4 text-sm text-zinc-800 shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
+          :class="errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
+        />
+        <p v-if="errors.password" class="mt-2 text-sm text-red-500">
+          {{ errors.password }}
+        </p>
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <label class="flex items-center gap-2 text-sm text-[#2E2E2E]">
+          <input
+            v-model="form.rememberMe"
+            type="checkbox"
+            class="h-4 w-4 rounded border-zinc-300 text-[#48B7CB] focus:ring-[#48B7CB]"
+          />
+          <span>Remember me</span>
+        </label>
+
+        <button
+          type="button"
+          class="text-sm font-medium text-[#2F8EA2] transition hover:text-[#368998]"
+        >
+          Forgot password
+        </button>
+      </div>
+
+      <button
+        type="submit"
+        :disabled="loading"
+        class="flex h-12 w-full items-center justify-center rounded-[10px] bg-[#48B7CB] px-4 text-sm font-semibold text-white transition hover:bg-[#368998] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <svg
+          v-if="loading"
+          class="mr-2 h-4 w-4 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          />
+        </svg>
+        {{ loading ? 'Signing in...' : 'Sign in' }}
+      </button>
+
+      <div class="flex items-center justify-between pt-2 text-sm">
+        <router-link
+          to="/register/data-use"
+          class="font-medium text-[#2F8EA2] transition hover:text-[#368998]"
+        >
+          Register (Data Use)
+        </router-link>
+
+        <router-link
+          to="/register/data-prep"
+          class="font-medium text-[#2F8EA2] transition hover:text-[#368998]"
+        >
+          Join (Data Prep)
+        </router-link>
+      </div>
+    </form>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { useAuthStore } from '@/store/auth.store';
-import { useRouter } from 'vue-router';
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/store/auth.store'
 
-const router = useRouter();
-const authStore = useAuthStore();
+const router = useRouter()
+const authStore = useAuthStore()
+
+const loading = ref(false)
+const errorMsg = ref('')
+const isDev = import.meta.env.DEV
 
 const form = reactive({
   email: '',
   password: '',
-  rememberMe: false
-});
-const loading = ref(false);
-const errorMsg = ref('');
+  rememberMe: false,
+})
 
-// Dev mode quick fills
-const isDev = import.meta.env.DEV;
-const fillDevAdmin = () => {
-  form.email = 'admin@test.com';
-  form.password = 'Admin123!';
-};
-const fillDevDataUse = () => {
-  form.email = 'demo@morphoaid.com';
-  form.password = 'demopass';
-};
+const errors = reactive({
+  email: '',
+  password: '',
+})
 
-const handleLogin = async () => {
-  errorMsg.value = '';
+function validateForm() {
+  errors.email = ''
+  errors.password = ''
+  errorMsg.value = ''
 
-  if (!form.email || !form.password) {
-    errorMsg.value = "Please enter your email and password.";
-    return;
+  let isValid = true
+
+  if (!form.email) {
+    errors.email = 'Please enter your email.'
+    isValid = false
+  } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+    errors.email = 'Please enter a valid email address.'
+    isValid = false
   }
 
-  loading.value = true;
-  try {
-    await authStore.login(form.email, form.password, form.rememberMe);
+  if (!form.password) {
+    errors.password = 'Please enter your password.'
+    isValid = false
+  }
 
-    // Ensure tokens/roles are in localStorage to match backend response requirements
+  return isValid
+}
+
+function fillDevAdmin() {
+  form.email = 'admin@test.com'
+  form.password = 'Admin123!'
+}
+
+function fillDevDataUse() {
+  form.email = 'demo@morphoaid.com'
+  form.password = 'demopass'
+}
+
+function fillDevDataPrep() {
+  form.email = 'dataprep101@example.com'
+  form.password = 'demopass'
+}
+
+async function handleLogin() {
+  if (!validateForm()) return
+
+  try {
+    loading.value = true
+    errorMsg.value = ''
+
+    await authStore.login(form.email, form.password, form.rememberMe)
+
     if (authStore.token) {
-      localStorage.setItem('access_token', authStore.token);
+      localStorage.setItem('access_token', authStore.token)
     }
     if (authStore.role) {
-      localStorage.setItem('role', authStore.role);
+      localStorage.setItem('role', authStore.role)
     }
 
-    // Redirect logic
-    const redirectPath = router.currentRoute.value.query.redirect;
+    const redirectPath = router.currentRoute.value.query.redirect
     if (redirectPath) {
-      router.push(redirectPath);
-      return;
+      router.push(redirectPath)
+      return
     }
 
-    const role = authStore.role;
+    const role = authStore.role
     if (role === 'ADMIN') {
-      router.push('/admin/dashboard');
+      router.push('/admin/dashboard')
     } else if (role === 'DATA_PREP') {
-      router.push('/data-prep/dashboard');
+      router.push('/dataprep')
     } else if (role === 'DATA_USE') {
-      router.push('/data-use/cases');
+      router.push('/data-use')
     } else {
-      router.push('/');
+      router.push('/')
     }
   } catch (err) {
-    errorMsg.value = err.response?.data?.message || err.message || "Login failed.";
+    errorMsg.value =
+      err?.response?.data?.message || err?.message || 'Login failed.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 </script>

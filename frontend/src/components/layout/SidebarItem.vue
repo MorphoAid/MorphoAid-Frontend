@@ -40,8 +40,10 @@ const isActive = computed(() => {
     if (props.disabled) return false
     if (props.to && route.path === props.to) return true
     if (props.activeMatches.length > 0) {
-        return props.activeMatches.some(match => route.path.startsWith(match))
-    }
+return props.activeMatches.some(match => {
+    if (route.path === match) return true
+    return route.path.startsWith(match + '/')
+})    }
     return false
 })
 </script>
