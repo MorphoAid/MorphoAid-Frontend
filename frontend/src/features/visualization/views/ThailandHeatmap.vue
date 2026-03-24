@@ -278,6 +278,10 @@ onBeforeUnmount(() => {
         mapInstance = null
     }
 })
+
+defineExpose({
+    updateRegionFilter
+})
 </script>
 
 <style>

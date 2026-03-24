@@ -82,15 +82,25 @@
                 <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="West">West</option>
                 <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="South">South</option>
               </select>
+              <button @click="handleReset" class="px-3 py-2 bg-white border border-[#368998]/20 text-[#368998] font-bold rounded-xl text-xs hover:bg-[#368998]/5 transition-all flex items-center gap-1 shadow-sm group">
+                <span class="material-symbols-outlined text-sm group-hover:rotate-[-180deg] transition-transform duration-500">restart_alt</span>
+                Reset
+              </button>
             </div>
           </div>
           <div class="flex-1 relative bg-[#e1e2e8]">
-            <ThailandHeatmap :region="selectedRegion" />
+            <ThailandHeatmap ref="heatmapRef" :region="selectedRegion" />
           </div>
         </div>
 
         <!-- Quick Action: Image Upload -->
-        <div v-if="aiStatus !== 'Offline'" @click="$router.push('/data-use/cases/new')" class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-2 border-dashed border-outline-variant hover:border-primary transition-all group cursor-pointer">
+        <div v-if="aiStatus !== 'Offline'" 
+             @click="uiStore.openUploadModal()" 
+             @dragover.prevent="isDragging = true" 
+             @dragleave.prevent="isDragging = false" 
+             @drop.prevent="handleDrop"
+             class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-2 border-dashed transition-all group cursor-pointer"
+             :class="isDragging ? 'border-primary bg-primary-fixed-dim' : 'border-outline-variant hover:border-primary'">
           <div class="flex flex-col md:flex-row items-center gap-8">
             <div class="w-20 h-20 bg-primary-fixed rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
               <span class="material-symbols-outlined text-[40px]">biotech</span>
@@ -194,18 +204,22 @@ import { visualizationService } from '@/features/visualization/services/visualiz
 import { systemService } from '@/services/system.service'
 import { useAuthStore } from '@/store/auth.store'
 import { useMapStore } from '@/store/map.store'
+import { useUiStore } from '@/store/ui.store'
 import ThailandHeatmap from '@/features/visualization/views/ThailandHeatmap.vue'
 
 const authStore = useAuthStore()
 const mapStore = useMapStore()
+const uiStore = useUiStore()
 const isAdmin = computed(() => authStore.role === 'ADMIN')
 
 const selectedRegion = computed({
     get: () => mapStore.selectedRegion,
     set: (val) => mapStore.setSelectedRegion(val)
 })
+const heatmapRef = ref(null)
 const heatmapData = ref([])
 const aiStatus = ref('Checking...')
+const isDragging = ref(false)
 const stats = ref({
     needsReview: 0,
     inQueue: 0,
@@ -323,6 +337,21 @@ const toggleAiStatus = async () => {
     } catch (e) {
         console.error("Failed to toggle AI status", e)
         aiStatus.value = 'Offline'
+    }
+}
+
+const handleReset = () => {
+    selectedRegion.value = 'All'
+    if (heatmapRef.value) {
+        heatmapRef.value.updateRegionFilter()
+    }
+}
+
+const handleDrop = (e) => {
+    isDragging.value = false
+    const file = e.dataTransfer.files[0]
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+        uiStore.openUploadModal(file)
     }
 }
 

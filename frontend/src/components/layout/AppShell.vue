@@ -3,7 +3,7 @@
         <Navbar />
         <Sidebar :items="items" @new-case="$emit('new-case')" />
 
-        <main class="ml-64 h-screen overflow-y-auto bg-[#F8F8F8]">
+        <main class="ml-64 h-[calc(100vh-64px)] overflow-y-auto bg-[#F8F8F8]">
             <router-view />
         </main>
     </div>

@@ -21,6 +21,10 @@ const ClinicalService = {
         return http.post(`/clinical/cases/${caseId}/notes`, { note });
     },
 
+    updateNote(caseId, noteId, note) {
+        return http.patch(`/clinical/cases/${caseId}/notes/${noteId}`, { note });
+    },
+
     exportPdf(caseId) {
         return http.get(`/clinical/cases/${caseId}/export`, {
             responseType: "blob",

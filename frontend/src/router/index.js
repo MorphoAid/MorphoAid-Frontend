@@ -35,6 +35,7 @@ const CaseDetail = () => import('@/features/case-management/views/CaseDetailTest
 const ResultDetail = () => import('@/features/case-management/views/ResultDetail.vue')
 const Insight = () => import('@/features/visualization/views/Insight.vue')
 const AccountManagement = () => import('@/features/case-management/views/AccountManagement.vue')
+const DiagnosticReport = () => import('@/features/case-management/views/DiagnosticReport.vue')
 
 // CLINICAL (Feature 2)
 const ClinicalUpload = () => import('@/features/clinical/views/ClinicalUpload.vue')
@@ -163,7 +164,7 @@ const routes = [
       { path: 'upload', component: UploadImage }, // (optional) you can keep for now
       { path: 'cases', component: CaseList },
 
-      // ✅ Detail route (dynamic)
+      // ✅ Detail routes (dynamic)
       { path: 'cases/:id', component: CaseDetail, props: true },
       // { path: 'clinical/cases/:id', name: 'ClinicalCaseDetail', component: ClinicalCaseDetail },
 
@@ -173,6 +174,8 @@ const routes = [
     ]
   },
 
+  { path: '/data-use/cases/:id/report', name: 'CaseReport', component: DiagnosticReport, props: true, meta: { requiresAuth: true } },
+  
   // TEST
   {
     path: '/__test',

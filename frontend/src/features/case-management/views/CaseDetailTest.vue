@@ -1,341 +1,388 @@
 <template>
-    <div class="h-full bg-slate-50 relative p-6">
-        <!-- Header & Back Button -->
-        <div class="flex justify-between items-center mb-6 text-gray-800">
-            <button @click="router.push('/data-use/cases')"
-                class="hover:bg-gray-200 p-1 rounded transition-colors text-sm font-semibold flex items-center">
-                <ChevronLeft class="w-4 h-4 mr-1"/> Case Details
-            </button>
-            <button @click="exportCase" class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow-sm transition-colors">
-                 <Download class="w-4 h-4" /> Export Report
-            </button>
-        </div>
-
-        <!-- 404 Case Not Found -->
-        <div v-if="caseNotFound" class="bg-red-100 border border-red-400 text-red-700 px-6 py-10 rounded text-center">
-            <h2 class="text-2xl font-bold mb-2">Case not found</h2>
-            <p>The requested case could not be retrieved from the database.</p>
-        </div>
-
-        <!-- Loading State -->
-        <div v-else-if="loadingCase" class="text-center py-10 flex flex-col items-center justify-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-500 mb-4"></div>
-            <p class="text-gray-500 font-medium">Loading case details...</p>
-        </div>
-
-        <!-- General Error (Non 404) -->
-        <div v-else-if="caseError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            <strong class="font-bold">Error: </strong>
-            <span class="block sm:inline">{{ caseError }}</span>
-        </div>
-
-        <!-- Case Details Content: 2-Column Layout -->
-        <div v-else-if="caseData" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <!-- LEFT COLUMN: Annotated Image -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col items-center w-full relative min-h-[500px]">
-                 <!-- Image Upload Section (if no image yet) -->
-                <div v-if="!caseData?.imageId" class="w-full p-6">
-                    <CaseImageUpload :caseId="caseId" :existingFilename="caseData.imageFilename" :imageId="caseData.imageId"
-                        @upload-success="fetchCaseDetail" />
-                </div>
-
-                <!-- Preview / Loading Image -->
-                <div v-else-if="loadingAi || isAnalyzing" class="w-full flex-grow relative flex items-center justify-center bg-gray-100">
-                    <img v-if="previewImageUrl" :src="previewImageUrl" alt="Uploaded case image" class="max-w-full max-h-full object-contain opacity-50" />
-                    <!-- Analyzing Overlay -->
-                    <div v-if="isAnalyzing" class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center">
-                        <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-emerald-500 mb-4"></div>
-                        <p class="text-white text-lg font-semibold tracking-wide drop-shadow-md">Analyzing Image...</p>
-                    </div>
-                </div>
-
-                 <!-- Annotated Image -->
-                 <div v-else-if="aiData && rawResults && caseData?.imageId" class="w-full h-full p-2 bg-gray-50 flex items-center justify-center">
-                    <AnnotatedImage :caseId="caseId" :imageId="caseData.imageId" :detections="rawResults" class="max-w-full max-h-[800px] object-contain rounded-lg shadow-inner" />
-                 </div>
-                 
-                 <!-- Fallback Preview -->
-                 <div v-else-if="caseData?.imageId" class="w-full h-full p-2 bg-gray-50 flex items-center justify-center">
-                    <img v-if="previewImageUrl" :src="previewImageUrl" alt="Preview" class="max-w-full max-h-[800px] object-contain rounded-lg shadow-inner"/>
-                 </div>
-            </div>
-
-            <!-- RIGHT COLUMN: Interactive Panels -->
-            <div class="flex flex-col gap-6">
-
-                <!-- 1. Patient Info Panel -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center gap-3">
-                            <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Patient Info.</h2>
-                            <span :class="patientInfoStatus.class" class="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border shadow-sm">
-                                {{ patientInfoStatus.label }}
-                            </span>
-                        </div>
-                        <button @click="togglePatientInfoEdit" class="text-gray-400 hover:text-gray-700 transition-colors p-1">
-                            <Pencil class="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <div v-if="!isEditingPatientInfo" class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Patient ID:</span> <span class="text-gray-700">{{ caseData.patientCode || 'N/A' }}</span></div>
-                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Age:</span> <span class="text-gray-700">{{ patientData.age ? `${patientData.age} yrs` : '-' }}</span></div>
-                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Gender:</span> <span class="text-gray-700">{{ patientData.gender || '-' }}</span></div>
-                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Weight:</span> <span class="text-gray-700">{{ patientData.weight ? `${patientData.weight}kg` : '-' }}</span></div>
-                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Risk Factors:</span> <span class="text-gray-700">{{ patientData.riskFactors || 'None' }}</span></div>
-                        <div class="flex items-baseline"><span class="font-bold text-gray-800 w-28">Fever Duration:</span> <span class="text-gray-700">{{ patientData.feverDuration ? `${patientData.feverDuration} days` : '-' }}</span></div>
-                    </div>
-                    
-                    <div v-else class="grid grid-cols-2 gap-4 text-sm mt-2">
-                        <div class="col-span-2 md:col-span-1">
-                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Patient Code</label>
-                            <input v-model="patientData.patientCode" type="text" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors" />
-                        </div>
-                        <div class="col-span-2 md:col-span-1 border-b pb-2 md:border-b-0 md:pb-0 border-gray-100">
-                             <!-- empty spacer -->
-                        </div>
-                        
-                        <div>
-                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Age (yrs)</label>
-                            <select v-model="patientData.age" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
-                                <option value="">Select</option>
-                                <option v-for="n in 100" :key="n" :value="n">{{ n }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Gender</label>
-                            <select v-model="patientData.gender" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
-                                <option value="">Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Weight (kg)</label>
-                             <select v-model="patientData.weight" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
-                                <option value="">Select</option>
-                                <option v-for="n in 150" :key="n" :value="n">{{ n }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Fever Duration (days)</label>
-                            <select v-model="patientData.feverDuration" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
-                                <option value="">Select</option>
-                                <option v-for="n in 30" :key="n" :value="n">{{ n }}</option>
-                            </select>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block font-bold text-gray-700 mb-1 leading-tight text-xs uppercase tracking-wider">Risk Factors</label>
-                            <select v-model="patientData.riskFactors" class="w-full border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white outline-none">
-                                <option value="None">None</option>
-                                <option value="Travel History">Travel History</option>
-                                <option value="Forest Entry">Forest Entry</option>
-                                <option value="Pregnancy">Pregnancy</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-span-2 flex justify-end gap-2 mt-2 pt-2 border-t border-gray-100">
-                             <button @click="isEditingPatientInfo = false" class="px-4 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">Cancel</button>
-                             <button @click="savePatientInfo" class="px-4 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-sm transition-colors">Save</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Diagnostic Panel -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-grow flex flex-col pt-5 tracking-tight">
-                    <div class="flex justify-between items-center mb-5">
-                        <h2 class="text-2xl font-bold text-gray-900">Diagnostic Panel</h2>
-                        
-                        <div v-if="aiData && !aiNotFound" class="px-4 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            Analyzed
-                        </div>
-                        <button v-else-if="caseData?.imageId && !isAnalyzing" @click="triggerAnalysis" class="px-4 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition-colors shadow-sm">
-                            Analyze Now
-                        </button>
-                        <div v-else-if="isAnalyzing" class="px-4 py-1 rounded-full text-sm font-bold bg-gray-100 text-gray-600 border border-gray-200 flex items-center">
-                            <div class="animate-spin h-3 w-3 mr-2 border-2 border-gray-400 border-t-transparent rounded-full"></div> Analyzing
-                        </div>
-                    </div>
-
-                    <div v-if="aiData && !aiNotFound" class="flex-grow flex flex-col gap-5">
-                        <!-- AI Suggestion -->
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-800 mb-2">AI Suggestion</h3>
-                            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 shadow-sm relative overflow-hidden">
-                                <div class="font-bold text-gray-900 text-base">Detect Stage: <span class="capitalize">{{ formattedParasiteStage }}</span></div>
-                                <div class="text-gray-600 font-medium text-sm mt-1">
-                                    {{ (aiData.confidence * 100).toFixed(1) }}% Confidence
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recommended Treatment (Conditional) -->
-                        <div v-if="shouldShowTreatment">
-                            <h3 class="text-sm font-bold text-gray-800 mb-2 mt-2">Recommended Treatment</h3>
-                            <div class="pl-4 border-l-2 border-gray-300 text-sm text-gray-700 leading-relaxed font-medium">
-                                 Administer ACT immediately (e.g., Artemether-Lumefantrine) for 3 days.
-                            </div>
-                        </div>
-
-                        <!-- Next Steps (Conditional) -->
-                        <div v-if="shouldShowTreatment || verdictData.drugExposure !== 'None'">
-                             <h3 class="text-sm font-bold text-gray-800 mb-2 mt-2">Next Steps</h3>
-                             <div class="pl-4 border-l-2 border-gray-300 text-sm text-gray-700 leading-relaxed font-medium">
-                                 Schedule follow-up smears on Days 1, 2, 3, and 7
-                             </div>
-                        </div>
-                    </div>
-                    <div v-else class="text-gray-400 text-center py-8 text-sm font-medium flex-grow flex items-center justify-center">
-                        Waiting for analysis...
-                    </div>
-                    
-                    <!-- 3. Doctor's Verdict Section -->
-                    <div class="mt-8">
-                        <h3 class="text-sm font-bold text-gray-900 mb-3 whitespace-nowrap">Doctor's Verdict</h3>
-                        
-                        <label class="flex items-center gap-2 mb-4 cursor-pointer w-fit group">
-                            <input type="checkbox" v-model="verdictData.isEditingResult" class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
-                            <span class="text-sm font-medium text-gray-800 group-hover:text-black">Edit Result</span>
-                        </label>
-
-                         <!-- Edit Form (when checkbox checked) -->
-                         <div v-if="verdictData.isEditingResult" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 w-3/4">
-                            
-                            <!-- Parasite Stage Radio -->
-                            <div>
-                                <h4 class="text-sm font-bold text-gray-900 mb-2">Parasite Stage</h4>
-                                <div class="grid grid-cols-2 gap-y-2 gap-x-4 pl-1">
-                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
-                                        <input type="radio" value="RING" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Ring
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
-                                        <input type="radio" value="SCHIZONTS" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Schizonts
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
-                                        <input type="radio" value="TROPHOZOITE" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Trophozoite
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
-                                        <input type="radio" value="NONE" v-model="verdictData.parasiteStage" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> None
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Drug Exposure Radio -->
-                            <div>
-                                <h4 class="text-sm font-bold text-gray-900 mb-2">Drug Exposure</h4>
-                                 <div class="grid grid-cols-2 gap-y-2 gap-x-4 pl-1">
-                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
-                                        <input type="radio" value="A" v-model="verdictData.drugExposure" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Drug A
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium">
-                                        <input type="radio" value="B" v-model="verdictData.drugExposure" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> Drug B
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer w-fit text-sm text-gray-700 hover:text-gray-900 font-medium col-span-2">
-                                        <input type="radio" value="None" v-model="verdictData.drugExposure" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500" /> None
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Treatment Plan (conditional) -->
-                            <div v-if="verdictData.drugExposure === 'A' || verdictData.drugExposure === 'B'" class="animate-in fade-in duration-200">
-                                <h4 class="text-sm font-bold text-gray-900 mb-2">Treatment Plan <span class="text-xs text-gray-400 font-normal ml-1">(Optional)</span></h4>
-                                 <input type="text" v-model="verdictData.treatmentPlan" placeholder="Enter specific treatment plan..." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow" />
-                            </div>
-                        </div>
-
-                        <!-- Info display when NOT editing result -->
-                        <div v-else-if="aiData && !aiNotFound" class="grid grid-cols-2 gap-4 text-sm mb-4 px-1 opacity-80 pl-2 border-l-4 border-gray-200">
-                             <div><span class="font-bold text-gray-800">Stage:</span> <span class="capitalize text-gray-700 ml-1">{{ verdictData.parasiteStage || formattedParasiteStage || 'None' }}</span></div>
-                             <div><span class="font-bold text-gray-800">Drug:</span> <span class="capitalize text-gray-700 ml-1">{{ verdictData.drugExposure !== 'None' ? 'Drug ' + verdictData.drugExposure : 'None' }}</span></div>
-                        </div>
-
-                        <!-- Notes Textarea -->
-                        <div class="mt-4">
-                            <h4 class="text-sm font-bold text-gray-900 mb-2">Notes</h4>
-                            <textarea v-model="verdictData.notes" rows="3" class="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow resize-none" placeholder="Add clinical observations, reasons for edits, etc..."></textarea>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-between items-center mt-6">
-                            <button @click="resetVerdict" class="px-6 py-1.5 rounded-md border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm">
-                                Cancel
-                            </button>
-                            <button @click="saveVerdict" class="px-8 py-1.5 rounded-md bg-[#38a89d] hover:bg-[#2e8f85] text-white font-semibold text-sm transition-colors shadow-md flex items-center justify-center min-w-[120px]" :disabled="isSavingVerdict">
-                                <div v-if="isSavingVerdict" class="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
-                                {{ isSavingVerdict ? 'Saving...' : 'Save' }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Custom Modal Popup -->
-        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
-            <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200">
-                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ modalTitle }}</h3>
-                <p class="text-gray-700 whitespace-pre-line mb-6 text-sm leading-relaxed">{{ modalMessage }}</p>
-                <div class="flex justify-end gap-3">
-                    <button v-if="modalType === 'confirm'" @click="handleModalClose(false)" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button @click="handleModalClose(true)" class="px-5 py-2 bg-indigo-600 text-white rounded-md font-medium text-sm hover:bg-indigo-700 shadow-sm transition-colors">OK</button>
-                </div>
-            </div>
-        </div>
+  <div class="min-h-screen bg-[#f8f9ff] text-[#191c20] font-inter pb-12">
+    <!-- Main Content Canvas -->
+    <div v-if="loadingCase" class="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <div class="w-12 h-12 border-4 border-[#00458f]/20 border-t-[#00458f] rounded-full animate-spin"></div>
+        <p class="text-slate-400 font-medium animate-pulse font-manrope">Synchronizing clinical data...</p>
     </div>
+
+    <div v-else-if="caseNotFound" class="max-w-4xl mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-sm border border-red-100 text-center">
+        <span class="material-symbols-outlined text-red-500 text-5xl mb-4">error_outline</span>
+        <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2">Case Not Found</h2>
+        <button @click="router.push('/data-use/cases')" class="px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Back to Archive</button>
+    </div>
+
+    <div v-else-if="caseData" class="max-w-screen-2xl mx-auto p-6 flex flex-col gap-6 pt-4">
+      <!-- Context Header -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-6">
+          <button @click="router.push('/data-use/cases')" 
+                  class="flex items-center justify-center h-14 w-14 rounded-3xl bg-white hover:shadow-md transition-all border border-slate-100 text-[#00458f] group active:scale-90">
+            <span class="material-symbols-outlined text-3xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
+          </button>
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <h1 class="text-3xl font-black tracking-tighter text-[#191c20] font-manrope leading-none">
+                Case #{{ String(caseId).padStart(5, 'PX-00000').replace('PX-00000', 'PX-') }}
+              </h1>
+              <div class="px-3 py-1 bg-[#00458f]/5 rounded-lg border border-[#00458f]/10">
+                <span class="text-[10px] font-black text-[#00458f] uppercase tracking-widest">{{ caseData.status }}</span>
+              </div>
+            </div>
+            <p class="text-sm text-slate-400 font-bold flex items-center gap-2">
+               Analysis Node: {{ caseData.uploadedBy?.fullName || 'Technician' }} • {{ formatDate(caseData.createdAt) }}
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <button @click="viewDigitalReport" 
+              class="px-8 py-4 rounded-2xl bg-white border-2 border-[#00458f]/10 text-[#00458f] text-xs font-black uppercase tracking-widest hover:bg-[#f8f9ff] hover:border-[#00458f]/30 transition-all flex items-center gap-3 shadow-sm active:scale-95">
+              <span class="material-symbols-outlined text-xl">description</span>
+              View Digital Report
+          </button>
+          <button @click="exportPdf" :disabled="isExporting"
+              class="px-8 py-4 rounded-2xl bg-gradient-to-br from-[#00458f] to-[#005cbb] text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-3">
+              <span v-if="!isExporting" class="material-symbols-outlined text-xl">download</span>
+              <div v-else class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
+              {{ isExporting ? 'Exporting...' : 'Export Report' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Bento Layout Content -->
+      <div class="grid grid-cols-12 gap-6">
+        <!-- Left Section: Microscopy Viewer & Clinical Verdict History -->
+        <div class="col-span-12 lg:col-span-8 space-y-6">
+          <!-- Microscopy Viewer -->
+          <div class="relative bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-200/50 group aspect-video flex items-center justify-center">
+            
+            <div v-if="!caseData?.imageId" class="w-full h-full flex flex-col items-center justify-center bg-slate-50 p-12">
+                 <CaseImageUpload :caseId="caseId" :existingFilename="caseData.imageFilename" :imageId="caseData.imageId"
+                    @upload-success="loadAllData" />
+            </div>
+
+            <div v-else-if="isAnalyzing" class="w-full h-full relative flex items-center justify-center bg-slate-900/5 backdrop-blur-sm z-10">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="w-16 h-16 border-4 border-[#00458f]/20 border-t-[#00458f] rounded-full animate-spin"></div>
+                    <p class="text-[#00458f] font-black uppercase tracking-widest text-sm">AI Analyzing Smear...</p>
+                </div>
+            </div>
+
+            <div v-else class="absolute inset-0 bg-slate-900 flex items-center justify-center overflow-hidden">
+               <AnnotatedImage 
+                 v-if="caseData.imageId && aiData" 
+                 :case-id="caseId"
+                 :image-id="caseData.imageId"
+                 :detections="rawAiDetections" 
+                 class="w-full h-full"
+               />
+               <img v-else-if="previewImageUrl" :src="previewImageUrl" class="w-full h-full object-contain" />
+               <div v-else class="text-slate-500 font-medium">Image not available</div>
+            </div>
+            
+            <!-- Viewer Controls -->
+            <div v-if="caseData?.imageId" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-xl border border-slate-200/50 rounded-2xl px-6 py-3 flex items-center gap-6 shadow-2xl z-20 transition-all opacity-0 group-hover:opacity-100">
+              <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">zoom_in</span></button>
+              <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">zoom_out</span></button>
+              <div class="h-4 w-px bg-slate-200"></div>
+              <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">layers</span></button>
+              <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">fullscreen</span></button>
+              <div class="h-4 w-px bg-slate-200"></div>
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">MAG: 1000X</span>
+            </div>
+          </div>
+
+          <!-- Clinical Verdict History Section -->
+          <section class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-200/50">
+            <div class="flex items-center gap-3 mb-8">
+              <span class="material-symbols-outlined text-[#00458f] p-2 bg-[#00458f]/5 rounded-xl">clinical_notes</span>
+              <h2 class="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">Clinical Verdict History</h2>
+            </div>
+            
+            <div v-if="notes.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div v-for="note in notes" :key="note.id" 
+                   class="relative group border border-slate-100 rounded-[2rem] p-6 transition-all duration-300 overflow-hidden"
+                   :class="getVerdictStatus(note) === 'accepted' ? 'bg-emerald-50 border-emerald-200' : getVerdictStatus(note) === 'discarded' ? 'bg-red-50 border-red-100' : 'bg-slate-50/50 hover:bg-white hover:shadow-md'">
+                
+                <!-- Status Overlay Icon -->
+                <div v-if="getVerdictStatus(note) !== 'pending'" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+                   <span class="material-symbols-outlined text-[10rem]" :class="getVerdictStatus(note) === 'accepted' ? 'text-emerald-500' : 'text-red-600'">
+                     {{ getVerdictStatus(note) === 'accepted' ? 'check_circle' : 'cancel' }}
+                   </span>
+                </div>
+
+                <div class="relative z-10 flex flex-col h-full">
+                  <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1 mr-4">
+                      <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ note.authorName || 'Medical Officer' }} • {{ formatRelativeTime(note.createdAt) }}</p>
+                      <div class="flex flex-wrap gap-2 items-center mt-1">
+                          <p class="text-sm font-black text-[#191c20] capitalize tracking-tight">{{ (parseNoteContent(note.note).parasiteStage || 'Observation').toLowerCase().replace('druga', 'DrugA').replace('drugb', 'DrugB') }}</p>
+                          <span v-if="parseNoteContent(note.note).drugExposure && parseNoteContent(note.note).drugExposure !== 'None'" 
+                                class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-black rounded border border-amber-100 uppercase tracking-tighter">
+                                {{ parseNoteContent(note.note).drugExposure }} Exposure
+                          </span>
+                      </div>
+                    </div>
+                    <div class="flex gap-1.5 bg-white/60 backdrop-blur-sm p-1 rounded-full border border-slate-100 shadow-sm">
+                      <button @click="toggleNoteStatus(note, 'accepted')" 
+                              class="p-1.5 rounded-full transition-all duration-200 active:scale-90"
+                              :class="getVerdictStatus(note) === 'accepted' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'hover:bg-emerald-50 text-slate-300'">
+                        <span class="material-symbols-outlined text-sm font-bold">check</span>
+                      </button>
+                      <button @click="toggleNoteStatus(note, 'discarded')" 
+                              class="p-1.5 rounded-full transition-all duration-200 active:scale-90"
+                              :class="getVerdictStatus(note) === 'discarded' ? 'bg-red-600 text-white shadow-lg shadow-red-200' : 'hover:bg-red-50 text-slate-300'">
+                        <span class="material-symbols-outlined text-sm font-bold">close</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="mt-2 pt-3 border-t border-slate-100/50">
+                    <p class="text-xs text-slate-400 leading-relaxed font-medium italic">"{{ parseNoteContent(note.note).notes || 'No detailed observations recorded.' }}"</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div v-else class="py-16 text-center bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200 mb-8">
+              <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <span class="material-symbols-outlined text-slate-300 text-3xl">history</span>
+              </div>
+              <p class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">No history recorded yet</p>
+            </div>
+
+            <!-- Current Verdict Form -->
+            <div class="bg-[#f8f9ff] rounded-[2.5rem] p-10 border border-[#00458f]/5">
+              <div class="flex items-center gap-3 mb-8">
+                <span class="material-symbols-outlined text-[#00458f] p-2 bg-[#00458f]/10 rounded-xl">add_notes</span>
+                <h2 class="text-xs font-black tracking-[0.2em] text-[#00458f] uppercase">Issue New Clinical Verdict</h2>
+              </div>
+              <form @submit.prevent="saveVerdict" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-6">
+                  <div class="space-y-2.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Diagnostic Classification</label>
+                    <div class="relative group">
+                        <select v-model="confirmedStage" 
+                            class="w-full bg-white border border-slate-100 rounded-2xl text-sm font-bold text-[#191c20] focus:ring-4 focus:ring-[#00458f]/5 py-4 px-5 appearance-none shadow-sm transition-all cursor-pointer">
+                            <option value="DRUGA">DrugA exposure</option>
+                            <option value="DRUGB">DrugB exposure</option>
+                            <option value="RING">Ring</option>
+                            <option value="TROPH">Trophozoite</option>
+                            <option value="SCHIZ">Schizont</option>
+                        </select>
+                        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 transition-transform group-hover:translate-y-[-40%]">expand_more</span>
+                    </div>
+                  </div>
+                  <label class="flex items-center gap-4 cursor-pointer group bg-white p-5 rounded-2xl border border-slate-100 hover:border-[#00458f]/30 transition-all shadow-sm">
+                    <div class="relative flex items-center">
+                        <input type="checkbox" v-model="overrideAi" class="peer h-6 w-6 cursor-pointer appearance-none rounded-lg border-2 border-slate-200 transition-all checked:bg-[#00458f] checked:border-[#00458f]" />
+                        <span class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                            <span class="material-symbols-outlined text-sm font-black">check</span>
+                        </span>
+                    </div>
+                    <span class="text-xs font-black text-slate-500 group-hover:text-[#00458f] transition-all uppercase tracking-widest">Adjust AI Confidence Weights</span>
+                  </label>
+                </div>
+                <div class="space-y-2.5">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clinical Observations & Findings</label>
+                  <textarea v-model="verdictNotes" 
+                            class="w-full h-full min-h-[160px] bg-white border border-slate-100 rounded-[2rem] text-sm font-medium text-slate-600 focus:ring-4 focus:ring-[#00458f]/5 p-6 resize-none transition-all shadow-sm placeholder:text-slate-300" 
+                            placeholder="Document morphological characteristics, parasite density estimates, or relevant clinical symptoms..."></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-4 pt-2">
+                   <button type="button" @click="verdictNotes = ''" class="px-8 py-4 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Discard</button>
+                   <button type="submit" :disabled="!verdictNotes.trim() || isSavingVerdict" 
+                        class="px-10 py-4 bg-[#00458f] text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all flex items-center gap-3">
+                      <span v-if="!isSavingVerdict" class="material-symbols-outlined text-lg">verified</span>
+                      <div v-else class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
+                      {{ isSavingVerdict ? 'Syncing...' : 'Submit Verification' }}
+                   </button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Section: Analysis Panels -->
+        <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+          <!-- Patient Information Card -->
+          <section class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-200/50">
+            <div class="flex items-center justify-between mb-8">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[#00458f] p-2 bg-[#00458f]/5 rounded-xl" style="font-variation-settings: 'FILL' 1;">person</span>
+                <h2 class="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">Patient Profile</h2>
+              </div>
+              <button @click="savePatientInfo" class="p-2 rounded-xl bg-slate-50 text-[#00458f] hover:bg-slate-100 transition-all flex items-center justify-center group shadow-sm active:scale-90">
+                  <span class="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500">sync</span>
+              </button>
+            </div>
+            
+            <div v-if="patientData" class="space-y-8">
+              <div class="space-y-1.5">
+                <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">System ID</label>
+                <input v-model="patientData.patientCode" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 focus:ring-2 focus:ring-[#00458f]/10 transition-all" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-1.5">
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Age</label>
+                  <div class="relative">
+                    <input v-model="patientData.age" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">YR</span>
+                  </div>
+                </div>
+                <div class="space-y-1.5">
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Gender</label>
+                  <select v-model="patientData.gender" class="w-full bg-[#f8f9ff] border-none rounded-xl text-xs font-black text-[#191c20] p-4 appearance-none cursor-pointer">
+                      <option value="Male">MALE</option>
+                      <option value="Female">FEMALE</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-1.5">
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Weight</label>
+                  <div class="relative">
+                    <input v-model="patientData.weight" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">KG</span>
+                  </div>
+                </div>
+                <div class="space-y-1.5">
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Fever</label>
+                  <div class="relative">
+                    <input v-model="patientData.feverDuration" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">DAYS</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Risk Assessment</label>
+                <select v-model="patientData.riskFactors" class="w-full bg-[#f8f9ff] border-none rounded-xl text-[10px] font-black text-[#191c20] p-4 appearance-none cursor-pointer uppercase tracking-widest">
+                    <option value="None">Normal / Low Risk</option>
+                    <option value="Pregnancy">Pregnancy (Critical)</option>
+                    <option value="Travel History">Recent Travel Exposure</option>
+                    <option value="Anemic">Anemic Symptoms</option>
+                </select>
+                <div class="flex flex-wrap gap-2 pt-1">
+                  <span v-for="risk in parseRiskFactors(patientData.riskFactors)" :key="risk"
+                        class="px-3 py-1.5 bg-red-50 text-red-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-red-100 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                    {{ risk }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Diagnostic AI Panel -->
+          <section class="bg-[#00458f] rounded-[2.5rem] p-10 shadow-2xl shadow-[#00458f]/20 text-white relative overflow-hidden group/ai">
+            <!-- Decorative circle -->
+            <div class="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full blur-[80px] group-hover/ai:scale-110 transition-transform duration-1000"></div>
+            <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-[#a0f0f0]/5 rounded-full blur-[60px]"></div>
+            
+            <div class="flex items-center justify-between mb-10 relative z-10">
+              <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-white/90 p-3 bg-white/10 rounded-2xl shadow-inner" style="font-variation-settings: 'FILL' 1;">psychology</span>
+                <div>
+                    <h2 class="text-[10px] font-black tracking-[0.3em] text-white/50 uppercase leading-none mb-1">AI Diagnostic</h2>
+                    <p class="text-xs font-bold text-[#a0f0f0] uppercase tracking-widest leading-none">Insight Engine</p>
+                </div>
+              </div>
+              <div class="flex flex-col items-end">
+                  <span class="px-3 py-1 bg-white/10 text-white text-[9px] font-black rounded-full uppercase tracking-[0.2em] border border-white/5">v4.2.1-LIVE</span>
+              </div>
+            </div>
+            
+            <div v-if="aiData" class="space-y-10 relative z-10">
+              <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[2rem] border border-white/10 shadow-2xl transition-all group-hover/ai:-translate-y-1">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Dominant Stage</p>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 bg-[#a0f0f0] rounded-full animate-ping"></span>
+                        <span class="text-[10px] font-black text-[#a0f0f0] uppercase tracking-widest">Optimized</span>
+                    </div>
+                </div>
+                <div class="flex items-end justify-between mb-6">
+                  <h3 class="text-3xl font-black text-white leading-none font-manrope capitalize tracking-tight">{{ aiData.parasiteStage?.toLowerCase() || 'Negative' }} Stage</h3>
+                  <div class="text-right">
+                      <p class="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none mb-1">Prob.</p>
+                      <span class="text-xl font-black text-[#a0f0f0] leading-none">{{ (aiData.confidence * 100).toFixed(1) }}%</span>
+                  </div>
+                </div>
+                <div class="w-full h-2.5 bg-white/10 rounded-full overflow-hidden shadow-inner p-[1px]">
+                  <div class="h-full bg-gradient-to-r from-[#a0f0f0] to-[#50c8c8] rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_#a0f0f0]" :style="`width: ${aiData.confidence * 100}%`"></div>
+                </div>
+              </div>
+              
+              <div class="px-4 space-y-6">
+                <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div class="flex items-center gap-3">
+                      <span class="material-symbols-outlined text-white/40">vaccines</span>
+                      <span class="text-xs font-bold text-white/50 uppercase tracking-widest">Drug Response</span>
+                  </div>
+                  <span class="text-xs font-black uppercase px-2.5 py-1 rounded-lg" :class="aiData.drugExposure ? 'bg-[#a0f0f0]/20 text-[#a0f0f0]' : 'bg-white/5 text-white/40'">
+                    {{ aiData.drugExposure ? 'Positive (Type '+aiData.drugType+')' : 'Negative' }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between pb-2">
+                  <div class="flex items-center gap-3">
+                      <span class="material-symbols-outlined text-white/40">verified_user</span>
+                      <span class="text-xs font-bold text-white/50 uppercase tracking-widest">Analysis Integrity</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] font-black text-[#a0f0f0] uppercase tracking-widest">LEGITIMIZED</span>
+                      <span class="material-symbols-outlined text-sm text-[#a0f0f0]">check_circle</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-16 opacity-40 flex flex-col items-center gap-6 relative z-10">
+               <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center animate-pulse">
+                   <span class="material-symbols-outlined text-4xl">analytics</span>
+               </div>
+               <div>
+                   <p class="text-xs font-black uppercase tracking-[0.3em] mb-2">Awaiting Diagnostic Data</p>
+                   <p class="text-[10px] font-medium text-white/50 max-w-[200px] leading-relaxed italic">Upload image and initialize analysis to retrieve AI insights.</p>
+               </div>
+               <button v-if="caseData?.imageId && !isAnalyzing" @click="triggerAnalysis" 
+                  class="px-10 py-4 bg-white text-[#00458f] rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                  Run Diagnostic Engine
+               </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/services/http';
 import AnnotatedImage from '@/components/AnnotatedImage.vue';
 import ClinicalService from '@/features/clinical/services/clinical.service';
 import CaseImageUpload from '../components/CaseImageUpload.vue';
-import { ChevronLeft, ChevronRight, Pencil, Download } from 'lucide-vue-next';
 
 const route = useRoute();
 const router = useRouter();
 
-// Derived ID — treat as string to support both numeric and UUID backends
+// Basic State
 const caseId = computed(() => route.params.id);
+const caseData = ref(null);
+const loadingCase = ref(true);
+const caseNotFound = ref(false);
+const caseError = ref(null);
 
-// Custom Modal State
-const showModal = ref(false);
-const modalTitle = ref('');
-const modalMessage = ref('');
-const modalType = ref('alert');
-let confirmResolve = null;
+// AI & Analysis State
+const aiData = ref(null);
+const rawAiDetections = ref([]);
+const isAnalyzing = ref(false);
+const previewImageUrl = ref(null);
 
-const customAlert = (title, message) => {
-    modalTitle.value = title;
-    modalMessage.value = message;
-    modalType.value = 'alert';
-    showModal.value = true;
-};
-
-const customConfirm = (title, message) => {
-    modalTitle.value = title;
-    modalMessage.value = message;
-    modalType.value = 'confirm';
-    showModal.value = true;
-    return new Promise((resolve) => {
-        confirmResolve = resolve;
-    });
-};
-
-const handleModalClose = (result) => {
-    showModal.value = false;
-    if (confirmResolve) {
-        confirmResolve(result);
-        confirmResolve = null;
-    }
-};
-
-// Edit states and local form data
-const isEditingPatientInfo = ref(false);
+// Form & Interactive State
+const notes = ref([]);
 const patientData = ref({
     patientCode: '',
     age: '',
@@ -344,260 +391,25 @@ const patientData = ref({
     riskFactors: 'None',
     feverDuration: ''
 });
-
-const patientInfoStatus = computed(() => {
-    const p = patientData.value;
-    const hasAnyData = p.age || p.gender || p.weight || (p.riskFactors && p.riskFactors !== 'None') || p.feverDuration;
-    return hasAnyData 
-       ? { label: 'Filled', class: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
-       : { label: 'Not Filled', class: 'bg-red-50 text-red-600 border-red-200' };
-});
-
-const verdictData = ref({
-    isEditingResult: false,
-    parasiteStage: '',
-    drugExposure: 'None',
-    treatmentPlan: '',
-    notes: ''
-});
+const verdictNotes = ref('');
+const confirmedStage = ref('RING');
+const overrideAi = ref(false);
 const isSavingVerdict = ref(false);
-
-const togglePatientInfoEdit = () => {
-    isEditingPatientInfo.value = !isEditingPatientInfo.value;
-};
-
-const savePatientInfo = async () => {
-    try {
-        const hasMetadata = patientData.value.age || patientData.value.gender || patientData.value.weight || 
-                           (patientData.value.riskFactors && patientData.value.riskFactors !== 'None') || 
-                           patientData.value.feverDuration;
-        
-        let metadataStr = null;
-        if (hasMetadata) {
-            metadataStr = JSON.stringify({
-                age: patientData.value.age,
-                gender: patientData.value.gender,
-                weight: patientData.value.weight,
-                riskFactors: patientData.value.riskFactors,
-                feverDuration: patientData.value.feverDuration
-            });
-        }
-
-        const payload = {
-            patientCode: patientData.value.patientCode ? Number(patientData.value.patientCode) : null,
-            patientMetadata: metadataStr
-        };
-        
-        await ClinicalService.updatePatientInfo(caseId.value, payload);
-        
-        // Refresh local data to ensure sync
-        await fetchCaseDetail();
-        
-        isEditingPatientInfo.value = false;
-        customAlert("Success", "Patient information saved successfully!");
-    } catch (err) {
-        const errorMessage = err.response?.data?.message || err.message || "An unknown error occurred.";
-        customAlert("Error", `Failed to save patient info:\n${errorMessage}`);
-        console.error("Save Patient Info Error:", err);
-    }
-};
-
-const resetVerdict = () => {
-    verdictData.value.isEditingResult = false;
-    verdictData.value.parasiteStage = formattedParasiteStage.value || '';
-    verdictData.value.drugExposure = aiData.value?.drugExposure ? aiData.value.drugType : 'None';
-    verdictData.value.treatmentPlan = '';
-    verdictData.value.notes = '';
-};
-
-const saveVerdict = async () => {
-    isSavingVerdict.value = true;
-    try {
-        const payload = JSON.stringify({
-            parasiteStage: verdictData.value.parasiteStage || formattedParasiteStage.value,
-            drugExposure: verdictData.value.drugExposure || 'None',
-            treatmentPlan: verdictData.value.treatmentPlan,
-            notes: verdictData.value.notes
-        });
-        
-        await ClinicalService.addNote(caseId.value, payload);
-        verdictData.value.isEditingResult = false;
-        
-        const wantsExport = await customConfirm("Success", "Verdict saved successfully!\n\nDo you want to export this case as a PDF report?\n(Click OK to Export, or Cancel to return to the Main Page.)");
-        if (wantsExport) {
-            await exportCase();
-        } else {
-            router.push('/data-use/cases');
-        }
-    } catch (err) {
-        customAlert("Error", "Failed to save doctor's verdict: " + (err.response?.data?.message || err.message));
-        console.error(err);
-    } finally {
-        isSavingVerdict.value = false;
-    }
-};
-
-const exportCase = async () => {
-    try {
-        const response = await ClinicalService.exportPdf(caseId.value);
-        
-        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `Case_Report_${caseData.value?.patientCode || caseId.value}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        
-        link.parentNode.removeChild(link);
-        window.URL.revokeObjectURL(url);
-    } catch (err) {
-        console.error("Export Error:", err);
-        customAlert("Error", "Failed to export case report.");
-    }
-};
-
-// Computed properties for display logic
-const formattedParasiteStage = computed(() => {
-    if (!aiData.value) return '';
-    return aiData.value.parasiteStage || 'None';
-});
-
-const shouldShowTreatment = computed(() => {
-    const stage = verdictData.value.isEditingResult ? verdictData.value.parasiteStage : formattedParasiteStage.value;
-    return ['RING', 'SCHIZONTS', 'TROPHOZOITE'].includes(stage);
-});
-
-// State: Case
-const caseData = ref(null);
-const loadingCase = ref(true);
-const caseError = ref(null);
-const caseNotFound = ref(false);
-
-// State: AI Result
-const aiData = ref(null);
-const loadingAi = ref(true);
-const aiError = ref(null);
-const aiNotFound = ref(false);
-const rawResults = ref([]);
-const previewImageUrl = ref(null);
-
-// Load image preview for cases that haven't been analyzed yet
-const loadPreviewImage = async () => {
-    if (!caseData.value?.imageId) return;
-    try {
-        const response = await http.get(
-            `/cases/${caseId.value}/images/${caseData.value.imageId}/content`,
-            { responseType: 'arraybuffer' }
-        );
-        const blob = new Blob([response.data], {
-            type: response.headers['content-type'] || 'image/png',
-        });
-        // Revoke previous URL if exists
-        if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value);
-        previewImageUrl.value = URL.createObjectURL(blob);
-    } catch (err) {
-        console.error('Failed to load preview image:', err);
-    }
-};
-
-// State: Clinical
-const clinicalData = ref(null);
-const notes = ref([]);
-const newNote = ref('');
-const isSavingNote = ref(false);
 const isExporting = ref(false);
-const loadingClinical = ref(true);
-const isAnalyzing = ref(false);
 
-const triggerAnalysis = async () => {
-    isAnalyzing.value = true;
+const loadAllData = async () => {
+    loadingCase.value = true;
     try {
-        const response = await http.post(`/cases/${caseId.value}/analyze`, null, { timeout: 120000 });
-        // Immediately update status and results without waiting for re-fetch
-        processAiResults(response.data);
-        aiNotFound.value = false;
-        aiError.value = null;
-
-        // Refresh case detail & AI result to ensure everything is up-to-date
         await fetchCaseDetail();
-        await fetchAiResult();
-
-    } catch (err) {
-        console.error('Analysis failed:', err);
-        alert('Analysis failed: ' + (err.response?.data?.message || err.message));
-    } finally {
-        isAnalyzing.value = false;
-    }
-};
-
-const processAiResults = (data) => {
-    aiData.value = data;
-    rawResults.value = [];
-
-    if (data && data.rawResponseJson) {
-        try {
-            const rawJson = JSON.parse(data.rawResponseJson);
-
-            // New format: rawJson.images[0].results
-            if (rawJson.images && rawJson.images.length > 0) {
-                const firstImage = rawJson.images[0];
-                if (firstImage.results && firstImage.results.length > 0) {
-                    // Store the full array for the table display
-                    rawResults.value = firstImage.results.map(res => {
-                        let mappedStage = null;
-                        let mappedExposure = false;
-                        let mappedDrugType = null;
-
-                        switch (res.class) {
-                            case 0: mappedExposure = true; mappedDrugType = 'A'; break;
-                            case 1: mappedExposure = true; mappedDrugType = 'B'; break;
-                            case 2: mappedExposure = false; mappedStage = 'RING'; break;
-                            case 3: mappedExposure = false; mappedStage = 'SCHIZ'; break;
-                            case 4: mappedExposure = false; mappedStage = 'TROPH'; break;
-                        }
-
-                        return { ...res, mappedStage, mappedExposure, mappedDrugType };
-                    });
-
-                    // Extract top result by confidence
-                    const topResult = firstImage.results.reduce((prev, current) =>
-                        (prev.confidence > current.confidence) ? prev : current
-                    );
-
-                    // Map missing fields from raw json onto main aiData
-                    if (topResult.confidence !== undefined) {
-                        aiData.value.confidence = topResult.confidence;
-                    }
-                    if (topResult.class !== undefined) {
-                        aiData.value.topClassId = topResult.class;
-                        switch (topResult.class) {
-                            case 0:
-                                aiData.value.drugExposure = true;
-                                aiData.value.drugType = 'A';
-                                break;
-                            case 1:
-                                aiData.value.drugExposure = true;
-                                aiData.value.drugType = 'B';
-                                break;
-                            case 2:
-                                aiData.value.drugExposure = false;
-                                aiData.value.parasiteStage = 'RING';
-                                break;
-                            case 3:
-                                aiData.value.drugExposure = false;
-                                aiData.value.parasiteStage = 'SCHIZ';
-                                break;
-                            case 4:
-                                aiData.value.drugExposure = false;
-                                aiData.value.parasiteStage = 'TROPH';
-                                break;
-                        }
-                    }
-                }
-            }
-        } catch (parseError) {
-            console.warn('Failed to parse rawResponseJson on frontend:', parseError);
+        if (caseData.value?.imageId) {
+            await fetchAiResult();
+            await loadPreviewImage();
         }
+        await fetchNotes();
+    } catch (err) {
+        console.error("Failed to sequence data hydration:", err);
+    } finally {
+        loadingCase.value = false;
     }
 };
 
@@ -606,7 +418,6 @@ const fetchCaseDetail = async () => {
         const response = await http.get(`/cases/${caseId.value}`);
         caseData.value = response.data;
         
-        // Initialize patient data from case data
         if (caseData.value) {
             patientData.value.patientCode = caseData.value.patientCode || '';
             if (caseData.value.patientMetadata) {
@@ -618,24 +429,13 @@ const fetchCaseDetail = async () => {
                     patientData.value.riskFactors = meta.riskFactors || 'None';
                     patientData.value.feverDuration = meta.feverDuration || '';
                 } catch(e) {
-                     console.warn("Could not parse patient metadata", e);
+                     console.warn("Patient metadata malformed, falling back to defaults.");
                 }
             }
         }
-
-        // Load image preview if available (for pre-analysis display)
-        if (response.data?.imageId) {
-            loadPreviewImage();
-        }
     } catch (err) {
-        if (err.response && err.response.status === 404) {
-            caseNotFound.value = true;
-        } else {
-            caseError.value = err.message || 'Error loading case details';
-        }
-        console.error('Failed to fetch case detail:', err);
-    } finally {
-        loadingCase.value = false;
+        if (err.response?.status === 404) caseNotFound.value = true;
+        else caseError.value = "Infrastructure communication failure.";
     }
 };
 
@@ -643,34 +443,36 @@ const fetchAiResult = async () => {
     try {
         const response = await http.get(`/cases/${caseId.value}/ai-result`);
         if (response.data) {
-            processAiResults(response.data);
-            aiNotFound.value = false;
-        } else {
-            // Backend returned 200 with null — no AI result yet
-            aiNotFound.value = true;
+            aiData.value = response.data;
+            processAiDetections(response.data);
         }
     } catch (err) {
-        // Fallback: handle 404 gracefully in case older backend is running
-        if (err.response && err.response.status === 404) {
-            aiNotFound.value = true;
-        } else {
-            aiError.value = err.message || 'Error loading AI result';
-            console.error('Failed to fetch AI result:', err);
-        }
-    } finally {
-        loadingAi.value = false;
+        console.warn("AI result context not established yet.");
     }
 };
 
-const fetchClinicalData = async () => {
-    loadingClinical.value = true;
-    try {
-        const res = await ClinicalService.getCase(caseId.value);
-        clinicalData.value = res.data;
-    } catch (err) {
-        console.error('Failed to fetch clinical data:', err);
-    } finally {
-        loadingClinical.value = false;
+const processAiDetections = (data) => {
+    if (data?.rawResponseJson) {
+        try {
+            const rawJson = JSON.parse(data.rawResponseJson);
+            if (rawJson.images?.[0]?.results) {
+                rawAiDetections.value = rawJson.images[0].results.map(res => {
+                    let mappedStage = null;
+                    let mappedExposure = false;
+                    let mappedDrugType = null;
+                    switch (res.class) {
+                        case 0: mappedExposure = true; mappedDrugType = 'A'; break;
+                        case 1: mappedExposure = true; mappedDrugType = 'B'; break;
+                        case 2: mappedExposure = false; mappedStage = 'RING'; break;
+                        case 3: mappedExposure = false; mappedStage = 'SCHIZ'; break;
+                        case 4: mappedExposure = false; mappedStage = 'TROPH'; break;
+                    }
+                    return { ...res, mappedStage, mappedExposure, mappedDrugType };
+                });
+            }
+        } catch (e) {
+            console.error("Critical: AI raw data parsing failure.");
+        }
     }
 };
 
@@ -679,7 +481,91 @@ const fetchNotes = async () => {
         const res = await ClinicalService.getNotes(caseId.value);
         notes.value = res.data;
     } catch (err) {
-        console.error('Failed to fetch notes:', err);
+        console.warn("Could not retrieve verdict timeline.");
+    }
+};
+
+const triggerAnalysis = async () => {
+    isAnalyzing.value = true;
+    try {
+        await http.post(`/cases/${caseId.value}/analyze`);
+        await loadAllData();
+    } catch (err) {
+        alert('Analysis sequence interrupted. Please check network connectivity.');
+    } finally {
+        isAnalyzing.value = false;
+    }
+};
+
+const loadPreviewImage = async () => {
+    if (!caseData.value?.imageId) return;
+    try {
+        const response = await http.get(`/cases/${caseId.value}/images/${caseData.value.imageId}/content`, { responseType: 'arraybuffer' });
+        const blob = new Blob([response.data], { type: response.headers['content-type'] || 'image/png' });
+        if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value);
+        previewImageUrl.value = URL.createObjectURL(blob);
+    } catch (err) {
+        console.warn("Specimen imagery rendering failed.");
+    }
+};
+
+const savePatientInfo = async () => {
+    try {
+        const payload = {
+            patientCode: patientData.value.patientCode ? Number(patientData.value.patientCode) : null,
+            patientMetadata: JSON.stringify({
+                age: patientData.value.age,
+                gender: patientData.value.gender,
+                weight: patientData.value.weight,
+                riskFactors: patientData.value.riskFactors,
+                feverDuration: patientData.value.feverDuration
+            })
+        };
+        await ClinicalService.updatePatientInfo(caseId.value, payload);
+        alert("Patient repository synchronized.");
+    } catch (err) {
+        alert("Sync error. Verify patient ID format.");
+    }
+};
+
+const parseNoteContent = (noteContent) => {
+    if (!noteContent) return {};
+    if (typeof noteContent === 'object') return noteContent;
+    try { return JSON.parse(noteContent); } 
+    catch (e) { return { notes: noteContent }; }
+};
+
+const getVerdictStatus = (note) => parseNoteContent(note.note).status || 'pending';
+
+const toggleNoteStatus = async (note, status) => {
+    const currentStatus = getVerdictStatus(note);
+    const newStatus = currentStatus === status ? 'pending' : status;
+    try {
+        const content = parseNoteContent(note.note);
+        content.status = newStatus;
+        await ClinicalService.updateNote(caseId.value, note.id, JSON.stringify(content));
+        await fetchNotes();
+    } catch (err) {
+        console.error("Verdict status update rejected.");
+    }
+};
+
+const saveVerdict = async () => {
+    if (!verdictNotes.value.trim()) return;
+    isSavingVerdict.value = true;
+    try {
+        const payload = JSON.stringify({
+            notes: verdictNotes.value,
+            parasiteStage: confirmedStage.value,
+            status: 'pending'
+        });
+        await ClinicalService.addNote(caseId.value, payload);
+        verdictNotes.value = '';
+        await fetchNotes();
+    } catch (err) {
+        console.error("Verdict persistence failed.");
+    } finally {
+        isSavingVerdict.value = false;
     }
 };
 
@@ -690,52 +576,65 @@ const exportPdf = async () => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `report_${String(caseId.value).padStart(5, '0')}.pdf`);
+        link.setAttribute('download', `REPORT-${caseId.value}.pdf`);
         document.body.appendChild(link);
         link.click();
         link.remove();
     } catch (err) {
-        alert("Error exporting report. Please try again later.");
+        alert("Export engine failed.");
     } finally {
         isExporting.value = false;
     }
 };
 
-const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleString('en-US', {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-    });
+const viewDigitalReport = () => {
+    window.open(`/data-use/cases/${caseId.value}/report`, '_blank');
 };
 
-// Cleanup object URL on unmount
-onUnmounted(() => {
-    if (previewImageUrl.value) {
-        URL.revokeObjectURL(previewImageUrl.value);
-    }
-});
+const formatRelativeTime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const diffMs = new Date() - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
 
-const loadAllData = () => {
-    if (!caseId.value) {
-        caseError.value = "Invalid case id format.";
-        loadingCase.value = false;
-        loadingAi.value = false;
-        return;
-    }
-    fetchCaseDetail();
-    fetchAiResult();
-    fetchClinicalData();
-    fetchNotes();
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+};
+
+const parseRiskFactors = (str) => {
+    if (!str || str === 'None') return [];
+    return str.split(',').map(s => s.trim().toUpperCase());
 };
 
 onMounted(loadAllData);
-
-// Watch for ID changes (e.g., when navigating from the list side-by-side or back-and-forth)
-watch(() => route.params.id, (newId) => {
-    if (newId) {
-        loadAllData();
-    }
-});
+onUnmounted(() => { if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value); });
+watch(() => route.params.id, (newId) => { if (newId) loadAllData(); });
 </script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+.font-manrope { font-family: 'Manrope', sans-serif; }
+.font-inter { font-family: 'Inter', sans-serif; }
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+}
+</style>

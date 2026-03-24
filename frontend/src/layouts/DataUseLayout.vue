@@ -1,5 +1,5 @@
 <template>
-    <AppShell :items="dataUseItems" @new-case="uiStore.openUploadModal" />
+    <AppShell :items="dataUseItems" @new-case="uiStore.openUploadModal()" />
     <CaseUploadModal :is-open="uiStore.isUploadModalOpen" @close="uiStore.closeUploadModal" />
 </template>
 

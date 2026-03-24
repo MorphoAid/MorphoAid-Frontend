@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" @click.self="handleClose">
+      <div v-if="isOpen" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" @click.self="handleClose">
         <Transition name="scale">
           <div v-if="isOpen" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-300">
             <!-- Modal Header - Simplified as per image -->
@@ -127,7 +127,7 @@
 
     <!-- Success/Error Alert Modal -->
     <Teleport to="body">
-      <div v-if="alert.show" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+      <div v-if="alert.show" class="fixed inset-0 z-[2100] flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
         <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
           <div :class="['w-14 h-14 rounded-full flex items-center justify-center mb-6 mx-auto', alert.type === 'success' ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500']">
             <span class="material-symbols-outlined text-3xl">{{ alert.type === 'success' ? 'check_circle' : 'error' }}</span>
@@ -148,6 +148,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { uploadCase, analyzeCase, fetchNextPatientCode } from '@/features/case-management/services/case.service'
 import { systemService } from '@/services/system.service'
+import { useUiStore } from '@/store/ui.store'
 import http from '@/services/http'
 
 const props = defineProps({
@@ -157,6 +158,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'success'])
 
 const router = useRouter()
+const uiStore = useUiStore()
 const fileInputRef = ref(null)
 const selectedFile = ref(null)
 const selectedFileName = ref('')
@@ -206,7 +208,7 @@ const triggerFileInput = () => {
 }
 
 const updatePreview = (file) => {
-  if (file) {
+  if (file && (file instanceof File || file instanceof Blob)) {
     selectedFile.value = file
     selectedFileName.value = file.name
     selectedFileSize.value = `${(file.size / 1024 / 1024).toFixed(2)} MB`
@@ -324,6 +326,10 @@ const loadInitialData = async () => {
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     loadInitialData()
+    if (uiStore.uploadedFile) {
+      updatePreview(uiStore.uploadedFile)
+      uiStore.uploadedFile = null
+    }
   }
 })
 
