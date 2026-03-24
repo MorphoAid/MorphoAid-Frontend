@@ -18,13 +18,13 @@
                     </svg>
                     {{ loading ? '...' : 'Refresh' }}
                 </button>
-                <RouterLink to="/data-use/cases/new"
+                <button @click="uiStore.openUploadModal"
                     class="bg-[#48B7CB] hover:bg-[#368998] text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     New Case
-                </RouterLink>
+                </button>
             </div>
         </div>
 
@@ -129,14 +129,14 @@
                     <h3 class="text-lg font-bold text-[#2E2E2E] mb-1">No Cases Found</h3>
                     <p class="text-[#5C5C5C] mb-6 max-w-sm">There are currently no cases uploaded to this system. Upload a
                         new case to get started.</p>
-                    <RouterLink to="/data-use/cases/new"
+                    <button @click="uiStore.openUploadModal"
                         class="text-[#48B7CB] font-medium hover:text-[#368998] transition-colors flex items-center gap-1">
                         Upload first case <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
                                 clip-rule="evenodd"></path>
                         </svg>
-                    </RouterLink>
+                    </button>
                 </template>
                 <template v-else>
                     <h3 class="text-lg font-bold text-[#2E2E2E] mb-1">No matches found</h3>
@@ -257,9 +257,11 @@ import { ref, onMounted, computed, onUnmounted } from 'vue'
 import StatusPill from '@/components/datause/StatusPill.vue'
 import { useAuthStore } from '@/store/auth.store'
 import { useSearchStore } from '@/store/search.store'
+import { useUiStore } from '@/store/ui.store'
 import { fetchCases as apiFetchCases, deleteCase as apiDeleteCase } from '@/features/case-management/services/case.service'
 
 const searchStore = useSearchStore()
+const uiStore = useUiStore()
 
 const cases = ref([])
 const filterType = ref('all') // 'all', 'needReview', 'newToday'

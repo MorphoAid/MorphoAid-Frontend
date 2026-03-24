@@ -343,6 +343,7 @@ async function handleSubmit() {
       email: form.email,
       password: form.password,
       confirmPassword: form.confirmPassword,
+      agreeTerms: form.agree,
     })
     router.push('/login')
   } catch (err) {

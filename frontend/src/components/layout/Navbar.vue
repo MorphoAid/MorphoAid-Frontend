@@ -1,7 +1,8 @@
 <template>
     <header class="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20">
-        <div class="text-[#48B7CB] text-2xl font-bold tracking-tight shrink-0">
-            MorphoAids
+        <!-- Logo moved to Sidebar -->
+        <div class="w-10 h-10 lg:hidden">
+            <!-- Mobile logo if needed -->
         </div>
 
         <!-- Search Bar Contextual -->
