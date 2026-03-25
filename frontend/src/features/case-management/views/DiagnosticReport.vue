@@ -4,12 +4,28 @@
     <p class="font-manrope font-bold text-[#00458f] animate-pulse">Preparing Diagnostic Report...</p>
   </div>
 
+  <div v-else-if="error === 'Case record not found.'" class="flex flex-col items-center justify-center min-h-screen bg-white p-6 text-center">
+    <span class="material-symbols-outlined text-red-500 text-6xl mb-4">search_off</span>
+    <h1 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">Case record not found.</h1>
+    <button @click="handleBack" class="px-8 py-3 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest text-xs mt-4">
+      Go Back
+    </button>
+  </div>
+
+  <div v-else-if="error === 'Access denied.'" class="flex flex-col items-center justify-center min-h-screen bg-white p-6 text-center">
+    <span class="material-symbols-outlined text-amber-500 text-6xl mb-4">lock</span>
+    <h1 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">Access denied.</h1>
+    <button @click="handleBack" class="px-8 py-3 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest text-xs mt-4">
+      Go Back
+    </button>
+  </div>
+
   <div v-else-if="error" class="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
     <span class="material-symbols-outlined text-red-500 text-6xl mb-4">error</span>
-    <h1 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">Failed to Load Report</h1>
+    <h1 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">Unable to load digital report. Please try again later.</h1>
     <p class="text-slate-500 font-medium mb-8 max-w-md">{{ error }}</p>
-    <button @click="$router.back()" class="px-8 py-3 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#005cbb] transition-all shadow-lg active:scale-95">
-      Return to Archive
+    <button @click="handleBack" class="px-8 py-3 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#005cbb] transition-all shadow-lg active:scale-95">
+      Return to Case Detail
     </button>
   </div>
 
@@ -27,8 +43,10 @@
           <button @click="handleBack" class="flex items-center gap-2 px-4 py-2 text-slate-500 font-bold text-sm hover:text-[#00458f] transition-colors">
             <span class="material-symbols-outlined text-lg">arrow_back</span> Back
           </button>
-          <button @click="printReport" class="flex items-center gap-2 px-6 py-2.5 bg-[#00458f] text-white rounded-xl font-bold text-sm hover:bg-[#005cbb] transition-all shadow-md shadow-blue-900/10 active:scale-95">
-            <span class="material-symbols-outlined text-lg">save</span> Save Report
+          <button 
+            v-if="caseData?.status === 'ANALYZED'"
+            @click="printReport" class="flex items-center gap-2 px-6 py-2.5 bg-[#00458f] text-white rounded-xl font-bold text-sm hover:bg-[#005cbb] transition-all shadow-md shadow-blue-900/10 active:scale-95">
+            <span class="material-symbols-outlined text-lg">description</span> Export Report
           </button>
         </div>
       </div>
@@ -47,8 +65,10 @@
           <button class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm shadow-black/5 active:scale-95">
             <span class="material-symbols-outlined text-lg">share</span> Share
           </button>
-          <button @click="printReport" class="px-5 py-2.5 bg-[#00458f] text-white rounded-xl text-sm font-bold hover:bg-[#005cbb] transition-all flex items-center gap-2 shadow-lg shadow-blue-900/10 active:scale-95">
-            <span class="material-symbols-outlined text-lg">save</span> Save Report
+          <button 
+            v-if="caseData?.status === 'ANALYZED'"
+            @click="printReport" class="px-5 py-2.5 bg-[#00458f] text-white rounded-xl text-sm font-bold hover:bg-[#005cbb] transition-all flex items-center gap-2 shadow-lg shadow-blue-900/10 active:scale-95">
+            <span class="material-symbols-outlined text-lg">description</span> Export Report
           </button>
         </div>
       </div>
@@ -335,6 +355,31 @@
         <p class="text-[10px] font-black uppercase tracking-widest">System Secure • Encrypted Link • Printed on {{ generatedAt.split('•')[0] }}</p>
       </div>
     </main>
+
+    <!-- Alert Modal (SRS-99/100) -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="alert.show" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition name="scale">
+            <div v-if="alert.show" class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-10 max-w-sm w-full text-center">
+              <div :class="[
+                'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl',
+                alert.type === 'success' ? 'bg-emerald-50 text-emerald-500 shadow-emerald-200/50' : 'bg-red-50 text-red-500 shadow-red-200/50'
+              ]">
+                <span class="material-symbols-outlined text-4xl font-black">
+                  {{ alert.type === 'success' ? 'check_circle' : 'error_outline' }}
+                </span>
+              </div>
+              <h3 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">{{ alert.title }}</h3>
+              <p class="text-slate-400 font-bold text-sm leading-relaxed mb-8">{{ alert.message }}</p>
+              <button @click="closeAlert" class="w-full py-4 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-95 transition-all">
+                OK
+              </button>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -351,6 +396,30 @@ const caseId = route.params.id;
 
 const loading = ref(true);
 const error = ref(null);
+
+const alert = ref({
+    show: false,
+    title: '',
+    message: '',
+    type: 'success', // 'success' | 'error' | 'warning'
+    callback: null
+})
+
+const showAlert = (title, message, type = 'success', callback = null) => {
+    alert.value.title = title
+    alert.value.message = message
+    alert.value.type = type
+    alert.value.callback = callback
+    alert.value.show = true
+}
+
+const closeAlert = () => {
+    alert.value.show = false
+    if (alert.value.callback) {
+        alert.value.callback()
+        alert.value.callback = null
+    }
+}
 const caseData = ref(null);
 const aiData = ref(null);
 const rawResults = ref([]);
@@ -475,7 +544,20 @@ const handleBack = () => {
 };
 
 const printReport = () => {
-    window.print();
+    if (caseData.value?.status !== 'ANALYZED') {
+        showAlert('Export Restricted', 'Report export is only allowed for analyzed cases.', 'error');
+        return;
+    }
+
+    window.onafterprint = () => {
+        showAlert('Success', 'Report exported successfully.', 'success');
+    };
+
+    try {
+        window.print();
+    } catch (e) {
+        showAlert('Error', 'Error exporting report. Please try again later.', 'error');
+    }
 };
 
 const loadData = async () => {
@@ -532,7 +614,13 @@ const loadData = async () => {
         loading.value = false;
     } catch (err) {
         console.error('Diagnostic Report data failure:', err);
-        error.value = "Unable to retrieve clinical data for this case record. The data may have been moved or you may lack sufficient permissions.";
+        if (err.response?.status === 404) {
+            error.value = "Case record not found.";
+        } else if (err.response?.status === 403) {
+            error.value = "Access denied.";
+        } else {
+            error.value = "Unable to retrieve clinical data for this case record. The data may have been moved or you may lack sufficient permissions.";
+        }
         loading.value = false;
     }
 };

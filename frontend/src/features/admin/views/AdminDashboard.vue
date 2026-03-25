@@ -68,20 +68,20 @@
               <div>
                 <div class="flex justify-between text-sm mb-1">
                   <span class="font-medium text-[#5C5C5C]">ADMIN</span>
-                  <span class="text-[#2E2E2E] font-semibold">5%</span>
+                  <span class="text-[#2E2E2E] font-semibold">{{ adminPercent }}%</span>
                 </div>
                 <div class="w-full bg-[#F8F8F8] rounded-full h-2">
-                  <div class="bg-[#368998] h-2 rounded-full" style="width: 5%"></div>
+                  <div class="bg-[#368998] h-2 rounded-full" :style="{ width: adminPercent + '%' }"></div>
                 </div>
               </div>
               <!-- DATA_USE -->
               <div>
                 <div class="flex justify-between text-sm mb-1">
                   <span class="font-medium text-[#5C5C5C]">DATA_USE</span>
-                  <span class="text-[#2E2E2E] font-semibold">95%</span>
+                  <span class="text-[#2E2E2E] font-semibold">{{ dataUsePercent }}%</span>
                 </div>
                 <div class="w-full bg-[#F8F8F8] rounded-full h-2">
-                  <div class="bg-[#368998] h-2 rounded-full opacity-60" style="width: 95%"></div>
+                  <div class="bg-[#368998] h-2 rounded-full opacity-60" :style="{ width: dataUsePercent + '%' }"></div>
                 </div>
               </div>
             </div>
@@ -187,12 +187,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { systemService } from '@/services/system.service'
 import { adminService } from '@/services/admin.service'
 
 const aiStatus = ref('Checking...')
 const activities = ref([])
+const adminCount = ref(0)
+const dataUseCount = ref(0)
+const totalUserCount = ref(0)
+
+const adminPercent = computed(() => {
+    if (totalUserCount.value === 0) return 0
+    return Math.round((adminCount.value / totalUserCount.value) * 100)
+})
+
+const dataUsePercent = computed(() => {
+    if (totalUserCount.value === 0) return 0
+    return Math.round((dataUseCount.value / totalUserCount.value) * 100)
+})
 
 const formatTimestamp = (ts) => {
     if (!ts) return '';
@@ -202,15 +215,25 @@ const formatTimestamp = (ts) => {
 
 const loadData = async () => {
     try {
-        const [aiRes, activityRes] = await Promise.all([
+        const [aiRes, activityRes, usersRes] = await Promise.all([
             systemService.getAiStatus(),
-            adminService.getActivities()
+            adminService.getActivities(),
+            adminService.getUsers()
         ]);
         aiStatus.value = aiRes.aiStatus === 'ONLINE' ? 'Online' : 'Offline';
         activities.value = activityRes.data;
+        
+        // Calculate role distribution
+        if (usersRes.data) {
+            totalUserCount.value = usersRes.data.length
+            adminCount.value = usersRes.data.filter(u => u.role === 'ADMIN').length
+            dataUseCount.value = usersRes.data.filter(u => u.role === 'DATA_USE').length
+            // Also update total users card if needed, but keeping it simple for now
+        }
     } catch (e) {
         console.error("Failed to load Dashboard data:", e)
         aiStatus.value = 'Offline';
+        alert("Unable to load system usage statistics. Please try again later.");
     }
 }
 

@@ -2,10 +2,22 @@
   <div class="p-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-gray-800">User Management</h1>
-      <button @click="fetchUsers"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition-colors font-medium">
-        Refresh
-      </button>
+      <div class="flex items-center gap-4">
+        <!-- Search Field (SRS-145) -->
+        <div class="relative group/search max-w-xs">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-lg group-focus-within/search:text-blue-500 transition-colors">search</span>
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Search email or role..."
+            class="pl-10 pr-4 py-2 bg-[#F8F8F8] border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-medium w-64"
+          />
+        </div>
+        <button @click="fetchUsers"
+          class="bg-[#004A99] hover:bg-[#003D7A] text-white px-6 py-2 rounded-xl shadow-lg shadow-[#004A99]/10 transition-all font-bold text-sm active:scale-95">
+          Refresh
+        </button>
+      </div>
     </div>
 
     <!-- Error State -->
@@ -34,7 +46,7 @@
     </div>
 
     <!-- Users Table -->
-    <div v-else-if="users.length > 0" class="bg-white shadow-xl shadow-gray-200/50 overflow-hidden rounded-2xl border border-gray-100">
+    <div v-else-if="filteredUsers.length > 0" class="bg-white shadow-xl shadow-gray-200/50 overflow-hidden rounded-2xl border border-gray-100">
       <table class="min-w-full divide-y divide-gray-100">
         <thead class="bg-gray-50/50">
           <tr>
@@ -102,11 +114,22 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'vue-router';
 
 const users = ref([]);
+const searchQuery = ref('');
 const loading = ref(true);
 const error = ref(null);
 const successMsg = ref(null);
 const router = useRouter();
 const authStore = useAuthStore();
+
+const filteredUsers = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return users.value;
+  return users.value.filter(u => 
+    (u.email && u.email.toLowerCase().includes(q)) || 
+    (u.username && u.username.toLowerCase().includes(q)) ||
+    (u.role && u.role.toLowerCase().includes(q))
+  );
+});
 
 const fetchUsers = async () => {
   loading.value = true;
@@ -121,7 +144,7 @@ const fetchUsers = async () => {
     } else if (err.response?.status === 403) {
       error.value = "Admin permission required";
     } else {
-      error.value = err.response?.data?.message || err.message || 'Failed to fetch users';
+      error.value = "Unable to load user accounts. Please try again later.";
     }
   } finally {
     loading.value = false;
@@ -136,7 +159,7 @@ const handleDeleteUser = async (user) => {
     
     try {
         await adminService.deleteUser(user.id);
-        successMsg.value = `User ${user.email} has been permanently removed.`;
+        successMsg.value = "User deleted successfully.";
         await fetchUsers();
     } catch (err) {
         if (err.response?.status === 401) {
@@ -144,7 +167,7 @@ const handleDeleteUser = async (user) => {
         } else if (err.response?.status === 403) {
             error.value = "Admin permission required";
         } else {
-            error.value = err.response?.data?.message || err.message || 'Failed to delete user';
+            error.value = "Error deleting user. Please try again later.";
         }
     }
 };

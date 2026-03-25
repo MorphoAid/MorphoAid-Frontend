@@ -62,7 +62,7 @@ const summary = ref({
 })
 
 const tabs = [
-    { key: 'trend', label: 'Case Trends' },
+    { key: 'trend', label: 'Case Trend' },
     { key: 'heatmap', label: 'AI Diagnostics' },
 ]
 
@@ -79,7 +79,8 @@ async function fetchSummary() {
         const data = await visualizationService.getSummary()
         summary.value = data
     } catch (e) {
-        console.error("Failed to fetch summary", e)
+        console.error("Failed to fetch summary", e);
+        alert("Unable to load insight data. Please try again later.");
     } finally {
         setTimeout(() => { loadingSummary.value = false }, 300)
     }

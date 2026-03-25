@@ -8,8 +8,20 @@
 
     <div v-else-if="caseNotFound" class="max-w-4xl mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-sm border border-red-100 text-center">
         <span class="material-symbols-outlined text-red-500 text-5xl mb-4">error_outline</span>
-        <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2">Case Not Found</h2>
-        <button @click="router.push('/data-use/cases')" class="px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Back to Archive</button>
+        <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2 text-red-600">Case record not found.</h2>
+        <button @click="router.push('/data-use/cases')" class="mt-4 px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Back to Case List</button>
+    </div>
+    
+    <div v-else-if="caseAccessDenied" class="max-w-4xl mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-sm border border-amber-100 text-center">
+        <span class="material-symbols-outlined text-amber-500 text-5xl mb-4">block</span>
+        <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2">Access denied.</h2>
+        <button @click="router.push('/data-use/cases')" class="mt-4 px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Back to Case List</button>
+    </div>
+
+    <div v-else-if="caseError" class="max-w-4xl mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-sm border border-red-100 text-center">
+        <span class="material-symbols-outlined text-red-500 text-5xl mb-4">bolt</span>
+        <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2">Unable to load case detail. Please try again later.</h2>
+        <button @click="loadAllData" class="mt-4 px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Try Refreshing</button>
     </div>
 
     <div v-else-if="caseData" class="max-w-screen-2xl mx-auto p-6 flex flex-col gap-6 pt-4">
@@ -26,8 +38,16 @@
                 Case #{{ String(caseId).padStart(5, 'PX-00000').replace('PX-00000', 'PX-') }}
               </h1>
               <div class="px-3 py-1 bg-[#00458f]/5 rounded-lg border border-[#00458f]/10">
-                <span class="text-[10px] font-black text-[#00458f] uppercase tracking-widest">{{ caseData.status }}</span>
+                <span class="text-[10px] font-black text-[#00458f] uppercase tracking-widest">{{ statusLabel }}</span>
               </div>
+            </div>
+            <div v-if="statusLabel === 'processing'" class="flex items-center gap-2 mb-2">
+                <div class="animate-spin h-3 w-3 border-2 border-[#00458f]/20 border-t-[#00458f] rounded-full"></div>
+                <span class="text-[11px] font-bold text-[#00458f] animate-pulse">analysis is still in progress</span>
+            </div>
+            <div v-else-if="statusLabel === 'fails'" class="flex items-center gap-2 mb-2 text-red-600">
+                <span class="material-symbols-outlined text-sm">error</span>
+                <span class="text-[11px] font-bold">AI analysis has failed</span>
             </div>
             <p class="text-sm text-slate-400 font-bold flex items-center gap-2">
                Analysis Node: {{ caseData.uploadedBy?.fullName || 'Technician' }} • {{ formatDate(caseData.createdAt) }}
@@ -141,11 +161,13 @@
                     <div class="flex gap-1.5 bg-white/60 backdrop-blur-sm p-1 rounded-full border border-slate-100 shadow-sm">
                       <button @click="toggleNoteStatus(note, 'accepted')" 
                               class="p-1.5 rounded-full transition-all duration-200 active:scale-90"
+                              title="Approve"
                               :class="getVerdictStatus(note) === 'accepted' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'hover:bg-emerald-50 text-slate-300'">
                         <span class="material-symbols-outlined text-sm font-bold">check</span>
                       </button>
                       <button @click="toggleNoteStatus(note, 'discarded')" 
                               class="p-1.5 rounded-full transition-all duration-200 active:scale-90"
+                              title="Reject"
                               :class="getVerdictStatus(note) === 'discarded' ? 'bg-red-600 text-white shadow-lg shadow-red-200' : 'hover:bg-red-50 text-slate-300'">
                         <span class="material-symbols-outlined text-sm font-bold">close</span>
                       </button>
@@ -178,11 +200,11 @@
                     <div class="relative group">
                         <select v-model="confirmedStage" 
                             class="w-full bg-white border border-slate-100 rounded-2xl text-sm font-bold text-[#191c20] focus:ring-4 focus:ring-[#00458f]/5 py-4 px-5 appearance-none shadow-sm transition-all cursor-pointer">
-                            <option value="DRUGA">DrugA exposure</option>
-                            <option value="DRUGB">DrugB exposure</option>
-                            <option value="RING">Ring</option>
-                            <option value="TROPH">Trophozoite</option>
-                            <option value="SCHIZ">Schizont</option>
+                            <option value="RING">Parasite Stage: Ring</option>
+                            <option value="TROPH">Parasite Stage: Trophozoite</option>
+                            <option value="SCHIZ">Parasite Stage: Schizont</option>
+                            <option value="DRUGA">Drug A</option>
+                            <option value="DRUGB">Drug B</option>
                         </select>
                         <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 transition-transform group-hover:translate-y-[-40%]">expand_more</span>
                     </div>
@@ -346,17 +368,29 @@
               </div>
             </div>
             <div v-else class="text-center py-16 opacity-40 flex flex-col items-center gap-6 relative z-10">
-               <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center animate-pulse">
-                   <span class="material-symbols-outlined text-4xl">analytics</span>
+               <div v-if="statusLabel === 'processing'" class="flex flex-col items-center gap-6">
+                   <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center border-2 border-white/20 border-t-white animate-spin"></div>
+                   <p class="text-xs font-black uppercase tracking-[0.3em] mb-2">analysis is still in progress</p>
                </div>
-               <div>
-                   <p class="text-xs font-black uppercase tracking-[0.3em] mb-2">Awaiting Diagnostic Data</p>
-                   <p class="text-[10px] font-medium text-white/50 max-w-[200px] leading-relaxed italic">Upload image and initialize analysis to retrieve AI insights.</p>
+               <div v-else-if="statusLabel === 'fails'" class="flex flex-col items-center gap-6 text-red-200">
+                   <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center">
+                       <span class="material-symbols-outlined text-4xl">error</span>
+                   </div>
+                   <p class="text-xs font-black uppercase tracking-[0.3em] mb-2">AI analysis has failed</p>
                </div>
-               <button v-if="caseData?.imageId && !isAnalyzing" @click="triggerAnalysis" 
-                  class="px-10 py-4 bg-white text-[#00458f] rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all">
-                  Run Diagnostic Engine
-               </button>
+               <div v-else class="flex flex-col items-center gap-6">
+                   <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center animate-pulse">
+                       <span class="material-symbols-outlined text-4xl">analytics</span>
+                   </div>
+                   <div>
+                       <p class="text-xs font-black uppercase tracking-[0.3em] mb-2">Awaiting Diagnostic Data</p>
+                       <p class="text-[10px] font-medium text-white/50 max-w-[200px] leading-relaxed italic">Upload image and initialize analysis to retrieve AI insights.</p>
+                   </div>
+                   <button v-if="caseData?.imageId" @click="triggerAnalysis" 
+                      class="px-10 py-4 bg-white text-[#00458f] rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                      Run Diagnostic Engine
+                   </button>
+               </div>
             </div>
 
             <!-- Clinical Disclaimer -->
@@ -369,6 +403,31 @@
         </div>
       </div>
     </div>
+
+    <!-- Alert Modal (SRS-82/83/84) -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="alert.show" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition name="scale">
+            <div v-if="alert.show" class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-10 max-w-sm w-full text-center">
+              <div :class="[
+                'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl',
+                alert.type === 'success' ? 'bg-emerald-50 text-emerald-500 shadow-emerald-200/50' : 'bg-red-50 text-red-500 shadow-red-200/50'
+              ]">
+                <span class="material-symbols-outlined text-4xl font-black">
+                  {{ alert.type === 'success' ? 'check_circle' : 'error_outline' }}
+                </span>
+              </div>
+              <h3 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">{{ alert.title }}</h3>
+              <p class="text-slate-400 font-bold text-sm leading-relaxed mb-8">{{ alert.message }}</p>
+              <button @click="closeAlert" class="w-full py-4 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-95 transition-all">
+                OK
+              </button>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -388,13 +447,21 @@ const caseId = computed(() => route.params.id);
 const caseData = ref(null);
 const loadingCase = ref(true);
 const caseNotFound = ref(false);
+const caseAccessDenied = ref(false);
 const caseError = ref(null);
 
 // AI & Analysis State
 const aiData = ref(null);
 const rawAiDetections = ref([]);
-const isAnalyzing = ref(false);
+const isAnalyzing = computed(() => caseData.value?.status === 'PENDING' || caseData.value?.status === 'PROCESSING');
 const previewImageUrl = ref(null);
+
+const statusLabel = computed(() => {
+    const s = caseData.value?.status;
+    if (s === 'PENDING' || s === 'PROCESSING') return 'processing';
+    if (s === 'FAILED') return 'fails';
+    return 'analyzed'; // success or finished
+});
 
 // Form & Interactive State
 const notes = ref([]);
@@ -412,6 +479,30 @@ const isSavingVerdict = ref(false);
 const isSavingReport = ref(false);
 const showSaveSuccess = ref(false);
 const isExporting = ref(false);
+
+const alert = ref({
+    show: false,
+    title: '',
+    message: '',
+    type: 'success', // 'success' | 'error' | 'warning'
+    callback: null
+})
+
+const showAlert = (title, message, type = 'success', callback = null) => {
+    alert.value.title = title
+    alert.value.message = message
+    alert.value.type = type
+    alert.value.callback = callback
+    alert.value.show = true
+}
+
+const closeAlert = () => {
+    alert.value.show = false
+    if (alert.value.callback) {
+        alert.value.callback()
+        alert.value.callback = null
+    }
+}
 
 const loadAllData = async () => {
     loadingCase.value = true;
@@ -451,7 +542,8 @@ const fetchCaseDetail = async () => {
         }
     } catch (err) {
         if (err.response?.status === 404) caseNotFound.value = true;
-        else caseError.value = "Infrastructure communication failure.";
+        else if (err.response?.status === 403) caseAccessDenied.value = true;
+        else caseError.value = "Unable to load case detail. Please try again later.";
     }
 };
 
@@ -583,6 +675,7 @@ const toggleNoteStatus = async (note, status) => {
         await fetchNotes();
     } catch (err) {
         console.error("Verdict status update rejected.");
+        alert("Unable to update clinical verdict status. Please try again later.");
     }
 };
 
@@ -599,11 +692,13 @@ const saveVerdict = async (silent = false) => {
         verdictNotes.value = '';
         await fetchNotes();
         if(!silent) {
-            showSaveSuccess.value = true;
-            setTimeout(() => { showSaveSuccess.value = false; }, 3000);
+            showAlert('Success', 'Clinical verdict submitted successfully.', 'success');
         }
     } catch (err) {
-        if(!silent) console.error("Verdict persistence failed.");
+        if(!silent) {
+            console.error("Verdict persistence failed.");
+            showAlert('Error', 'Unable to submit clinical verdict. Please try again later.', 'error');
+        }
         throw err;
     } finally {
         isSavingVerdict.value = false;

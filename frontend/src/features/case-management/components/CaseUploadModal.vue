@@ -334,14 +334,42 @@ watch(() => props.isOpen, (newVal) => {
 })
 
 const handleSubmit = async () => {
-  if (!selectedFile.value) return
+  // SRS-41: Selection Validation
+  if (!selectedFile.value) {
+    showAlert('Selection Required', 'Please select an image file first.', 'error')
+    return
+  }
+
+  // SRS-139: Block uploads when AI service is offline
+  if (aiStatus.value === 'Offline') {
+    showAlert('Service Offline', 'AI service is currently offline for maintenance. New image uploads are suspended.', 'error')
+    return
+  }
+  
+  // SRS-40: Supported formats (already restricted by input accept, but for drag-drop/manual)
+  const allowedFormats = ['image/png', 'image/jpeg', 'image/jpg']
+  if (!allowedFormats.includes(selectedFile.value.type)) {
+     showAlert('Unsupported Format', 'Unsupported file format.', 'error')
+     return
+  }
+
+  // SRS-42: File size limit 10MB
+  const maxSize = 10 * 1024 * 1024 // 10MB
+  if (selectedFile.value.size > maxSize) {
+    showAlert('Limit Exceeded', 'File size exceeds the limit.', 'error')
+    return
+  }
+
+  // SRS-39: Location Required
+  if (!form.location) {
+    showAlert('Field Required', 'Location is required.', 'error')
+    return
+  }
+
   if (isSubmitting.value) return
 
   try {
     isSubmitting.value = true
-
-    // 3-second delay as per original logic to match previous UX
-    await new Promise(resolve => setTimeout(resolve, 3000))
 
     const caseFormData = new FormData()
     caseFormData.append('patientCode', form.patientCode)
@@ -352,27 +380,34 @@ const handleSubmit = async () => {
     const res = await uploadCase(caseFormData)
     const caseId = res.data.id
 
-    // Block on AI analysis trigger to ensure backend starts/completes processing 
-    // before we navigate, matching the original UploadImage.vue flow.
-    try {
-      await analyzeCase(caseId)
-    } catch (analyzeErr) {
-      console.warn('AI analysis failed or timed out:', analyzeErr.message)
-      // We still proceed because the case/image itself was uploaded successfully
-    }
-
     isSubmitting.value = false
     
-    showAlert('Success', 'Image is valid and meets the criteria. Click OK to proceed to analysis.', 'success', () => {
-      handleClose()
-      router.push(`/data-use/cases/${caseId}`)
+    // SRS-45/46: Success Validation Popup
+    showAlert('Success', 'Image is valid and meets the criteria. Click OK to proceed to analysis.', 'success', async () => {
+      try {
+        // SRS-47: Submit for AI analysis
+        analyzeCase(caseId).catch(err => console.error('Auto-analysis trigger failed:', err))
+        
+        handleClose()
+        // SRS-49: Redirect to Case Detail
+        router.push(`/data-use/cases/${caseId}`)
+      } catch (e) {
+        console.error('Post-OK action failed:', e)
+      }
     })
 
   } catch (error) {
     console.error('Upload error:', error)
     isSubmitting.value = false
-    const msg = error.response?.data?.message || error.message || 'Unknown error'
-    showAlert('Upload Failed', msg, 'error')
+    
+    const resData = error.response?.data
+    if (resData?.type === 'ImageValidationFailed' || (error.response?.status === 400 && resData?.message)) {
+      // SRS-44: Upload Rejected
+      showAlert('Upload Rejected', resData.message || 'Image validation failed.', 'error')
+    } else {
+      // SRS-50: System/Database error
+      showAlert('Error', 'Error creating case. Please try again later.', 'error')
+    }
   }
 }
 </script>

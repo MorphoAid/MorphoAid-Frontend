@@ -16,7 +16,7 @@
 
       <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-transform hover:scale-[1.01]">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-secondary uppercase tracking-wider font-manrope">AI Confirmations</span>
+          <span class="text-xs font-bold text-secondary uppercase tracking-wider font-manrope">AI Confirmation</span>
           <span class="material-symbols-outlined text-tertiary text-[20px]">psychology</span>
         </div>
         <div class="flex items-baseline gap-2">
@@ -292,7 +292,8 @@ const loadDashboardData = async () => {
           .slice(0, 5)
 
     } catch (err) {
-        console.error("Dashboard load error:", err)
+        console.error("Dashboard load error:", err);
+        alert("Unable to load dashboard data. Please try again later.");
     }
 }
 

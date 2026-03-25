@@ -156,7 +156,7 @@ const fetchActivities = async () => {
     } else if (err.response?.status === 403) {
       error.value = "Admin permission required";
     } else {
-      error.value = err.response?.data?.message || err.message || 'Failed to fetch activities';
+      error.value = "Unable to load activity records. Please try again later.";
     }
   } finally {
     loading.value = false;

@@ -92,14 +92,6 @@
         </p>
       </div>
 
-      <div class="flex items-center justify-end">
-        <button
-          type="button"
-          class="text-sm font-medium text-[#2F8EA2] transition hover:text-[#368998]"
-        >
-          Forgot password
-        </button>
-      </div>
 
       <button
         type="submit"
@@ -141,7 +133,7 @@
           to="/register/data-use"
           class="font-medium text-[#2F8EA2] transition hover:text-[#368998]"
         >
-          Register (Data Use)
+          Register
         </router-link>
 
         <!-- <router-link
@@ -206,15 +198,15 @@ function validateForm() {
   let isValid = true
 
   if (!form.email) {
-    errors.email = 'Please enter your email.'
+    errors.email = 'Email is required.'
     isValid = false
   } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-    errors.email = 'Please enter a valid email address.'
+    errors.email = 'Email is invalid.'
     isValid = false
   }
 
   if (!form.password) {
-    errors.password = 'Please enter your password.'
+    errors.password = 'Password is required.'
     isValid = false
   }
 
@@ -245,32 +237,41 @@ async function handleLogin() {
 
     await authStore.login(form.email, form.password)
 
-    if (authStore.token) {
-      localStorage.setItem('access_token', authStore.token)
-    }
-    if (authStore.role) {
-      localStorage.setItem('role', authStore.role)
-    }
-
-    const redirectPath = router.currentRoute.value.query.redirect
-    if (redirectPath) {
-      router.push(redirectPath)
+    const user = authStore.user
+    if (!user) {
+      errorMsg.value = 'Login failed. Please try again later.'
       return
     }
 
-    const role = authStore.role
-    if (role === 'ADMIN') {
+    // Role-based redirection logic (SRS-25 to SRS-29)
+    if (user.role === 'DATA_USE') {
+      if (!user.approved) {
+        // SRS-25/26: Pending doctor accounts
+        router.push('/verification-pending')
+      } else {
+        // SRS-28: Approved Data Use
+        router.push('/data-use')
+      }
+    } else if (user.role === 'ADMIN') {
+      // SRS-29: Admin user
       router.push('/admin/dashboard')
-    } else if (role === 'DATA_PREP') {
-      router.push('/dataprep')
-    } else if (role === 'DATA_USE') {
-      router.push('/data-use')
     } else {
+      // Fallback
       router.push('/')
     }
+
   } catch (err) {
-    errorMsg.value =
-      err?.response?.data?.message || err?.message || 'Login failed.'
+    const status = err?.response?.status
+    if (status === 401) {
+      // SRS-23: Incorrect credentials
+      errorMsg.value = 'Invalid email or password.'
+    } else if (status === 403) {
+      // SRS-24: Inactive/blocked/deleted
+      errorMsg.value = 'This account is not allowed to access the system.'
+    } else {
+      // SRS-30: System or server error
+      errorMsg.value = 'Login failed. Please try again later.'
+    }
   } finally {
     loading.value = false
   }

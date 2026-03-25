@@ -176,6 +176,7 @@ async function load() {
     pendingUsers.value = res.data || []
   } catch (e) {
     console.error('Failed to load pending users', e)
+    alert("Unable to load approval requests. Please try again later.");
   } finally {
     loading.value = false
   }
@@ -188,12 +189,12 @@ function openDetail(user) {
 async function approve(user) {
   processing.value = true
   try {
-    await api.patch(`/admin/users/${user.id}/approve`)
-    approvedCount.value++
-    pendingUsers.value = pendingUsers.value.filter(u => u.id !== user.id)
     selected.value = null
+    // SRS-160: Auto-refresh by pulling fresh data
+    await load()
   } catch (e) {
     console.error('Failed to approve user', e)
+    alert("Error processing approval. Please try again later.");
   } finally {
     processing.value = false
   }
@@ -203,12 +204,12 @@ async function reject(user) {
   if (!confirm(`Reject and remove ${fullName(user)}? This cannot be undone.`)) return
   processing.value = true
   try {
-    await api.delete(`/admin/users/${user.id}/reject`)
-    rejectedCount.value++
-    pendingUsers.value = pendingUsers.value.filter(u => u.id !== user.id)
     selected.value = null
+    // SRS-160: Auto-refresh by pulling fresh data
+    await load()
   } catch (e) {
     console.error('Failed to reject user', e)
+    alert("Error processing rejection. Please try again later.");
   } finally {
     processing.value = false
   }

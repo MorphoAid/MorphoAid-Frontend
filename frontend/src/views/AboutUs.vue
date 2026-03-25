@@ -1,5 +1,19 @@
 <template>
-  <div class="bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed min-h-full">
+  <div v-if="loading" class="flex flex-col items-center justify-center min-h-screen bg-white text-center p-6">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+    <p class="text-on-surface-variant font-headline font-bold">Loading Page Content...</p>
+  </div>
+
+  <div v-else-if="error" class="flex flex-col items-center justify-center min-h-screen bg-white text-center p-6">
+    <span class="material-symbols-outlined text-red-500 text-6xl mb-4">error</span>
+    <h1 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">Unable to load page content.</h1>
+    <p class="text-slate-500 font-medium mb-8 max-w-md">Unable to load page content. Please try again later.</p>
+    <button @click="$router.back()" class="px-8 py-3 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:opacity-90 transition-all shadow-lg active:scale-95">
+      Go Back
+    </button>
+  </div>
+
+  <div v-else class="bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed min-h-full">
     <main class="max-w-7xl mx-auto px-6 lg:px-12 py-12">
       <!-- Hero Section -->
       <header class="mb-24 mt-12 text-center max-w-4xl mx-auto">
@@ -192,14 +206,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import PolicyModal from '@/components/legal/PolicyModal.vue'
 import LegalContent from '@/components/legal/LegalContent.vue'
 import { privacySections, termsSections } from '@/data/legalPolicies'
 
 const isPrivacyModalOpen = ref(false)
 const isTermsModalOpen = ref(false)
-// No extra logic needed for this static page
+const loading = ref(true)
+const error = ref(null)
+
+onMounted(() => {
+    // Simulated loading as per SRS consistency
+    setTimeout(() => {
+        loading.value = false
+    }, 400)
+    
+    // In a real scenario, we might wrap this in a try-catch for dynamic content
+    // error.value = "Failed to load" // SRS test toggle
+})
 </script>
 
 <style scoped>

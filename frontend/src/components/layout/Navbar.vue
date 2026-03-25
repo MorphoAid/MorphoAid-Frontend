@@ -5,8 +5,8 @@
             <!-- Mobile logo if needed -->
         </div>
 
-        <!-- Search Bar Contextual -->
-        <div class="flex-1 max-w-md mx-8 relative" ref="searchContainerRef">
+        <!-- Search Bar Contextual (SRS-119/120) -->
+        <div v-if="authStore.user?.role === 'DATA_USE'" class="flex-1 max-w-md mx-8 relative" ref="searchContainerRef">
             <div class="relative flex items-center">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -24,10 +24,25 @@
                 </button>
             </div>
 
-            <div v-if="showSearchDropdown && searchResults.length > 0" 
+            <!-- Search Dropdown (SRS-121) -->
+            <div v-if="showSearchDropdown" 
                  class="absolute bg-white border border-gray-100 shadow-xl rounded-xl w-full mt-2 py-2 z-[100] max-h-72 overflow-y-auto"
                  style="scrollbar-width: thin; scrollbar-color: #B8E7FC transparent;">
-                 <div v-for="result in searchResults" :key="result.name"
+                 
+                 <!-- Error Message (SRS-125) -->
+                 <div v-if="searchError" class="px-4 py-3 text-center">
+                     <span class="material-symbols-outlined text-red-400 mb-1">error</span>
+                     <p class="text-xs text-slate-500 font-medium tracking-tight">Search failed. Please try again later.</p>
+                 </div>
+
+                 <!-- No Results (SRS-124) -->
+                 <div v-else-if="searchStore.query && searchResults.length === 0" class="px-4 py-6 text-center">
+                     <span class="material-symbols-outlined text-slate-300 text-3xl mb-2">search_off</span>
+                     <p class="text-sm text-slate-400 font-bold tracking-tight">No matching results found.</p>
+                 </div>
+
+                 <!-- Results -->
+                 <div v-else v-for="result in searchResults" :key="result.name"
                       @mouseenter="result.type !== 'case' && mapStore.setHoveredLocation(result.type, result.name)"
                       @mouseleave="result.type !== 'case' && mapStore.clearHoveredLocation()"
                       @mousedown.prevent="selectLocation(result)"
@@ -119,9 +134,14 @@ const fullName = computed(() => {
 })
 
 const handleLogout = () => {
-    isDropdownOpen.value = false
-    authStore.logout()
-    router.push('/login')
+    try {
+        isDropdownOpen.value = false
+        authStore.logout()
+        router.push('/login')
+    } catch (err) {
+        console.error('Logout failed', err)
+        alert('Logout failed. Please try again later.')
+    }
 }
 
 const goToAccount = () => {
@@ -144,6 +164,7 @@ const handleClickOutside = (event) => {
 // Search Logic Contextual
 const showSearchDropdown = ref(false)
 const searchContainerRef = ref(null)
+const searchError = ref(null)
 
 const regions = ['North', 'Northeast', 'Central', 'East', 'West', 'South']
 
@@ -156,33 +177,45 @@ const searchPlaceholder = computed(() => {
 })
 
 const searchResults = computed(() => {
-    const q = searchStore.query.trim().toLowerCase()
-    
-    if (searchContext.value === 'map') {
-        if (!q) {
-            return regions.map(r => ({ type: 'region', name: r }))
+    try {
+        searchError.value = null
+        const q = searchStore.query.trim().toLowerCase()
+        
+        // SRS-120: Province or Region search only for Data Use
+        // Forcing map context here. If we need case search elsewhere, we can conditionally enable it.
+        const effectiveContext = authStore.user?.role === 'DATA_USE' ? 'map' : searchContext.value
+
+        if (effectiveContext === 'map') {
+            if (!q) {
+                return regions.map(r => ({ type: 'region', name: r }))
+            }
+            let res = []
+            regions.forEach(r => {
+                if (r.toLowerCase().includes(q)) {
+                    res.push({ type: 'region', name: r })
+                }
+            })
+            englishProvinces.forEach(p => {
+                if (p.toLowerCase().includes(q)) {
+                    res.push({ type: 'province', name: p })
+                }
+            })
+            return res.slice(0, 8)
+        } 
+        
+        else if (effectiveContext === 'cases') {
+            if (!q) return []
+            const cleanQ = q.replace('cas-0', '')
+            return searchStore.globalCases
+                .filter(c => c.id.toString().includes(cleanQ))
+                .map(c => ({ type: 'case', name: `CAS-0${c.id}`, rawId: c.id.toString() }))
+                .slice(0, 5)
         }
-        let res = []
-        regions.forEach(r => {
-            if (r.toLowerCase().includes(q)) {
-                res.push({ type: 'region', name: r })
-            }
-        })
-        englishProvinces.forEach(p => {
-            if (p.toLowerCase().includes(q)) {
-                res.push({ type: 'province', name: p })
-            }
-        })
-        return res.slice(0, 8)
-    } 
-    
-    else if (searchContext.value === 'cases') {
-        if (!q) return []
-        const cleanQ = q.replace('cas-0', '')
-        return searchStore.globalCases
-            .filter(c => c.id.toString().includes(cleanQ))
-            .map(c => ({ type: 'case', name: `CAS-0${c.id}`, rawId: c.id.toString() }))
-            .slice(0, 5)
+        return []
+    } catch (err) {
+        console.error('Search evaluation failed:', err)
+        searchError.value = 'failed'
+        return []
     }
 })
 

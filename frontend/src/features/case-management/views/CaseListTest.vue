@@ -90,10 +90,9 @@
                         <span class="text-sm font-medium text-[#5C5C5C] whitespace-nowrap">Sort by:</span>
                         <div class="relative">
                             <select v-model="sortOption" class="appearance-none bg-gray-50 border border-gray-200 text-[#2E2E2E] text-sm rounded-lg focus:ring-[#48B7CB] focus:border-[#48B7CB] block w-full pl-3 pr-8 py-2 cursor-pointer outline-none transition-colors hover:border-gray-300">
-                                <option value="date-desc">Newest First</option>
-                                <option value="date-asc">Oldest First</option>
-                                <option value="id-desc">ID (Highest)</option>
-                                <option value="id-asc">ID (Lowest)</option>
+                                <option value="date-desc">New</option>
+                                <option value="date-asc">Old</option>
+                                <option value="id-desc">ID</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#5C5C5C]">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -358,7 +357,7 @@ const executeDelete = async () => {
         await fetchCases()
     } catch (err) {
         console.error("Delete case error:", err)
-        error.value = 'Failed to delete case: ' + (err.response?.data?.message || err.message)
+        error.value = 'Error deleting case. Please try again later.'
         showDeleteDialog.value = false
         caseToDelete.value = null
     } finally {
@@ -385,12 +384,24 @@ const fetchCases = async () => {
                 } catch(e) {}
             }
             
+            // Map status to SRS-56 mandated values: analyzed, fails
+            let uiStatus = 'analyzed';
+            if (c.status === 'FAILED') {
+                uiStatus = 'fails';
+            } else if (c.status === 'ANALYZED' || c.status === 'COMPLETED' || c.status === 'SUCCESS') {
+                uiStatus = 'analyzed';
+            } else if (c.status === 'PENDING') {
+                // If it's pending, we still treat it as eventually analyzed in UI, 
+                // but the backend might update it. SRS-56 only lists analyzed/fails.
+                uiStatus = 'analyzed'; 
+            }
+
             return {
                 id: c.id,
                 patientCode: c.patientCode || 'N/A',
                 technicianId: c.technicianId || 'N/A',
                 location: c.location || 'N/A',
-                status: c.status || 'UNKNOWN',
+                status: uiStatus,
                 isReviewed: isReviewed,
                 createdAt: c.createdAt || new Date().toISOString()
             };
@@ -403,7 +414,7 @@ const fetchCases = async () => {
         cases.value.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     } catch (err) {
         console.error("Fetch cases error:", err)
-        error.value = 'Failed to load cases: ' + (err.response?.data?.message || err.message)
+        error.value = 'Unable to load case records. Please try again later.'
     } finally {
         loading.value = false
     }

@@ -89,7 +89,12 @@ async function checkStatus() {
 }
 
 function logout() {
-  authStore.logout()
-  router.push('/login')
+  try {
+    authStore.logout()
+    router.push('/login')
+  } catch (err) {
+    console.error('Logout failed', err)
+    alert('Logout failed. Please try again later.')
+  }
 }
 </script>
