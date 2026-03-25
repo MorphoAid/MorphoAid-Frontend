@@ -9,7 +9,7 @@
         </div>
         <div class="flex items-baseline gap-2">
           <h2 class="text-3xl font-extrabold font-manrope tracking-tight">{{ totalProcessed }}</h2>
-          <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
+          <span class="text-xs font-medium text-[#48B7CB] bg-[#B8E7FC]/20 px-2 py-0.5 rounded-full">Total</span>
         </div>
         <p class="text-[11px] text-on-surface-variant mt-1">Total clinical instances processed today</p>
       </div>
@@ -21,7 +21,7 @@
         </div>
         <div class="flex items-baseline gap-2">
           <h2 class="text-3xl font-extrabold font-manrope tracking-tight">{{ stats.completed }}</h2>
-          <span class="text-[11px] font-medium text-secondary bg-surface-container px-2 py-0.5 rounded-full">New Stages</span>
+          <span class="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Completed</span>
         </div>
         <p class="text-[11px] text-on-surface-variant mt-1">Confirmed Plasmodium identifications</p>
       </div>
@@ -93,42 +93,6 @@
           </div>
         </div>
 
-        <!-- Quick Action: Image Upload -->
-        <div v-if="aiStatus !== 'Offline'" 
-             @click="uiStore.openUploadModal()" 
-             @dragover.prevent="isDragging = true" 
-             @dragleave.prevent="isDragging = false" 
-             @drop.prevent="handleDrop"
-             class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-2 border-dashed transition-all group cursor-pointer"
-             :class="isDragging ? 'border-primary bg-primary-fixed-dim' : 'border-outline-variant hover:border-primary'">
-          <div class="flex flex-col md:flex-row items-center gap-8">
-            <div class="w-20 h-20 bg-primary-fixed rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-              <span class="material-symbols-outlined text-[40px]">biotech</span>
-            </div>
-            <div class="flex-1 text-center md:text-left">
-              <h4 class="text-lg font-bold font-manrope">Quick Diagnostic Scan</h4>
-              <p class="text-sm text-on-surface-variant">Drag and drop blood smear microscopy images (JPEG, PNG, DICOM) to initiate AI parasite detection and staging.</p>
-            </div>
-            <button class="px-8 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-colors whitespace-nowrap">
-              Select File
-            </button>
-          </div>
-        </div>
-        <!-- Offline State -->
-        <div v-else class="bg-red-50 p-8 rounded-xl shadow-sm border-2 border-dashed border-red-200 opacity-90 cursor-not-allowed">
-          <div class="flex flex-col md:flex-row items-center gap-8">
-            <div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center text-[#FF4C38]">
-              <span class="material-symbols-outlined text-[40px]">cloud_off</span>
-            </div>
-            <div class="flex-1 text-center md:text-left">
-              <h4 class="text-lg font-bold font-manrope text-[#A92222]">Diagnostic AI is Offline</h4>
-              <p class="text-sm text-[#FF4C38]">The MORU AI engine is disconnected or disabled by an administrator. Image uploads are suspended until the connection is restored.</p>
-            </div>
-            <button disabled class="px-8 py-3 bg-red-100 text-[#FF4C38]/70 rounded-xl font-bold text-sm cursor-not-allowed whitespace-nowrap">
-              Service Unavailable
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- Right Side: Regional Summary (Secondary) -->
@@ -167,29 +131,7 @@
             </div>
           </div>
 
-          <div class="mt-8 pt-6 border-t border-slate-100">
-            <h4 class="text-xs font-bold text-secondary uppercase mb-4">Latest Lab Feed</h4>
-            <div class="space-y-4">
-              <div class="flex gap-3">
-                <div class="w-8 h-8 rounded-lg bg-red-50 text-error flex items-center justify-center flex-shrink-0">
-                  <span class="material-symbols-outlined text-sm">warning</span>
-                </div>
-                <div>
-                  <p class="text-[11px] font-bold">High Load: Tak General</p>
-                  <p class="text-[10px] text-on-surface-variant">Emergency request for AI triage assistance</p>
-                </div>
-              </div>
-              <div class="flex gap-3">
-                <div class="w-8 h-8 rounded-lg bg-blue-50 text-primary flex items-center justify-center flex-shrink-0">
-                  <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-                </div>
-                <div>
-                  <p class="text-[11px] font-bold">System Update: v2.4.1</p>
-                  <p class="text-[10px] text-on-surface-variant">P. falciparum detection accuracy improved by 2%</p>
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
 
       </div>
@@ -199,6 +141,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { fetchCases as apiFetchCases } from '@/features/case-management/services/case.service'
 import { visualizationService } from '@/features/visualization/services/visualization.service'
 import { systemService } from '@/services/system.service'
@@ -210,6 +153,7 @@ import ThailandHeatmap from '@/features/visualization/views/ThailandHeatmap.vue'
 const authStore = useAuthStore()
 const mapStore = useMapStore()
 const uiStore = useUiStore()
+const router = useRouter()
 const isAdmin = computed(() => authStore.role === 'ADMIN')
 
 const selectedRegion = computed({
@@ -226,6 +170,25 @@ const stats = ref({
     completed: 0,
     failed: 0
 })
+const recentCases = ref([])
+
+const getStatusBg = (status) => {
+    if (status === 'ANALYZED') return 'bg-emerald-50'
+    if (status === 'PENDING_ANALYSIS' || status === 'PENDING') return 'bg-amber-50'
+    return 'bg-slate-50'
+}
+
+const getStatusColor = (status) => {
+    if (status === 'ANALYZED') return 'text-emerald-600'
+    if (status === 'PENDING_ANALYSIS' || status === 'PENDING') return 'text-amber-600'
+    return 'text-slate-600'
+}
+
+const getStatusIcon = (status) => {
+    if (status === 'ANALYZED') return 'check_circle'
+    if (status === 'PENDING_ANALYSIS' || status === 'PENDING') return 'biotech'
+    return 'circle'
+}
 
 const totalProcessed = computed(() => {
     return stats.value.completed + stats.value.inQueue + stats.value.failed + stats.value.needsReview;
@@ -322,6 +285,11 @@ const loadDashboardData = async () => {
 
         const hData = await visualizationService.getHeatmapData()
         heatmapData.value = Array.isArray(hData) ? hData : (hData?.data || [])
+
+        // Get 5 most recent cases for the feed
+        recentCases.value = [...allCases]
+          .sort((a, b) => b.id - a.id)
+          .slice(0, 5)
 
     } catch (err) {
         console.error("Dashboard load error:", err)

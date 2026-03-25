@@ -67,7 +67,6 @@
                         </p>
                     </div>
 
-                    <!-- Manage Account -->
                     <button @click="goToAccount"
                         class="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-[#2E2E2E] hover:bg-gray-50 transition-colors">
                         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +126,12 @@ const handleLogout = () => {
 
 const goToAccount = () => {
     isDropdownOpen.value = false
-    router.push('/data-use/account')
+    const role = authStore.user?.role
+    if (role === 'ADMIN') {
+        router.push('/admin/account')
+    } else {
+        router.push('/data-use/account')
+    }
 }
 
 // Close dropdown when clicking outside

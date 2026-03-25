@@ -120,6 +120,12 @@
           {{ isSubmitting ? 'Uploading...' : 'Upload Case' }}
         </button>
       </div>
+
+      <div class="mt-6 pt-2 text-center">
+        <p class="text-[10px] text-[#5C5C5C] italic opacity-60">
+            AI-assisted support only. Results must be reviewed by qualified personnel.
+        </p>
+      </div>
     </form>
 
     <!-- Custom Modal Popup -->

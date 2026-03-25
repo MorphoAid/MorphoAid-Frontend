@@ -105,51 +105,25 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-[#368998]/10 text-[#2E2E2E]">
-                  <!-- Row 1 (Success) -->
-                  <tr class="hover:bg-[#F8F8F8]/50 transition-colors">
-                    <td class="py-3 px-6 text-[#5C5C5C]">10:45 AM</td>
-                    <td class="py-3 px-6 font-medium">dr.smith@example.com</td>
+                  <tr v-for="activity in activities" :key="activity.id" class="hover:bg-[#F8F8F8]/50 transition-colors text-xs lg:text-sm">
+                    <td class="py-3 px-6 text-[#5C5C5C] whitespace-nowrap">{{ formatTimestamp(activity.timestamp) }}</td>
+                    <td class="py-3 px-6 font-medium max-w-[150px] truncate" :title="activity.userEmail">{{ activity.userEmail }}</td>
                     <td class="py-3 px-6">
-                      <span class="px-2 py-1 bg-[#368998]/10 text-[#368998] rounded-md text-xs font-medium">DATA_USE</span>
+                      <span class="px-2 py-1 bg-[#368998]/10 text-[#368998] rounded-md text-[10px] lg:text-xs font-medium uppercase">{{ activity.userRole }}</span>
                     </td>
-                    <td class="py-3 px-6">Case Analysis</td>
-                    <td class="py-3 px-6 text-[#5C5C5C]">Case #8902</td>
+                    <td class="py-3 px-6 whitespace-nowrap">{{ activity.action }}</td>
+                    <td class="py-3 px-6 text-[#5C5C5C] truncate max-w-[120px]" :title="activity.target">{{ activity.target }}</td>
                     <td class="py-3 px-6">
-                      <span class="text-[#407533] font-medium flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#407533]"></span> Success
+                      <span class="font-medium flex items-center gap-1.5 whitespace-nowrap"
+                            :class="activity.status.toLowerCase() === 'success' ? 'text-[#407533]' : 'text-[#A92222]'">
+                        <span class="w-1.5 h-1.5 rounded-full"
+                              :class="activity.status.toLowerCase() === 'success' ? 'bg-[#407533]' : 'bg-[#A92222]'"></span> 
+                        {{ activity.status }}
                       </span>
                     </td>
                   </tr>
-                  <!-- Row 2 (Success) -->
-                  <tr class="hover:bg-[#F8F8F8]/50 transition-colors">
-                    <td class="py-3 px-6 text-[#5C5C5C]">10:30 AM</td>
-                    <td class="py-3 px-6 font-medium">admin@example.com</td>
-                    <td class="py-3 px-6">
-                      <span class="px-2 py-1 bg-[#368998]/10 text-[#368998] rounded-md text-xs font-medium">ADMIN</span>
-                    </td>
-                    <td class="py-3 px-6">Role Update</td>
-                    <td class="py-3 px-6 text-[#5C5C5C]">User #124</td>
-                    <td class="py-3 px-6">
-                      <span class="text-[#407533] font-medium flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#407533]"></span> Success
-                      </span>
-                    </td>
-                  </tr>
-
-                  <!-- Row 4 (Failed) -->
-                  <tr class="hover:bg-[#F8F8F8]/50 transition-colors">
-                    <td class="py-3 px-6 text-[#5C5C5C]">08:00 AM</td>
-                    <td class="py-3 px-6 font-medium">system</td>
-                    <td class="py-3 px-6">
-                      <span class="px-2 py-1 bg-[#5C5C5C]/10 text-[#5C5C5C] rounded-md text-xs font-medium">SYSTEM</span>
-                    </td>
-                    <td class="py-3 px-6">Nightly Sync</td>
-                    <td class="py-3 px-6 text-[#5C5C5C]">External DB</td>
-                    <td class="py-3 px-6">
-                      <span class="text-[#A92222] font-medium flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#A92222]"></span> Failed
-                      </span>
-                    </td>
+                  <tr v-if="activities.length === 0">
+                    <td colspan="6" class="py-10 text-center text-[#5C5C5C]">No recent activity found.</td>
                   </tr>
                 </tbody>
               </table>
@@ -215,15 +189,27 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { systemService } from '@/services/system.service'
+import { adminService } from '@/services/admin.service'
 
 const aiStatus = ref('Checking...')
+const activities = ref([])
+
+const formatTimestamp = (ts) => {
+    if (!ts) return '';
+    const date = new Date(ts);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
 const loadData = async () => {
     try {
-        const aiRes = await systemService.getAiStatus();
+        const [aiRes, activityRes] = await Promise.all([
+            systemService.getAiStatus(),
+            adminService.getActivities()
+        ]);
         aiStatus.value = aiRes.aiStatus === 'ONLINE' ? 'Online' : 'Offline';
+        activities.value = activityRes.data;
     } catch (e) {
-        console.error("Failed to load AI Status:", e)
+        console.error("Failed to load Dashboard data:", e)
         aiStatus.value = 'Offline';
     }
 }

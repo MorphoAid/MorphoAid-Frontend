@@ -6,47 +6,39 @@
         </div>
 
         <div class="bg-white rounded-xl border border-[#368998]/20 p-6 flex-1 min-h-[350px] flex flex-col items-center justify-center relative">
-            <!-- Loading -->
             <div v-if="loading" class="animate-pulse flex flex-col items-center gap-2">
                 <div class="w-10 h-10 border-4 border-[#368998]/20 border-t-[#368998] rounded-full animate-spin"></div>
                 <p class="text-xs text-gray-400">Loading diagnostics data...</p>
             </div>
 
-            <!-- Empty -->
             <div v-else-if="rawData.length === 0" class="flex flex-col items-center gap-2 text-center">
                 <span class="material-symbols-outlined text-gray-300 text-4xl">grid_view</span>
                 <p class="text-sm text-gray-400">No AI analysis data found.</p>
             </div>
 
             <div v-else class="w-full flex flex-col h-full">
-                <!-- Heatmap Grid -->
                 <div class="grid grid-cols-[100px_repeat(5,1fr)] gap-2 flex-1">
-                    <!-- Corner -->
                     <div></div>
-                    <!-- Column headers -->
                     <div v-for="stage in stages" :key="stage" class="text-[9px] font-bold text-gray-400 text-center uppercase tracking-wider self-end pb-1">
                         {{ stage }}
                     </div>
 
-                    <!-- Rows -->
                     <template v-for="range in confidenceRanges" :key="range">
-                        <!-- Row header -->
                         <div class="text-[10px] font-bold text-gray-400 flex items-center pr-3 text-right justify-end border-r border-gray-100 italic">
                             {{ range }}
                         </div>
-                        <!-- Cells -->
                         <div v-for="stage in stages" :key="stage + range" 
-                             class="rounded-lg aspect-square flex items-center justify-center text-[10px] font-bold transition-all hover:scale-105 cursor-default relative group"
+                             class="rounded-lg aspect-square flex items-center justify-center text-[10px] font-bold cursor-default relative shadow-sm border group transition-all hover:scale-105"
                              :style="getCellStyle(stage, range)">
-                             <span class="opacity-0 group-hover:opacity-100 transition-opacity">
+                             <span v-if="getCount(stage, range) > 0"
+                                   class="z-10 text-center px-0.5 leading-none transition-opacity opacity-0 group-hover:opacity-100 print:opacity-100" 
+                                   :style="{ color: getTextColor(stage, range) }">
                                 {{ getCount(stage, range) }}
                              </span>
-                             <!-- Simple tooltip on mobile/hover if needed -->
                         </div>
                     </template>
                 </div>
 
-                <!-- Legend Area -->
                 <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
                     <div class="flex items-center gap-3 text-xs text-[#5C5C5C]">
                         <span class="font-medium">Density Score:</span>
@@ -85,20 +77,25 @@ function getCount(stage, range) {
 
 function getCellStyle(stage, range) {
     const count = getCount(stage, range)
-    if (count === 0) return { backgroundColor: '#F9FAFB', border: '1px solid #F3F4F6', opacity: 0.5 }
+    if (count === 0) return { backgroundColor: '#F9FAFB', border: '1px solid #F3F4F6' }
     
-    // Scale from Teal to Deep Blue for better contrast
     const colors = ['#E0F2F1', '#4DB6AC', '#00897B', '#00695C', '#004D40']
     const index = Math.min(Math.floor((count / maxCount.value) * colors.length), colors.length - 1)
     const activeColor = colors[index]
     
     return {
         backgroundColor: activeColor,
-        color: index > 1 ? 'white' : '#2E2E2E',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         border: `1px solid ${activeColor}`,
         fontWeight: 'bold'
     }
+}
+
+function getTextColor(stage, range) {
+    const count = getCount(stage, range)
+    if (count === 0) return '#9CA3AF'
+    const index = Math.min(Math.floor((count / maxCount.value) * 5), 4)
+    return index > 1 ? 'white' : '#2E2E2E'
 }
 
 const legendLevels = [
@@ -120,3 +117,9 @@ onMounted(async () => {
     }
 })
 </script>
+
+<style scoped>
+@media print {
+    .print\:opacity-100 { opacity: 1 !important; }
+}
+</style>

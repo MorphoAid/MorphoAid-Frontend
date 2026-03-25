@@ -95,3 +95,30 @@ function exportReport() {
 
 onMounted(fetchSummary)
 </script>
+
+<style scoped>
+@media print {
+    div[class*="bg-[#F8F8F8]"] { background-color: white !important; }
+    button, nav, .no-print, aside, header { display: none !important; }
+    
+    body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .max-w-6xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    .bg-white { border: 1px solid #eee !important; }
+    
+    /* Ensure the main content takes full width by overriding AppShell's ml-64 */
+    :global(main) { 
+        margin-left: 0 !important; 
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure the tab content is visible and takes full width */
+    .lg\:rounded-tl-none { border-radius: 0.75rem !important; }
+}
+</style>

@@ -40,14 +40,29 @@
               <span class="material-symbols-outlined text-xl">description</span>
               View Digital Report
           </button>
-          <button @click="exportPdf" :disabled="isExporting"
-              class="px-8 py-4 rounded-2xl bg-gradient-to-br from-[#00458f] to-[#005cbb] text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-3">
-              <span v-if="!isExporting" class="material-symbols-outlined text-xl">download</span>
-              <div v-else class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
-              {{ isExporting ? 'Exporting...' : 'Export Report' }}
+          <button @click="handleSaveReport" :disabled="isSavingReport"
+              class="px-8 py-4 rounded-2xl bg-gradient-to-br from-[#00458f] to-[#005cbb] text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-3 relative overflow-hidden group">
+              <div v-if="isSavingReport" class="absolute inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-10">
+                <div class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
+              </div>
+              <span class="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">cloud_upload</span>
+              {{ isSavingReport ? 'Syncing...' : 'Save Report' }}
           </button>
         </div>
       </div>
+      
+      <!-- Success Toast -->
+      <Transition name="toast">
+        <div v-if="showSaveSuccess" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 bg-[#191c20] text-white px-8 py-4 rounded-3xl shadow-2xl border border-white/10 backdrop-blur-2xl">
+          <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+            <span class="material-symbols-outlined text-sm font-black">check</span>
+          </div>
+          <div class="flex flex-col">
+            <p class="text-[10px] font-black uppercase tracking-widest text-emerald-400 leading-none mb-1">Success</p>
+            <p class="text-xs font-bold leading-none">Report synchronized to repository</p>
+          </div>
+        </div>
+      </Transition>
 
       <!-- Bento Layout Content -->
       <div class="grid grid-cols-12 gap-6">
@@ -219,7 +234,9 @@
             <div v-if="patientData" class="space-y-8">
               <div class="space-y-1.5">
                 <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">System ID</label>
-                <input v-model="patientData.patientCode" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 focus:ring-2 focus:ring-[#00458f]/10 transition-all" />
+                <input v-model="patientData.patientCode" 
+                       readonly
+                       class="w-full bg-slate-50 border-none rounded-xl text-sm font-black text-slate-400 p-4 cursor-not-allowed opacity-60" />
               </div>
 
               <div class="grid grid-cols-2 gap-6">
@@ -350,6 +367,13 @@
                   Run Diagnostic Engine
                </button>
             </div>
+
+            <!-- Clinical Disclaimer -->
+            <div class="mt-6 pt-6 border-t border-white/5 relative z-10">
+              <p class="text-[9px] text-white/30 leading-relaxed italic uppercase tracking-tighter">
+                MorphoAid provides AI-assisted diagnostic support and does not replace professional clinical judgment. All results should be reviewed and interpreted by qualified personnel.
+              </p>
+            </div>
           </section>
         </div>
       </div>
@@ -395,6 +419,8 @@ const verdictNotes = ref('');
 const confirmedStage = ref('RING');
 const overrideAi = ref(false);
 const isSavingVerdict = ref(false);
+const isSavingReport = ref(false);
+const showSaveSuccess = ref(false);
 const isExporting = ref(false);
 
 const loadAllData = async () => {
@@ -509,7 +535,23 @@ const loadPreviewImage = async () => {
     }
 };
 
-const savePatientInfo = async () => {
+const handleSaveReport = async () => {
+    isSavingReport.value = true;
+    try {
+        await savePatientInfo(true);
+        if (verdictNotes.value.trim()) {
+            await saveVerdict(true);
+        }
+        showSaveSuccess.value = true;
+        setTimeout(() => { showSaveSuccess.value = false; }, 3000);
+    } catch (err) {
+        console.error("Consolidated save failed:", err);
+    } finally {
+        isSavingReport.value = false;
+    }
+}
+
+const savePatientInfo = async (silent = false) => {
     try {
         const payload = {
             patientCode: patientData.value.patientCode ? Number(patientData.value.patientCode) : null,
@@ -522,9 +564,13 @@ const savePatientInfo = async () => {
             })
         };
         await ClinicalService.updatePatientInfo(caseId.value, payload);
-        alert("Patient repository synchronized.");
+        if(!silent) {
+            showSaveSuccess.value = true;
+            setTimeout(() => { showSaveSuccess.value = false; }, 3000);
+        }
     } catch (err) {
-        alert("Sync error. Verify patient ID format.");
+        if(!silent) alert("Sync error. Verify patient ID format.");
+        throw err;
     }
 };
 
@@ -550,7 +596,7 @@ const toggleNoteStatus = async (note, status) => {
     }
 };
 
-const saveVerdict = async () => {
+const saveVerdict = async (silent = false) => {
     if (!verdictNotes.value.trim()) return;
     isSavingVerdict.value = true;
     try {
@@ -562,8 +608,13 @@ const saveVerdict = async () => {
         await ClinicalService.addNote(caseId.value, payload);
         verdictNotes.value = '';
         await fetchNotes();
+        if(!silent) {
+            showSaveSuccess.value = true;
+            setTimeout(() => { showSaveSuccess.value = false; }, 3000);
+        }
     } catch (err) {
-        console.error("Verdict persistence failed.");
+        if(!silent) console.error("Verdict persistence failed.");
+        throw err;
     } finally {
         isSavingVerdict.value = false;
     }
@@ -633,6 +684,21 @@ watch(() => route.params.id, (newId) => { if (newId) loadAllData(); });
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+.toast-enter-active {
+  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.toast-leave-active {
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.toast-enter-from {
+  transform: translate(-50%, -100%);
+  opacity: 0;
+}
+.toast-leave-to {
+  transform: translate(-50%, -20px);
+  opacity: 0;
+}
 
 input:focus, select:focus, textarea:focus {
     outline: none;

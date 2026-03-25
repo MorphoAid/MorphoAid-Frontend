@@ -28,7 +28,7 @@
             <span class="material-symbols-outlined text-lg">arrow_back</span> Back
           </button>
           <button @click="printReport" class="flex items-center gap-2 px-6 py-2.5 bg-[#00458f] text-white rounded-xl font-bold text-sm hover:bg-[#005cbb] transition-all shadow-md shadow-blue-900/10 active:scale-95">
-            <span class="material-symbols-outlined text-lg">download</span> Export PDF
+            <span class="material-symbols-outlined text-lg">save</span> Save Report
           </button>
         </div>
       </div>
@@ -48,7 +48,7 @@
             <span class="material-symbols-outlined text-lg">share</span> Share
           </button>
           <button @click="printReport" class="px-5 py-2.5 bg-[#00458f] text-white rounded-xl text-sm font-bold hover:bg-[#005cbb] transition-all flex items-center gap-2 shadow-lg shadow-blue-900/10 active:scale-95">
-            <span class="material-symbols-outlined text-lg">download</span> Export PDF
+            <span class="material-symbols-outlined text-lg">save</span> Save Report
           </button>
         </div>
       </div>
@@ -240,19 +240,47 @@
           <div class="space-y-12">
             <div>
               <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-3 opacity-70">Conclusion / Diagnosis</p>
-              <div class="inline-flex items-center px-6 py-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-3xl font-manrope font-black text-[#191c20]">{{ aiData?.parasiteStage || 'Ring' }}</p>
+              <div class="inline-flex items-center gap-4 px-6 py-3 rounded-2xl shadow-sm border transition-all"
+                   :class="finalVerdictStatus === 'accepted' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-white border-slate-100 text-[#191c20]'">
+                <span v-if="finalVerdictStatus === 'accepted'" class="material-symbols-outlined text-2xl text-emerald-500">check_circle</span>
+                <p class="text-3xl font-manrope font-black uppercase">{{ finalDiagnosis }}</p>
               </div>
             </div>
             <div>
               <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-4 opacity-70">Clinician Notes & Observations</p>
               <div v-if="notes.length > 0" class="space-y-4">
-                <div v-for="note in notes" :key="note.id" class="text-sm text-slate-600 leading-relaxed font-medium bg-white p-8 rounded-[2rem] border border-slate-100 shadow-inner relative group">
-                  <div class="flex justify-between items-start mb-3">
-                    <span class="text-[8px] font-black text-[#00458f] uppercase tracking-widest">{{ note.authorName }}</span>
-                    <span class="text-[8px] text-slate-400 font-bold">{{ formatDate(note.createdAt) }}</span>
+                <div v-for="note in notes" :key="note.id" 
+                     class="relative group border rounded-[2rem] p-8 transition-all duration-300 overflow-hidden shadow-sm"
+                     :class="getVerdictStatus(note) === 'accepted' ? 'bg-emerald-50 border-emerald-100' : getVerdictStatus(note) === 'discarded' ? 'bg-red-50 border-red-100' : 'bg-white border-slate-100'">
+                  
+                  <!-- Status Overlay Icon -->
+                  <div v-if="getVerdictStatus(note) !== 'pending'" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+                    <span class="material-symbols-outlined text-[8rem]" :class="getVerdictStatus(note) === 'accepted' ? 'text-emerald-500' : 'text-red-600'">
+                      {{ getVerdictStatus(note) === 'accepted' ? 'check_circle' : 'cancel' }}
+                    </span>
                   </div>
-                  <p class="italic text-base">"{{ displayNoteContent(note.note) }}"</p>
+
+                  <div class="relative z-10 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-4">
+                      <div class="flex-1 mr-4">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ note.authorName }} • {{ formatDate(note.createdAt) }}</p>
+                        <div class="flex flex-wrap gap-2 items-center mt-1">
+                            <p class="text-base font-black text-[#191c20] capitalize tracking-tight">{{ (parseNoteContent(note.note).parasiteStage || 'Observation').toLowerCase().replace('druga', 'DrugA').replace('drugb', 'DrugB') }}</p>
+                            <span v-if="parseNoteContent(note.note).drugExposure && parseNoteContent(note.note).drugExposure !== 'None'" 
+                                  class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-black rounded border border-amber-100 uppercase tracking-tighter">
+                                  {{ parseNoteContent(note.note).drugExposure }} Exposure
+                            </span>
+                        </div>
+                      </div>
+                      <div class="flex gap-2">
+                         <span v-if="getVerdictStatus(note) === 'accepted'" class="material-symbols-outlined text-emerald-500">check_circle</span>
+                         <span v-if="getVerdictStatus(note) === 'discarded'" class="material-symbols-outlined text-red-500">cancel</span>
+                      </div>
+                    </div>
+                    <div class="mt-2 pt-3 border-t border-slate-100/50">
+                      <p class="text-sm text-slate-600 leading-relaxed font-medium italic">"{{ parseNoteContent(note.note).notes || 'No detailed observations recorded.' }}"</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               <p v-else class="text-sm text-slate-400 italic font-medium bg-white p-8 rounded-[2rem] border border-slate-100 text-center shadow-inner">
@@ -289,7 +317,7 @@
           <div class="flex flex-col md:flex-row justify-between items-end gap-6">
             <div class="max-w-xl">
               <p class="text-[8px] text-slate-300 leading-normal font-bold uppercase tracking-tight">
-                LEGAL NOTICE: This diagnostic report is generated using advanced AI algorithms refined for clinical decision support. Results should be interpreted by qualified medical personnel. Final responsibility for diagnosis and therapeutic intervention remains with the attending clinician. Data encrypted @ 256-bit AES.
+                CLINICAL DISCLAIMER: This report contains AI-assisted analytical output for clinical support purposes only and must be reviewed by qualified personnel. MorphoAid does not replace professional medical judgment. Final responsibility for diagnosis and therapeutic intervention remains with the attending clinician. Data encrypted @ 256-bit AES.
               </p>
             </div>
             <div class="flex flex-col items-end">
@@ -354,17 +382,43 @@ const generatedAt = computed(() => {
     }) + ' UTC';
 });
 
-const latestNote = computed(() => {
-    if (notes.value.length === 0) return '';
-    return notes.value[0].note;
+
+const parseNoteContent = (noteContent) => {
+    if (!noteContent) return {};
+    if (typeof noteContent === 'object') return noteContent;
+    try { return JSON.parse(noteContent); } 
+    catch (e) { return { notes: noteContent }; }
+};
+
+const getVerdictStatus = (note) => parseNoteContent(note.note).status || 'pending';
+
+const finalDiagnosis = computed(() => {
+    // Find the latest accepted verdict
+    const acceptedVerdict = [...notes.value].reverse().find(n => getVerdictStatus(n) === 'accepted');
+    if (acceptedVerdict) {
+        return parseNoteContent(acceptedVerdict.note).parasiteStage;
+    }
+    return aiData.value?.parasiteStage || 'Ring';
+});
+
+const finalVerdictStatus = computed(() => {
+    const acceptedVerdict = [...notes.value].reverse().find(n => getVerdictStatus(n) === 'accepted');
+    if (acceptedVerdict) return 'accepted';
+    
+    // Check if there are any discarded ones to maybe show a warning, 
+    // but usually we just care if it's accepted or still pending/AI
+    return 'pending';
 });
 
 const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleString('en-US', {
         day: '2-digit',
         month: 'short',
-        year: 'numeric'
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
     });
 };
 
@@ -414,24 +468,9 @@ const processAiResults = (data) => {
 const handleBack = () => {
     if (window.opener || window.history.length <= 1) {
         window.close();
-        // Fallback if close is blocked
         setTimeout(() => router.push('/data-use/cases'), 100);
     } else {
         router.back();
-    }
-};
-
-const displayNoteContent = (noteStr) => {
-    if (!noteStr) return '';
-    try {
-        const parsed = JSON.parse(noteStr);
-        if (parsed.notes) return parsed.notes;
-        // If no notes but has other fields, summarize
-        let detail = `Diagnosis: ${parsed.parasiteStage || 'None'}`;
-        if (parsed.drugExposure && parsed.drugExposure !== 'None') detail += ` | Exposure: ${parsed.drugExposure}`;
-        return detail;
-    } catch (e) {
-        return noteStr;
     }
 };
 
@@ -628,6 +667,6 @@ onUnmounted(() => {
   }
   
   .bg-slate-50 { background-color: #f8fafc !important; }
-  .bg-[#00458f]\/5 { background-color: rgba(0, 69, 143, 0.05) !important; }
+  div[class*="bg-[#00458f]/5"] { background-color: rgba(0, 69, 143, 0.05) !important; }
 }
 </style>

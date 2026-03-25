@@ -36,6 +36,9 @@ const ResultDetail = () => import('@/features/case-management/views/ResultDetail
 const Insight = () => import('@/features/visualization/views/Insight.vue')
 const AccountManagement = () => import('@/features/case-management/views/AccountManagement.vue')
 const DiagnosticReport = () => import('@/features/case-management/views/DiagnosticReport.vue')
+const AboutUs = () => import('@/views/AboutUs.vue')
+const PrivacyPolicy = () => import('@/views/PrivacyPolicy.vue')
+const TermsOfUse = () => import('@/views/TermsOfUse.vue')
 
 // CLINICAL (Feature 2)
 const ClinicalUpload = () => import('@/features/clinical/views/ClinicalUpload.vue')
@@ -65,7 +68,21 @@ const routes = [
     path: '/__auth',
     component: PublicLayout,
     meta: { guestOnly: true },
-    children: [{ path: '', component: AuthLanding }]
+    children: [
+      { path: '', component: AuthLanding },
+      { path: 'privacy', component: PrivacyPolicy },
+      { path: 'terms', component: TermsOfUse }
+    ]
+  },
+  {
+    path: '/privacy',
+    component: PublicLayout,
+    children: [{ path: '', component: PrivacyPolicy }]
+  },
+  {
+    path: '/terms',
+    component: PublicLayout,
+    children: [{ path: '', component: TermsOfUse }]
   },
   {
     path: '/login',
@@ -106,6 +123,8 @@ const routes = [
       { path: 'invitations', component: InvitationManagement },
       { path: 'activity-log', component: ActivityLog },
       { path: 'approvals', component: UserApprovals },
+      { path: 'account', component: AccountManagement },
+      { path: 'about', component: AboutUs }
     ]
   },
 
@@ -170,7 +189,8 @@ const routes = [
 
       { path: 'result/:id', component: ResultDetail, props: true },
       { path: 'insights', component: Insight },
-      { path: 'account', component: AccountManagement }
+      { path: 'account', component: AccountManagement },
+      { path: 'about', component: AboutUs }
     ]
   },
 

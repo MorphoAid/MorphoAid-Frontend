@@ -72,7 +72,12 @@
                                 <span class="text-[#2E2E2E] font-bold text-sm">{{ caseData?.confidenceScore ?
                                     `${(caseData.confidenceScore * 100).toFixed(1)}%` : 'N/A' }}</span>
                             </div>
-                        </div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-50">
+                        <p class="text-[10px] text-[#5C5C5C] leading-relaxed italic uppercase tracking-tighter opacity-70">
+                            MorphoAid provides AI-assisted support and does not replace professional clinical judgment. All results should be reviewed by qualified personnel.
+                        </p>
                     </div>
                 </div>
 

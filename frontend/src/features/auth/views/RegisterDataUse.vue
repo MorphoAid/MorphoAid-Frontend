@@ -132,15 +132,32 @@
       <div>
         <label class="flex items-start gap-3 text-[14px] text-[#2E2E2E] cursor-pointer">
           <input v-model="form.agree" type="checkbox" class="mt-0.5 h-5 w-5 rounded border-gray-300 text-[#48B7CB] focus:ring-[#48B7CB]" />
-          <span>
+          <span class="select-none">
             I agree to all the
-            <a href="#" class="font-bold underline underline-offset-2">Terms</a>
+            <button type="button" @click="isTermsModalOpen = true" class="font-bold underline underline-offset-2 hover:text-[#48B7CB] transition-colors focus:outline-none">Terms of Use</button>
             and
-            <a href="#" class="font-bold underline underline-offset-2">Privacy Policies</a>
+            <button type="button" @click="isPrivacyModalOpen = true" class="font-bold underline underline-offset-2 hover:text-[#48B7CB] transition-colors focus:outline-none">Privacy Notice</button>
           </span>
         </label>
         <p v-if="errors.agree" class="mt-1 text-xs text-red-500">{{ errors.agree }}</p>
       </div>
+
+      <!-- Legal Modals -->
+      <PolicyModal 
+        :is-open="isPrivacyModalOpen" 
+        title="Privacy Notice" 
+        @close="isPrivacyModalOpen = false"
+      >
+        <LegalContent :sections="privacySections" />
+      </PolicyModal>
+
+      <PolicyModal 
+        :is-open="isTermsModalOpen" 
+        title="Terms of Use" 
+        @close="isTermsModalOpen = false"
+      >
+        <LegalContent :sections="termsSections" />
+      </PolicyModal>
 
       <!-- Next Button -->
       <div class="pt-1">
@@ -249,8 +266,14 @@
 import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '@/services/auth.service'
+import PolicyModal from '@/components/legal/PolicyModal.vue'
+import LegalContent from '@/components/legal/LegalContent.vue'
+import { privacySections, termsSections } from '@/data/legalPolicies'
 
 const router = useRouter()
+
+const isPrivacyModalOpen = ref(false)
+const isTermsModalOpen = ref(false)
 
 const step = ref(1)
 const loading = ref(false)

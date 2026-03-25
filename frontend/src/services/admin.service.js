@@ -7,5 +7,13 @@ export const adminService = {
 
     async updateUserRole(id, role) {
         return http.patch(`/admin/users/${id}`, { role });
+    },
+
+    async deleteUser(id) {
+        return http.delete(`/admin/users/${id}/reject`);
+    },
+
+    async getActivities() {
+        return http.get('/admin/activities');
     }
 };

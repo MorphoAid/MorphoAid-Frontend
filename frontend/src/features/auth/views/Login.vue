@@ -129,6 +129,13 @@
         {{ loading ? 'Signing in...' : 'Sign in' }}
       </button>
 
+      <p class="text-center text-[12px] text-[#5C5C5C] px-2">
+        By continuing, you agree to our 
+        <button type="button" @click="isPrivacyModalOpen = true" class="text-[#2F8EA2] hover:underline focus:outline-none">Privacy Notice</button> 
+        and 
+        <button type="button" @click="isTermsModalOpen = true" class="text-[#2F8EA2] hover:underline focus:outline-none">Terms of Use</button>.
+      </p>
+
       <div class="flex items-center justify-center pt-2 text-sm">
         <router-link
           to="/register/data-use"
@@ -145,6 +152,21 @@
         </router-link> -->
       </div>
     </form>
+    <PolicyModal 
+      :is-open="isPrivacyModalOpen" 
+      title="Privacy Notice" 
+      @close="isPrivacyModalOpen = false"
+    >
+      <LegalContent :sections="privacySections" />
+    </PolicyModal>
+
+    <PolicyModal 
+      :is-open="isTermsModalOpen" 
+      title="Terms of Use" 
+      @close="isTermsModalOpen = false"
+    >
+      <LegalContent :sections="termsSections" />
+    </PolicyModal>
   </div>
 </template>
 
@@ -152,9 +174,15 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth.store'
+import PolicyModal from '@/components/legal/PolicyModal.vue'
+import LegalContent from '@/components/legal/LegalContent.vue'
+import { privacySections, termsSections } from '@/data/legalPolicies'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const isPrivacyModalOpen = ref(false)
+const isTermsModalOpen = ref(false)
 
 const loading = ref(false)
 const errorMsg = ref('')
