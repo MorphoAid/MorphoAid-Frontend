@@ -266,7 +266,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '@/services/auth.service'
 import PolicyModal from '@/components/legal/PolicyModal.vue'
