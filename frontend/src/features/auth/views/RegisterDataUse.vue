@@ -103,11 +103,10 @@
           id="password"
           v-model="form.password"
           type="password"
-          placeholder="At least 6 characters"
+          placeholder="8-20 characters"
           class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
           :class="errors.password ? 'border-red-400' : ''"
         />
-        <p class="mt-1 text-[12px] italic text-[#7A8594]">Must contain <strong>letters and numbers</strong></p>
         <p v-if="errors.password" class="mt-1 text-xs text-red-500">{{ errors.password }}</p>
       </div>
 
@@ -182,7 +181,7 @@
 
       <!-- Medical License -->
       <div>
-        <label for="licenseNumber" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Medical license number (Thailand)</label>
+        <label for="licenseNumber" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Medical license number</label>
         <input
           id="licenseNumber"
           v-model.trim="form.licenseNumber"
@@ -196,7 +195,7 @@
 
       <!-- Affiliated Hospital -->
       <div>
-        <label for="hospital" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Affiliated Hospital/Clinical</label>
+        <label for="hospital" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Affiliated hospital or clinic</label>
         <input
           id="hospital"
           v-model.trim="form.hospital"
@@ -210,7 +209,7 @@
 
       <!-- Document Upload -->
       <div>
-        <label class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Verification Documents</label>
+        <label class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Verification document upload</label>
         <div
           class="relative flex flex-col items-center justify-center gap-3 rounded-[12px] border-2 border-dashed border-[#D9DDE3] bg-white p-8 text-center transition-colors cursor-pointer"
           :class="isDragging ? 'border-[#48B7CB] bg-[#48B7CB]/5' : 'hover:border-[#48B7CB]/60'"
@@ -223,7 +222,7 @@
           <div v-if="!form.document" class="flex flex-col items-center gap-2">
             <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p class="text-[14px] font-semibold text-[#2E2E2E]">Doctor ID Card or Medical License Certificate</p>
-            <p class="text-[12px] text-[#7A8594]">Click or drag to upload (PDF or JPG only)</p>
+            <p class="text-[12px] text-[#7A8594]">Click or drag to upload (PDF, JPG, or PNG)</p>
           </div>
           <div v-else class="flex flex-col items-center gap-2">
             <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -316,16 +315,20 @@ function validateStep1() {
   clearErrors()
   let ok = true
 
-  if (!form.title) { errors.title = 'Required'; ok = false }
-  if (!form.firstName) { errors.firstName = 'Enter first name'; ok = false }
-  if (!form.lastName) { errors.lastName = 'Enter last name'; ok = false }
-  if (!form.email) { errors.email = 'Enter email'; ok = false }
-  else if (!/\S+@\S+\.\S+/.test(form.email)) { errors.email = 'Invalid email'; ok = false }
-  if (!form.password) { errors.password = 'Enter password'; ok = false }
-  else if (!/^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(form.password)) { errors.password = 'Letters and numbers required'; ok = false }
-  if (!form.confirmPassword) { errors.confirmPassword = 'Confirm password'; ok = false }
-  else if (form.confirmPassword !== form.password) { errors.confirmPassword = 'Password do not match'; ok = false }
-  if (!form.agree) { errors.agree = 'You must agree to continue'; ok = false }
+  if (!form.title) { errors.title = 'Title is required.'; ok = false }
+  if (!form.firstName) { errors.firstName = 'First name is required.'; ok = false }
+  if (!form.lastName) { errors.lastName = 'Last name is required.'; ok = false }
+  if (!form.email) { errors.email = 'Email is required.'; ok = false }
+  else if (!/\S+@\S+\.\S+/.test(form.email)) { errors.email = 'Email is invalid.'; ok = false }
+  
+  if (!form.password) { errors.password = 'Password is required.'; ok = false }
+  else if (form.password.length < 8) { errors.password = 'Password must be at least 8 characters.'; ok = false }
+  else if (form.password.length > 20) { errors.password = 'Password must not exceed 20 characters.'; ok = false }
+  
+  if (!form.confirmPassword) { errors.confirmPassword = 'Confirm password is required.'; ok = false }
+  else if (form.confirmPassword !== form.password) { errors.confirmPassword = 'Password does not match.'; ok = false }
+  
+  if (!form.agree) { errors.agree = 'You must agree to the terms and privacy policy to continue.'; ok = false }
 
   return ok
 }
@@ -334,9 +337,19 @@ function validateStep2() {
   clearErrors()
   let ok = true
 
-  if (!form.licenseNumber) { errors.licenseNumber = 'Enter medical license number'; ok = false }
-  if (!form.hospital) { errors.hospital = 'Enter affiliated hospital'; ok = false }
-  if (!form.document) { errors.document = 'Please upload your verification document'; ok = false }
+  if (!form.licenseNumber) { errors.licenseNumber = 'Medical license number is required.'; ok = false }
+  if (!form.hospital) { errors.hospital = 'Affiliated hospital or clinic is required.'; ok = false }
+  if (!form.document) { 
+    errors.document = 'Verification document is required.'; 
+    ok = false 
+  } else {
+    // SRS-14: Validate file types
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+    if (!allowedTypes.includes(form.document.type)) {
+      errors.document = 'Unsupported file format. Please upload a valid verification document.'
+      ok = false
+    }
+  }
 
   return ok
 }
@@ -360,23 +373,37 @@ async function handleSubmit() {
   if (!validateStep2()) return
   try {
     loading.value = true
-    await authService.registerDataUse({
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      password: form.password,
-      confirmPassword: form.confirmPassword,
-      agreeTerms: form.agree,
-    })
+    
+    // Prepare form data for upload if necessary (Step 2 has document)
+    const formData = new FormData()
+    formData.append('title', form.title)
+    formData.append('firstName', form.firstName)
+    formData.append('lastName', form.lastName)
+    formData.append('email', form.email)
+    formData.append('password', form.password)
+    formData.append('confirmPassword', form.confirmPassword)
+    formData.append('agreeTerms', form.agree)
+    formData.append('licenseNumber', form.licenseNumber)
+    formData.append('hospital', form.hospital)
+    if (form.document) {
+      formData.append('verificationDocument', form.document)
+    }
+
+    await authService.registerDataUse(formData)
     router.push('/login')
   } catch (err) {
-    const serverErrors = err?.response?.data?.errors
-    if (serverErrors) {
-      Object.assign(errors, serverErrors)
-      // If email error, go back to step 1
-      if (serverErrors.email) step.value = 1
+    const status = err?.response?.status
+    const message = err?.response?.data?.message
+    
+    if (status === 409 || message?.toLowerCase().includes('already exists')) {
+      errors.email = 'This email already exists.'
+      step.value = 1
+    } else if (err?.response?.data?.errors) {
+      Object.assign(errors, err.response.data.errors)
+      if (err.response.data.errors.email) step.value = 1
     } else {
-      errors.licenseNumber = err?.response?.data?.message || 'Registration failed. Please try again.'
+      // SRS-18: System or database error
+      errors.licenseNumber = 'Registration failed. Please try again later.'
     }
   } finally {
     loading.value = false
