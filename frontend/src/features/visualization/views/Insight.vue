@@ -8,10 +8,6 @@
                     <h1 class="text-2xl font-semibold text-[#368998]">Insights Dashboard</h1>
                     <p class="text-sm text-[#5C5C5C]">Comprehensive analysis metrics and clinical trends.</p>
                 </div>
-                <button @click="exportReport" class="flex items-center gap-2 px-4 py-2 bg-white border border-[#368998]/20 rounded-lg text-sm font-medium text-[#368998] hover:bg-gray-50 transition-colors shadow-sm">
-                    <span class="material-symbols-outlined text-lg">description</span>
-                    Export PDF
-                </button>
             </div>
 
             <!-- Summary Cards -->
@@ -89,9 +85,7 @@ async function fetchSummary() {
     }
 }
 
-function exportReport() {
-    window.print()
-}
+
 
 onMounted(fetchSummary)
 </script>
