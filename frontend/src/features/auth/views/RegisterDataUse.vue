@@ -162,10 +162,14 @@
       <div class="pt-1">
         <button
           type="submit"
-          class="h-[54px] w-full rounded-[10px] bg-[#48B7CB] text-[18px] font-bold text-white shadow-sm transition hover:bg-[#3aa8bc] flex items-center justify-center gap-2"
+          :disabled="loading"
+          class="h-[54px] w-full rounded-[10px] bg-[#48B7CB] text-[18px] font-bold text-white shadow-sm transition hover:bg-[#3aa8bc] disabled:opacity-60 flex items-center justify-center gap-2"
         >
-          Next
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          <template v-if="!loading">
+            Next
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </template>
+          <span v-else>Verifying...</span>
         </button>
       </div>
 
@@ -305,7 +309,14 @@ const errors = reactive({
   document: '',
 })
 
-const emailValid = computed(() => form.email && /\S+@\S+\.\S+/.test(form.email))
+const emailValid = computed(() => form.email && /\S+@\S+\.\S+/.test(form.email) && !errors.email)
+
+// Watch email change to clear server-side "already exists" error
+watch(() => form.email, () => {
+  if (errors.email === 'This email already exists.') {
+    errors.email = ''
+  }
+})
 
 function clearErrors() {
   Object.keys(errors).forEach(k => errors[k] = '')
@@ -354,8 +365,22 @@ function validateStep2() {
   return ok
 }
 
-function goNext() {
-  if (validateStep1()) step.value = 2
+async function goNext() {
+  if (validateStep1()) {
+    try {
+      loading.value = true
+      await authService.checkEmail(form.email)
+      step.value = 2
+    } catch (err) {
+      if (err.response?.status === 409) {
+        errors.email = 'This email already exists.'
+      } else {
+        errors.email = 'Failed to verify email. Please try again later.'
+      }
+    } finally {
+      loading.value = false
+    }
+  }
 }
 
 function handleFileChange(e) {

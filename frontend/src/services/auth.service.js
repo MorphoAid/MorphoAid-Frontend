@@ -5,6 +5,10 @@ export const authService = {
         return http.post('/auth/register', data);
     },
 
+    async checkEmail(email) {
+        return http.get(`/auth/check-email?email=${encodeURIComponent(email)}`);
+    },
+
     async registerDataPrep(data) {
         return http.post('/auth/register/dataprep', data);
     },
