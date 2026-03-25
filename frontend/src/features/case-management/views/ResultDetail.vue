@@ -3,7 +3,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
             <div>
-                <h1 class="text-3xl font-bold text-[#2E2E2E] mb-1">Case Detalls</h1>
+                <h1 class="text-3xl font-bold text-[#2E2E2E] mb-1">Case Details</h1>
                 <p class="text-[#5C5C5C] font-medium text-sm">Case ID: <span class="text-[#2E2E2E]">{{ caseId }}</span>
                 </p>
             </div>
@@ -72,6 +72,7 @@
                                 <span class="text-[#2E2E2E] font-bold text-sm">{{ caseData?.confidenceScore ?
                                     `${(caseData.confidenceScore * 100).toFixed(1)}%` : 'N/A' }}</span>
                             </div>
+                        </div>
                     </div>
                     
                     <div class="mt-6 pt-4 border-t border-gray-50">
