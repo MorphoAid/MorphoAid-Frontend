@@ -187,15 +187,6 @@
                         <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 transition-transform group-hover:translate-y-[-40%]">expand_more</span>
                     </div>
                   </div>
-                  <label class="flex items-center gap-4 cursor-pointer group bg-white p-5 rounded-2xl border border-slate-100 hover:border-[#00458f]/30 transition-all shadow-sm">
-                    <div class="relative flex items-center">
-                        <input type="checkbox" v-model="overrideAi" class="peer h-6 w-6 cursor-pointer appearance-none rounded-lg border-2 border-slate-200 transition-all checked:bg-[#00458f] checked:border-[#00458f]" />
-                        <span class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                            <span class="material-symbols-outlined text-sm font-black">check</span>
-                        </span>
-                    </div>
-                    <span class="text-xs font-black text-slate-500 group-hover:text-[#00458f] transition-all uppercase tracking-widest">Adjust AI Confidence Weights</span>
-                  </label>
                 </div>
                 <div class="space-y-2.5">
                   <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clinical Observations & Findings</label>
@@ -417,7 +408,6 @@ const patientData = ref({
 });
 const verdictNotes = ref('');
 const confirmedStage = ref('RING');
-const overrideAi = ref(false);
 const isSavingVerdict = ref(false);
 const isSavingReport = ref(false);
 const showSaveSuccess = ref(false);
