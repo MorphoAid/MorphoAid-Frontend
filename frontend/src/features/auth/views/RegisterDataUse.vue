@@ -1,267 +1,322 @@
 <template>
-  <div class="w-full max-w-md sm:max-w-2xl rounded-[24px] border border-white/60 bg-stone-50/85 px-6 py-8 shadow-[0_12px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:px-10 sm:py-10">
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-[42px] font-bold leading-tight text-[#2E2E2E]">Register</h1>
-    </div>
-
-    <!-- Step Header -->
-    <div class="mb-6">
-      <div class="flex items-center justify-between mb-2">
-        <p class="text-[17px] font-semibold text-[#2E2E2E]">
-          {{ step === 1 ? 'Create an account' : 'Verify your Medical Identity' }}
-        </p>
-        <span class="text-xs font-semibold text-[#5C5C5C] bg-gray-100 px-3 py-1 rounded-full">Step {{ step }} of 2</span>
-      </div>
-      <!-- Progress Bar -->
-      <div class="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-        <div class="h-full bg-[#48B7CB] rounded-full transition-all duration-500" :style="{ width: step === 1 ? '50%' : '100%' }"></div>
-      </div>
-    </div>
-
-    <!-- ── STEP 1 ─────────────────────────────────────────── -->
-    <form v-if="step === 1" class="space-y-5" @submit.prevent="goNext">
-
-      <!-- Title + First name + Last name -->
-      <div class="flex gap-3 items-start">
-        <!-- Title Dropdown -->
-        <div class="flex-shrink-0" style="width: 110px;">
-          <label class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Title</label>
-          <div class="relative">
-            <select
-              v-model="form.title"
-              class="h-12 w-full appearance-none rounded-[10px] border border-[#D9DDE3] bg-white pl-3 pr-8 text-[14px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15 cursor-pointer"
-              :class="errors.title ? 'border-red-400' : ''"
-            >
-              <option value="" disabled>Title</option>
-              <option value="Dr.">Dr.</option>
-              <option value="Prof.">Prof.</option>
-              <option value="Assoc. Prof.">Assoc. Prof.</option>
-              <option value="Asst. Prof.">Asst. Prof.</option>
-              <option value="Mr.">Mr.</option>
-              <option value="Ms.">Ms.</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  <div class="w-full flex items-center justify-center transition-all duration-500" :class="step === 1 ? 'max-w-xl' : 'max-w-4xl'">
+    
+    <!-- ── STEP 1: Account Creation ─────────────────────────────────────────── -->
+    <section v-if="step === 1" class="w-full bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
+      <!-- Header & Progress Indicator -->
+      <div class="p-8 pb-4">
+        <div class="flex justify-between items-end mb-6">
+          <div>
+            <span class="text-primary font-semibold text-xs tracking-widest uppercase mb-2 block">Registration Phase</span>
+            <h1 class="text-3xl font-extrabold text-on-surface tracking-tight leading-tight">Create Medical Account</h1>
+          </div>
+          <div class="text-right">
+            <p class="text-xs font-medium text-on-surface-variant mb-1 uppercase tracking-tighter">Step 1 of 2</p>
+            <div class="flex gap-1">
+              <div class="h-1.5 w-12 bg-primary rounded-full"></div>
+              <div class="h-1.5 w-12 bg-surface-container-high rounded-full"></div>
             </div>
           </div>
-          <p v-if="errors.title" class="mt-1 text-xs text-red-500">{{ errors.title }}</p>
         </div>
-
-        <!-- First Name -->
-        <div class="flex-1">
-          <label for="firstName" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">First name</label>
-          <input
-            id="firstName"
-            v-model.trim="form.firstName"
-            type="text"
-            placeholder="First name"
-            class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
-            :class="errors.firstName ? 'border-red-400' : ''"
-          />
-          <p v-if="errors.firstName" class="mt-1 text-xs text-red-500">{{ errors.firstName }}</p>
-        </div>
-
-        <!-- Last Name -->
-        <div class="flex-1">
-          <label for="lastName" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Last name</label>
-          <input
-            id="lastName"
-            v-model.trim="form.lastName"
-            type="text"
-            placeholder="Last name"
-            class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
-            :class="errors.lastName ? 'border-red-400' : ''"
-          />
-          <p v-if="errors.lastName" class="mt-1 text-xs text-red-500">{{ errors.lastName }}</p>
-        </div>
+        <p class="text-on-surface-variant text-sm max-w-md">Please provide your professional credentials to initiate the clinical onboarding process for MorphoAid.</p>
       </div>
 
-      <!-- Email -->
-      <div>
-        <label for="email" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Email</label>
-        <div class="relative">
-          <input
-            id="email"
-            v-model.trim="form.email"
-            type="email"
-            placeholder="e.g. doctor@hospital.com"
-            class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 pr-11 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
-            :class="errors.email ? 'border-red-400' : emailValid ? 'border-emerald-400' : ''"
-          />
-          <span v-if="emailValid" class="absolute inset-y-0 right-3 flex items-center text-emerald-500">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-          </span>
-        </div>
-        <p v-if="errors.email" class="mt-1 text-xs text-red-500">{{ errors.email }}</p>
+      <!-- Form Area -->
+      <div class="p-8 pt-4">
+        <form class="space-y-6" @submit.prevent="goNext">
+          <!-- Row 1: Title & First Name -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="md:col-span-1">
+              <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2" for="title">Title</label>
+              <div class="relative">
+                <select 
+                  v-model="form.title"
+                  class="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary appearance-none text-sm" 
+                  :class="errors.title ? 'ring-2 ring-error/50' : ''"
+                  id="title"
+                >
+                  <option value="" disabled>Select</option>
+                  <option value="Dr.">Dr.</option>
+                  <option value="Prof.">Prof.</option>
+                  <option value="Assoc. Prof.">Assoc. Prof.</option>
+                  <option value="Asst. Prof.">Asst. Prof.</option>
+                  <option value="Mr.">Mr.</option>
+                  <option value="Ms.">Ms.</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+              </div>
+              <p v-if="errors.title" class="mt-1 text-[10px] font-bold text-error uppercase">{{ errors.title }}</p>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2" for="first_name">First name</label>
+              <input 
+                v-model.trim="form.firstName"
+                class="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary text-sm placeholder:text-outline/50" 
+                :class="errors.firstName ? 'ring-2 ring-error/50' : ''"
+                id="first_name" 
+                placeholder="Enter first name" 
+                type="text"
+              />
+              <p v-if="errors.firstName" class="mt-1 text-[10px] font-bold text-error uppercase">{{ errors.firstName }}</p>
+            </div>
+          </div>
+
+          <!-- Row 2: Last Name -->
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2" for="last_name">Last name</label>
+            <input 
+              v-model.trim="form.lastName"
+              class="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary text-sm placeholder:text-outline/50" 
+              :class="errors.lastName ? 'ring-2 ring-error/50' : ''"
+              id="last_name" 
+              placeholder="Enter last name" 
+              type="text"
+            />
+            <p v-if="errors.lastName" class="mt-1 text-[10px] font-bold text-error uppercase">{{ errors.lastName }}</p>
+          </div>
+
+          <!-- Row 3: Email -->
+          <div>
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2" for="email">Medical Email Address</label>
+            <div class="relative">
+              <input 
+                v-model.trim="form.email"
+                class="w-full bg-surface-container-low border-none rounded-lg py-3 pl-10 pr-4 text-on-surface focus:ring-2 focus:ring-primary text-sm placeholder:text-outline/50" 
+                :class="errors.email ? 'ring-2 ring-error/50' : emailValid ? 'ring-2 ring-emerald-500/30' : ''"
+                id="email" 
+                placeholder="email@institution.edu" 
+                type="email"
+              />
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">mail</span>
+              <span v-if="emailValid" class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 text-sm">check_circle</span>
+            </div>
+            <p v-if="errors.email" class="mt-1 text-[10px] font-bold text-error uppercase">{{ errors.email }}</p>
+          </div>
+
+          <!-- Row 4: Password Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2" for="password">Password</label>
+              <div class="relative">
+                <input 
+                  v-model="form.password"
+                  class="w-full bg-surface-container-low border-none rounded-lg py-3 pl-10 pr-4 text-on-surface focus:ring-2 focus:ring-primary text-sm placeholder:text-outline/50" 
+                  :class="errors.password ? 'ring-2 ring-error/50' : ''"
+                  id="password" 
+                  placeholder="••••••••" 
+                  type="password"
+                />
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">lock</span>
+              </div>
+              <p v-if="errors.password" class="mt-1 text-[10px] font-bold text-error uppercase">{{ errors.password }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2" for="confirm_password">Confirm Password</label>
+              <div class="relative">
+                <input 
+                  v-model="form.confirmPassword"
+                  class="w-full bg-surface-container-low border-none rounded-lg py-3 pl-10 pr-4 text-on-surface focus:ring-2 focus:ring-primary text-sm placeholder:text-outline/50" 
+                  :class="errors.confirmPassword ? 'ring-2 ring-error/50' : ''"
+                  id="confirm_password" 
+                  placeholder="••••••••" 
+                  type="password"
+                />
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">enhanced_encryption</span>
+              </div>
+              <p v-if="errors.confirmPassword" class="mt-1 text-[10px] font-bold text-error uppercase">{{ errors.confirmPassword }}</p>
+            </div>
+          </div>
+
+          <!-- Checkbox -->
+          <div class="flex items-start gap-3 py-2">
+            <input 
+              v-model="form.agree"
+              class="mt-1 h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-low" 
+              id="terms" 
+              type="checkbox"
+            />
+            <label class="text-xs text-on-surface-variant leading-relaxed" for="terms">
+              I agree to the <button type="button" @click="isTermsModalOpen = true" class="text-primary font-medium hover:underline">Terms of Service</button> and <button type="button" @click="isPrivacyModalOpen = true" class="text-primary font-medium hover:underline">Privacy Notice</button>, and confirm I am a licensed healthcare professional.
+            </label>
+          </div>
+          <p v-if="errors.agree" class="text-[10px] font-bold text-error uppercase">{{ errors.agree }}</p>
+
+          <!-- Action Button -->
+          <div class="pt-4">
+            <button 
+              class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold py-4 rounded-lg shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all flex justify-center items-center gap-2 group disabled:opacity-50" 
+              type="submit"
+              :disabled="loading"
+            >
+              <span v-if="loading" class="material-symbols-outlined animate-spin">progress_activity</span>
+              <span>{{ loading ? 'Verifying...' : 'Proceed to Step 2' }}</span>
+              <span v-if="!loading" class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+            </button>
+          </div>
+
+          <div class="text-center">
+            <p class="text-[13px] text-on-surface-variant">
+              Already have an account? 
+              <router-link to="/login" class="font-bold text-primary hover:underline">Log in</router-link>
+            </p>
+          </div>
+        </form>
       </div>
 
-      <!-- Password -->
-      <div>
-        <label for="password" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Password</label>
-        <input
-          id="password"
-          v-model="form.password"
-          type="password"
-          placeholder="8-20 characters"
-          class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
-          :class="errors.password ? 'border-red-400' : ''"
-        />
-        <p v-if="errors.password" class="mt-1 text-xs text-red-500">{{ errors.password }}</p>
-      </div>
-
-      <!-- Confirm Password -->
-      <div>
-        <label for="confirmPassword" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Confirm Password</label>
-        <input
-          id="confirmPassword"
-          v-model="form.confirmPassword"
-          type="password"
-          placeholder="Re-enter password"
-          class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-white px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
-          :class="errors.confirmPassword ? 'border-red-400' : ''"
-        />
-        <p v-if="errors.confirmPassword" class="mt-1 text-xs text-red-500 flex items-center gap-1">
-          <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-          {{ errors.confirmPassword }}
+      <!-- Footer Note -->
+      <div class="bg-surface-container-low p-6 text-center">
+        <p class="text-xs text-on-surface-variant font-medium flex justify-center items-center gap-2">
+          <span class="material-symbols-outlined text-[16px] text-tertiary">verified_user</span>
+          End-to-end encrypted registration protocol active
         </p>
       </div>
+    </section>
 
-      <!-- Terms -->
-      <div>
-        <label class="flex items-start gap-3 text-[14px] text-[#2E2E2E] cursor-pointer">
-          <input v-model="form.agree" type="checkbox" class="mt-0.5 h-5 w-5 rounded border-gray-300 text-[#48B7CB] focus:ring-[#48B7CB]" />
-          <span class="select-none">
-            I agree to all the
-            <button type="button" @click="isTermsModalOpen = true" class="font-bold underline underline-offset-2 hover:text-[#48B7CB] transition-colors focus:outline-none">Terms of Use</button>
-            and
-            <button type="button" @click="isPrivacyModalOpen = true" class="font-bold underline underline-offset-2 hover:text-[#48B7CB] transition-colors focus:outline-none">Privacy Notice</button>
-          </span>
-        </label>
-        <p v-if="errors.agree" class="mt-1 text-xs text-red-500">{{ errors.agree }}</p>
-      </div>
-
-      <!-- Legal Modals -->
-      <PolicyModal 
-        :is-open="isPrivacyModalOpen" 
-        title="Privacy Notice" 
-        @close="isPrivacyModalOpen = false"
-      >
-        <LegalContent :sections="privacySections" />
-      </PolicyModal>
-
-      <PolicyModal 
-        :is-open="isTermsModalOpen" 
-        title="Terms of Use" 
-        @close="isTermsModalOpen = false"
-      >
-        <LegalContent :sections="termsSections" />
-      </PolicyModal>
-
-      <!-- Next Button -->
-      <div class="pt-1">
-        <button
-          type="submit"
-          :disabled="loading"
-          class="h-[54px] w-full rounded-[10px] bg-[#48B7CB] text-[18px] font-bold text-white shadow-sm transition hover:bg-[#3aa8bc] disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          <template v-if="!loading">
-            Next
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-          </template>
-          <span v-else>Verifying...</span>
-        </button>
-      </div>
-
-      <!-- Bottom Link -->
-      <div class="text-center text-[14px] text-[#2E2E2E]">
-        Already have an account?
-        <router-link to="/login" class="font-semibold text-[#2F8EA2] hover:underline">Log in</router-link>
-      </div>
-    </form>
-
-    <!-- ── STEP 2 ─────────────────────────────────────────── -->
-    <form v-else class="space-y-5" @submit.prevent="handleSubmit">
-
-      <!-- Medical License -->
-      <div>
-        <label for="licenseNumber" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Medical license number</label>
-        <input
-          id="licenseNumber"
-          v-model.trim="form.licenseNumber"
-          type="text"
-          placeholder="e.g. 1234567"
-          class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-stone-100 px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15 focus:bg-white"
-          :class="errors.licenseNumber ? 'border-red-400' : ''"
-        />
-        <p v-if="errors.licenseNumber" class="mt-1 text-xs text-red-500">{{ errors.licenseNumber }}</p>
-      </div>
-
-      <!-- Affiliated Hospital -->
-      <div>
-        <label for="hospital" class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Affiliated hospital or clinic</label>
-        <input
-          id="hospital"
-          v-model.trim="form.hospital"
-          type="text"
-          placeholder="e.g. Tak Hospital"
-          class="h-12 w-full rounded-[10px] border border-[#D9DDE3] bg-stone-100 px-4 text-[15px] text-[#2E2E2E] shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15 focus:bg-white"
-          :class="errors.hospital ? 'border-red-400' : ''"
-        />
-        <p v-if="errors.hospital" class="mt-1 text-xs text-red-500">{{ errors.hospital }}</p>
-      </div>
-
-      <!-- Document Upload -->
-      <div>
-        <label class="mb-1.5 block text-[14px] font-medium text-[#2E2E2E]">Verification document upload</label>
-        <div
-          class="relative flex flex-col items-center justify-center gap-3 rounded-[12px] border-2 border-dashed border-[#D9DDE3] bg-white p-8 text-center transition-colors cursor-pointer"
-          :class="isDragging ? 'border-[#48B7CB] bg-[#48B7CB]/5' : 'hover:border-[#48B7CB]/60'"
-          @dragover.prevent="isDragging = true"
-          @dragleave.prevent="isDragging = false"
-          @drop.prevent="handleDrop"
-          @click="$refs.fileInput.click()"
-        >
-          <input ref="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="handleFileChange" />
-          <div v-if="!form.document" class="flex flex-col items-center gap-2">
-            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <p class="text-[14px] font-semibold text-[#2E2E2E]">Doctor ID Card or Medical License Certificate</p>
-            <p class="text-[12px] text-[#7A8594]">Click or drag to upload (PDF, JPG, or PNG)</p>
+    <!-- ── STEP 2: Identity Verification ─────────────────────────────────────────── -->
+    <section v-else class="w-full grid md:grid-cols-2 gap-0 overflow-hidden rounded-xl shadow-2xl shadow-on-background/5 border border-outline-variant/15">
+      <!-- Left Side: Informational/Brand Panel -->
+      <div class="clinical-gradient p-10 flex flex-col justify-between relative overflow-hidden text-on-primary">
+        <div class="relative z-10">
+          <span class="text-xs font-bold tracking-widest uppercase opacity-70 mb-4 block">MorphoAid Identity</span>
+          <h2 class="font-headline text-4xl font-extrabold tracking-tight leading-tight mb-6">Medical Identity Verification</h2>
+          <p class="text-on-primary-container leading-relaxed opacity-90 max-w-sm">
+            To maintain a secure medical environment, we require verification of your clinical credentials. Our AI processes these documents in a HIPAA-compliant workspace.
+          </p>
+        </div>
+        <div class="mt-12 relative z-10 space-y-6">
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined bg-on-primary/10 p-2 rounded-lg" data-icon="verified_user">verified_user</span>
+            <div>
+              <p class="font-semibold text-sm">Credential Validation</p>
+              <p class="text-xs opacity-70">Cross-referenced with state medical boards.</p>
+            </div>
           </div>
-          <div v-else class="flex flex-col items-center gap-2">
-            <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-[14px] font-semibold text-emerald-600">{{ form.document.name }}</p>
-            <button type="button" @click.stop="form.document = null" class="text-xs text-gray-400 hover:text-red-500">Remove</button>
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined bg-on-primary/10 p-2 rounded-lg" data-icon="lock">lock</span>
+            <div>
+              <p class="font-semibold text-sm">End-to-End Encryption</p>
+              <p class="text-xs opacity-70">Your documents are purged after verification.</p>
+            </div>
           </div>
         </div>
-        <p v-if="errors.document" class="mt-1 text-xs text-red-500">{{ errors.document }}</p>
+        <!-- Abstract Visual -->
+        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-primary-container rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+        <div class="absolute top-1/4 -left-10 w-40 h-40 bg-on-primary rounded-full mix-blend-screen filter blur-3xl opacity-10"></div>
       </div>
 
-      <!-- Warning Banner -->
-      <div class="flex items-start gap-3 rounded-[10px] bg-red-50 border border-red-200 px-4 py-3">
-        <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-        <p class="text-[13px] text-red-700">Please ensure the license number matches the document provided</p>
-      </div>
+      <!-- Right Side: The Form -->
+      <div class="bg-surface-container-lowest p-10 flex flex-col">
+        <!-- Progress Indicator -->
+        <div class="mb-10">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-[10px] font-bold tracking-widest text-primary uppercase">Step 2 of 2</span>
+            <span class="text-[10px] font-medium text-on-surface-variant">Identity Review</span>
+          </div>
+          <div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
+            <div class="h-full bg-primary w-full rounded-full"></div>
+          </div>
+        </div>
 
-      <!-- Buttons -->
-      <div class="flex gap-3 pt-1">
-        <button
-          type="button"
-          @click="step = 1"
-          class="h-[54px] w-28 rounded-[10px] border border-[#D9DDE3] bg-white text-[15px] font-semibold text-[#2E2E2E] shadow-sm transition hover:bg-gray-50"
-        >
-          ← Back
-        </button>
-        <button
-          type="submit"
-          :disabled="loading"
-          class="h-[54px] flex-1 rounded-[10px] bg-[#48B7CB] text-[18px] font-bold text-white shadow-sm transition hover:bg-[#3aa8bc] disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          <span v-if="!loading">Submit</span>
-          <span v-else>Submitting...</span>
-        </button>
+        <form class="space-y-6" @submit.prevent="handleSubmit">
+          <!-- Medical License Number -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold text-on-surface-variant tracking-tight" for="license">Medical License Number</label>
+            <div class="relative group">
+              <input 
+                v-model.trim="form.licenseNumber"
+                class="w-full bg-surface-container-low border-0 rounded-lg pr-4 pl-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all placeholder:text-outline-variant" 
+                :class="errors.licenseNumber ? 'ring-2 ring-error/40' : ''"
+                id="license" 
+                placeholder="e.g. 1234567" 
+                type="text"
+              />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-lg group-focus-within:text-primary transition-colors" data-icon="badge">badge</span>
+            </div>
+            <p v-if="errors.licenseNumber" class="text-[10px] font-bold text-error uppercase">{{ errors.licenseNumber }}</p>
+          </div>
+
+          <!-- Affiliated Hospital -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold text-on-surface-variant tracking-tight" for="hospital">Affiliated Hospital or Clinic</label>
+            <div class="relative group">
+              <input 
+                v-model.trim="form.hospital"
+                class="w-full bg-surface-container-low border-0 rounded-lg pr-4 pl-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all placeholder:text-outline-variant" 
+                :class="errors.hospital ? 'ring-2 ring-error/40' : ''"
+                id="hospital" 
+                placeholder="Enter facility name" 
+                type="text"
+              />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-lg group-focus-within:text-primary transition-colors" data-icon="domain">domain</span>
+            </div>
+            <p v-if="errors.hospital" class="text-[10px] font-bold text-error uppercase">{{ errors.hospital }}</p>
+          </div>
+
+          <!-- Drag and Drop Upload -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold text-on-surface-variant tracking-tight">Verification Document Upload</label>
+            <div 
+              class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group"
+              :class="isDragging ? 'border-primary bg-primary/5' : 'border-outline-variant hover:border-primary/40 hover:bg-surface-container-low'"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="handleDrop"
+              @click="$refs.fileInput.click()"
+            >
+              <input ref="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="handleFileChange" />
+              <div v-if="!form.document" class="flex flex-col items-center">
+                <span class="material-symbols-outlined text-outline mb-3 group-hover:text-primary transition-colors text-3xl" data-icon="upload_file">upload_file</span>
+                <p class="text-sm font-medium text-on-surface">Drag and drop file here</p>
+                <p class="text-[10px] text-on-surface-variant mt-1">PDF, JPG or PNG (max. 10MB)</p>
+                <button class="mt-4 text-xs font-bold text-primary hover:underline" type="button">Or browse files</button>
+              </div>
+              <div v-else class="flex flex-col items-center gap-1">
+                <span class="material-symbols-outlined text-emerald-500 text-3xl">task</span>
+                <p class="text-xs font-bold text-on-surface">{{ form.document.name }}</p>
+                <button type="button" @click.stop="form.document = null" class="text-[10px] font-bold text-error hover:underline uppercase mt-1">Remove File</button>
+              </div>
+            </div>
+            <p v-if="errors.document" class="text-[10px] font-bold text-error uppercase">{{ errors.document }}</p>
+          </div>
+
+          <!-- Error Message Example (if registration failed) -->
+          <div v-if="errors.licenseNumber && errors.licenseNumber.includes('failed')" class="bg-error-container/40 p-3 rounded-lg flex items-start gap-3 border border-error/10">
+            <span class="material-symbols-outlined text-error text-lg" data-icon="error">error</span>
+            <div>
+              <p class="text-xs font-bold text-on-error-container">Registration Failed</p>
+              <p class="text-[10px] text-on-error-container/80 leading-relaxed">{{ errors.licenseNumber }}</p>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div class="space-y-3">
+            <button 
+              class="w-full bg-clinical-gradient text-on-primary py-4 rounded-lg font-headline font-bold text-sm tracking-wide shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50" 
+              type="submit"
+              :disabled="loading"
+            >
+              <span v-if="loading" class="material-symbols-outlined animate-spin">progress_activity</span>
+              {{ loading ? 'Submitting...' : 'Complete Verification' }}
+            </button>
+            <button 
+              @click="step = 1"
+              class="w-full text-center text-xs text-on-surface-variant font-medium hover:text-on-surface py-2 transition-colors uppercase tracking-widest" 
+              type="button"
+            >
+              ← Back to Step 1
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </section>
+
+    <!-- Modals (Kept for functionality) -->
+    <PolicyModal :is-open="isPrivacyModalOpen" title="Privacy Notice" @close="isPrivacyModalOpen = false">
+      <LegalContent :sections="privacySections" />
+    </PolicyModal>
+    <PolicyModal :is-open="isTermsModalOpen" title="Terms of Use" @close="isTermsModalOpen = false">
+      <LegalContent :sections="termsSections" />
+    </PolicyModal>
   </div>
 </template>
 

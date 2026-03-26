@@ -1,162 +1,101 @@
 <template>
-  <div
-    class="w-full max-w-md rounded-2xl border border-white/60 bg-stone-50/90 px-6 py-8 shadow-[0_12px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:px-8 sm:py-9"
-  >
-    <div class="text-center">
-      <h1 class="text-3xl font-bold leading-tight text-[#2E2E2E] sm:text-4xl">
-        Login
-      </h1>
-      <p class="mt-3 text-sm leading-6 text-[#5C5C5C] sm:text-base">
-        Welcome back to MorphoAid.
-      </p>
-    </div>
-
-    <!-- Dev Quick Login -->
-    <div
-      v-if="isDev"
-      class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4"
-    >
-      <p class="mb-3 text-sm font-semibold text-amber-800">Dev Quick Login</p>
-      <div class="flex flex-wrap justify-center gap-2">
-        <button
-          type="button"
-          @click="fillDevAdmin"
-          class="rounded-lg bg-purple-100 px-3 py-1.5 text-sm font-medium text-purple-700 transition hover:bg-purple-200"
-        >
-          Admin
-        </button>
-        <button
-          type="button"
-          @click="fillDevDataUse"
-          class="rounded-lg bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-200"
-        >
-          DataUse
-        </button>
-        <button
-          type="button"
-          @click="fillDevDataPrep"
-          class="rounded-lg bg-sky-100 px-3 py-1.5 text-sm font-medium text-sky-700 transition hover:bg-sky-200"
-        >
-          DataPrep
-        </button>
+  <div class="w-full max-w-md z-10">
+    <div class="bg-surface-container-lowest p-8 sm:p-10 rounded-xl shadow-[0_32px_64px_-12px_rgba(25,28,32,0.06)]">
+      <!-- Header Section -->
+      <div class="mb-10 text-center">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-surface-container-high mb-6">
+          <span class="material-symbols-outlined text-primary text-3xl" data-icon="clinical_notes">clinical_notes</span>
+        </div>
+        <h1 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface mb-2">MorphoAid</h1>
+        <p class="text-on-surface-variant text-sm font-medium">AI-Based Malaria Treatment Supporting Platform Environment</p>
       </div>
-    </div>
 
-    <div
-      v-if="errorMsg"
-      class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-    >
-      {{ errorMsg }}
-    </div>
+      <!-- Dev Quick Login (Consolidated into same theme) -->
+      <div v-if="isDev" class="mb-8 rounded-lg bg-surface-container-low p-4 border border-outline-variant/15">
+        <p class="mb-3 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/70">Dev Quick Access</p>
+        <div class="flex flex-wrap justify-between gap-2">
+          <button type="button" @click="fillDevAdmin" class="flex-1 rounded-lg bg-surface-container-high py-2 text-xs font-semibold text-primary transition hover:bg-primary/10">Admin</button>
+          <button type="button" @click="fillDevDataUse" class="flex-1 rounded-lg bg-surface-container-high py-2 text-xs font-semibold text-primary transition hover:bg-primary/10">DataUse</button>
+          <button type="button" @click="fillDevDataPrep" class="flex-1 rounded-lg bg-surface-container-high py-2 text-xs font-semibold text-primary transition hover:bg-primary/10">DataPrep</button>
+        </div>
+      </div>
 
-    <form class="mt-6 space-y-4" @submit.prevent="handleLogin">
-      <div>
-        <label
-          for="email"
-          class="mb-2 block text-sm font-medium text-[#2E2E2E]"
+      <!-- Error Alert -->
+      <div v-if="errorMsg" class="mb-6 flex gap-3 rounded-lg bg-error-container p-4 border border-error/10">
+        <span class="material-symbols-outlined text-error text-xl">error</span>
+        <p class="text-[13px] font-medium text-on-error-container">{{ errorMsg }}</p>
+      </div>
+
+      <!-- Login Form -->
+      <form class="space-y-6" @submit.prevent="handleLogin">
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant" for="email">Email</label>
+          <div class="relative group">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl group-focus-within:text-primary transition-colors" data-icon="alternate_email">alternate_email</span>
+            <input 
+              class="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-transparent rounded-lg transition-all focus:bg-surface-container-lowest placeholder:text-outline/60 text-sm" 
+              :class="errors.email ? 'border-error/40 focus:border-error' : ''"
+              id="email" 
+              v-model.trim="form.email"
+              placeholder="doctor@clinic.ai" 
+              type="email"
+            />
+          </div>
+          <p v-if="errors.email" class="text-[11px] text-error font-medium mt-1">{{ errors.email }}</p>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-end">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant" for="password">Password</label>
+          </div>
+          <div class="relative group">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl group-focus-within:text-primary transition-colors" data-icon="lock">lock</span>
+            <input 
+              class="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-transparent rounded-lg transition-all focus:bg-surface-container-lowest placeholder:text-outline/60 text-sm" 
+              :class="errors.password ? 'border-error/40 focus:border-error' : ''"
+              id="password" 
+              v-model="form.password"
+              placeholder="••••••••" 
+              type="password"
+            />
+          </div>
+          <p v-if="errors.password" class="text-[11px] text-error font-medium mt-1">{{ errors.password }}</p>
+        </div>
+
+        <button 
+          class="w-full clinical-gradient text-on-primary font-semibold py-3.5 rounded-lg shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2" 
+          type="submit"
+          :disabled="loading"
         >
-          Email
-        </label>
-        <input
-          id="email"
-          v-model.trim="form.email"
-          type="email"
-          autocomplete="email"
-          placeholder="Email address"
-          class="h-12 w-full rounded-[10px] border border-neutral-200 bg-white px-4 text-sm text-zinc-800 shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
-          :class="errors.email ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
-        />
-        <p v-if="errors.email" class="mt-2 text-sm text-red-500">
-          {{ errors.email }}
+          <span v-if="loading" class="material-symbols-outlined animate-spin">progress_activity</span>
+          {{ loading ? 'Signing In...' : 'Sign In' }}
+        </button>
+      </form>
+
+      <!-- Legal Links -->
+      <div class="mt-6 text-center">
+         <p class="text-[11px] text-on-surface-variant/70 leading-relaxed px-4">
+          By continuing, you agree to our 
+          <button type="button" @click="isPrivacyModalOpen = true" class="font-bold underline underline-offset-2 hover:text-primary focus:outline-none">Privacy Notice</button> 
+          and 
+          <button type="button" @click="isTermsModalOpen = true" class="font-bold underline underline-offset-2 hover:text-primary focus:outline-none">Terms of Use</button>.
         </p>
       </div>
 
-      <div>
-        <label
-          for="password"
-          class="mb-2 block text-sm font-medium text-[#2E2E2E]"
-        >
-          Password
-        </label>
-        <input
-          id="password"
-          v-model="form.password"
-          type="password"
-          autocomplete="current-password"
-          placeholder="Password"
-          class="h-12 w-full rounded-[10px] border border-neutral-200 bg-white px-4 text-sm text-zinc-800 shadow-sm outline-none transition focus:border-[#48B7CB] focus:ring-4 focus:ring-[#48B7CB]/15"
-          :class="errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''"
-        />
-        <p v-if="errors.password" class="mt-2 text-sm text-red-500">
-          {{ errors.password }}
+      <div class="mt-8 pt-8 border-t border-outline-variant/15">
+        <p class="text-center text-sm text-on-surface-variant">
+          Don't have an account? 
+          <router-link class="font-semibold text-primary hover:underline" to="/register/data-use">Register</router-link>
         </p>
       </div>
+    </div>
+    
 
-
-      <button
-        type="submit"
-        :disabled="loading"
-        class="flex h-12 w-full items-center justify-center rounded-[10px] bg-[#48B7CB] px-4 text-sm font-semibold text-white transition hover:bg-[#368998] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <svg
-          v-if="loading"
-          class="mr-2 h-4 w-4 animate-spin"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          />
-        </svg>
-        {{ loading ? 'Signing in...' : 'Sign in' }}
-      </button>
-
-      <p class="text-center text-[12px] text-[#5C5C5C] px-2">
-        By continuing, you agree to our 
-        <button type="button" @click="isPrivacyModalOpen = true" class="text-[#2F8EA2] hover:underline focus:outline-none">Privacy Notice</button> 
-        and 
-        <button type="button" @click="isTermsModalOpen = true" class="text-[#2F8EA2] hover:underline focus:outline-none">Terms of Use</button>.
-      </p>
-
-      <div class="flex items-center justify-center pt-2 text-sm">
-        <router-link
-          to="/register/data-use"
-          class="font-medium text-[#2F8EA2] transition hover:text-[#368998]"
-        >
-          Register
-        </router-link>
-
-        <!-- <router-link
-          to="/register/data-prep"
-          class="font-medium text-[#2F8EA2] transition hover:text-[#368998]"
-        >
-          Join (Data Prep)
-        </router-link> -->
-      </div>
-    </form>
-    <PolicyModal 
-      :is-open="isPrivacyModalOpen" 
-      title="Privacy Notice" 
-      @close="isPrivacyModalOpen = false"
-    >
+    <!-- Modals -->
+    <PolicyModal :is-open="isPrivacyModalOpen" title="Privacy Notice" @close="isPrivacyModalOpen = false">
       <LegalContent :sections="privacySections" />
     </PolicyModal>
-
-    <PolicyModal 
-      :is-open="isTermsModalOpen" 
-      title="Terms of Use" 
-      @close="isTermsModalOpen = false"
-    >
+    <PolicyModal :is-open="isTermsModalOpen" title="Terms of Use" @close="isTermsModalOpen = false">
       <LegalContent :sections="termsSections" />
     </PolicyModal>
   </div>
