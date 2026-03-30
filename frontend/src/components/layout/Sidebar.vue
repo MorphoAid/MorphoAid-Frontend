@@ -4,8 +4,10 @@
         
         <!-- Logo as per image -->
         <div class="mb-8 px-4 flex items-center gap-2">
-            <div class="w-8 h-8 bg-[#004A99] rounded-lg flex items-center justify-center text-white">
-                <span class="material-symbols-outlined text-xl">microscope</span>
+            <div class="w-8 h-8 bg-[#004A99] rounded-lg flex items-center justify-center text-white overflow-hidden shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 1 1-2-2V6h6v4a2 2 0 1 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+                </svg>
             </div>
             <span class="text-xl font-bold text-[#004A99] tracking-tight">MorphoAid</span>
         </div>
@@ -15,6 +17,7 @@
             v-if="showNewCase"
             @click="$emit('new-case')"
             class="mx-2 mb-8 bg-[#004A99] hover:bg-[#003D7A] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#004A99]/20 transition-all hover:scale-[1.02] active:scale-95"
+            data-testid="new-case-button"
         >
             <span class="material-symbols-outlined text-xl">add</span>
             New Case

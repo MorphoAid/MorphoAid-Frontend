@@ -13,7 +13,7 @@
     <!-- Redesigned Footer -->
     <footer class="relative z-10 w-full py-8 px-6 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-outline-variant/10 bg-surface-container-low/30 backdrop-blur-sm">
       <div class="text-xs font-normal tracking-wide text-on-surface-variant/60">
-        © 2024 AI-Based Malaria Treatment Supporting Platform
+        © 2026 AI-Based Malaria Treatment Supporting Platform
       </div>
       <div class="flex gap-6">
         <button type="button" class="text-xs font-medium tracking-wide text-on-surface-variant/60 hover:text-primary transition-colors">Privacy Policy</button>

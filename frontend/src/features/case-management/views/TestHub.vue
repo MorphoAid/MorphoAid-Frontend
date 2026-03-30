@@ -75,12 +75,12 @@
             <div class="flex gap-2">
               <select v-model="selectedRegion" class="px-4 py-2 bg-[#48B7CB] text-[#F8F8F8] font-bold rounded-xl text-xs hover:opacity-90 transition-colors cursor-pointer border-none outline-none ring-0 appearance-none focus:ring-0 shadow-sm leading-tight text-center">
                 <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="All">All Regions</option>
-                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="North">North</option>
-                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Northeast">Northeast</option>
-                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Central">Central</option>
-                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="East">East</option>
-                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="West">West</option>
-                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="South">South</option>
+                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Northern Region">North</option>
+                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Northeastern Region">Northeast</option>
+                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Central Region">Central</option>
+                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Eastern Region">East</option>
+                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Western Region">West</option>
+                <option class="bg-[#F8F8F8] text-[#2E2E2E] font-medium" value="Southern Region">South</option>
               </select>
               <button @click="handleReset" class="px-3 py-2 bg-white border border-[#368998]/20 text-[#368998] font-bold rounded-xl text-xs hover:bg-[#368998]/5 transition-all flex items-center gap-1 shadow-sm group">
                 <span class="material-symbols-outlined text-sm group-hover:rotate-[-180deg] transition-transform duration-500">restart_alt</span>
@@ -98,7 +98,7 @@
       <!-- Right Side: Regional Summary (Secondary) -->
       <div class="lg:col-span-4 space-y-6">
         <div class="bg-surface-container-lowest rounded-xl shadow-sm p-6 flex flex-col">
-          <h3 class="text-lg font-bold font-manrope tracking-tight mb-6 flex items-center justify-between">
+          <h3 data-testid="insight-region-heading" class="text-lg font-bold font-manrope tracking-tight mb-6 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-[#48B7CB]">location_on</span>
                 {{ selectedRegion === 'All' ? 'Regional Summary' : selectedRegion + ' Provinces' }}
@@ -195,12 +195,12 @@ const totalProcessed = computed(() => {
 })
 
 const regionsMap = {
-  'North': ['chiangmai', 'chiangrai', 'lampang', 'lamphun', 'maehongson', 'nan', 'phayao', 'phrae', 'uttaradit'],
-  'Northeast': ['amnatcharoen', 'buengkan', 'buriram', 'chaiyaphum', 'kalasin', 'khonkaen', 'loei', 'mahasarakham', 'mukdahan', 'nakhonphanom', 'nakhonratchasima', 'nongbualamphu', 'nongkhai', 'roiet', 'sakonnakhon', 'sisaket', 'surin', 'ubonratchathani', 'udonthani', 'yasothon'],
-  'Central': ['angthong', 'phranakhonsiayutthaya', 'ayutthaya', 'krungthepmahanakhon', 'bangkok', 'chainat', 'kamphaengphet', 'lopburi', 'nakhonnayok', 'nakhonpathom', 'nakhonsawan', 'nonthaburi', 'pathumthani', 'phetchabun', 'phichit', 'phitsanulok', 'samutprakan', 'samutsakhon', 'samutsongkhram', 'saraburi', 'singburi', 'sukhothai', 'suphanburi', 'uthaithani'],
-  'East': ['chachoengsao', 'chanthaburi', 'chonburi', 'prachinburi', 'rayong', 'sakaeo', 'trat'],
-  'West': ['kanchanaburi', 'phetchaburi', 'prachuapkhirikhan', 'ratchaburi', 'tak'],
-  'South': ['chumphon', 'krabi', 'nakhonsithammarat', 'narathiwat', 'pattani', 'phangnga', 'phatthalung', 'phuket', 'ranong', 'satun', 'songkhla', 'suratthani', 'trang', 'yala']
+  'Northern Region': ['chiangmai', 'chiangrai', 'lampang', 'lamphun', 'maehongson', 'nan', 'phayao', 'phrae', 'uttaradit'],
+  'Northeastern Region': ['amnatcharoen', 'buengkan', 'buriram', 'chaiyaphum', 'kalasin', 'khonkaen', 'loei', 'mahasarakham', 'mukdahan', 'nakhonphanom', 'nakhonratchasima', 'nongbualamphu', 'nongkhai', 'roiet', 'sakonnakhon', 'sisaket', 'surin', 'ubonratchathani', 'udonthani', 'yasothon'],
+  'Central Region': ['angthong', 'phranakhonsiayutthaya', 'ayutthaya', 'krungthepmahanakhon', 'bangkok', 'chainat', 'kamphaengphet', 'lopburi', 'nakhonnayok', 'nakhonpathom', 'nakhonsawan', 'nonthaburi', 'pathumthani', 'phetchabun', 'phichit', 'phitsanulok', 'samutprakan', 'samutsakhon', 'samutsongkhram', 'saraburi', 'singburi', 'sukhothai', 'suphanburi', 'uthaithani'],
+  'Eastern Region': ['chachoengsao', 'chanthaburi', 'chonburi', 'prachinburi', 'rayong', 'sakaeo', 'trat'],
+  'Western Region': ['kanchanaburi', 'phetchaburi', 'prachuapkhirikhan', 'ratchaburi', 'tak'],
+  'Southern Region': ['chumphon', 'krabi', 'nakhonsithammarat', 'narathiwat', 'pattani', 'phangnga', 'phatthalung', 'phuket', 'ranong', 'satun', 'songkhla', 'suratthani', 'trang', 'yala']
 }
 
 function normalizeProv(name) {

@@ -34,8 +34,10 @@
     <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 no-print">
       <div class="flex items-center justify-between px-8 py-4 max-w-screen-2xl mx-auto">
         <div class="flex items-center gap-2 cursor-pointer" @click="$router.push('/data-use')">
-          <div class="w-8 h-8 bg-[#00458f] rounded-lg flex items-center justify-center">
-            <span class="material-symbols-outlined text-white text-xl">microscopy</span>
+          <div class="w-8 h-8 bg-[#00458f] rounded-lg flex items-center justify-center text-white shadow-inner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 1 1-2-2V6h6v4a2 2 0 1 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+            </svg>
           </div>
           <span class="text-xl font-black tracking-tighter text-[#00458f] font-manrope">MorphoAid</span>
         </div>
@@ -45,6 +47,7 @@
           </button>
           <button 
             v-if="caseData?.status === 'ANALYZED'"
+            data-testid="export-report-button"
             @click="printReport" class="flex items-center gap-2 px-6 py-2.5 bg-[#00458f] text-white rounded-xl font-bold text-sm hover:bg-[#005cbb] transition-all shadow-md shadow-blue-900/10 active:scale-95">
             <span class="material-symbols-outlined text-lg">description</span> Export Report
           </button>
@@ -67,6 +70,7 @@
           </button>
           <button 
             v-if="caseData?.status === 'ANALYZED'"
+            data-testid="export-report-button"
             @click="printReport" class="px-5 py-2.5 bg-[#00458f] text-white rounded-xl text-sm font-bold hover:bg-[#005cbb] transition-all flex items-center gap-2 shadow-lg shadow-blue-900/10 active:scale-95">
             <span class="material-symbols-outlined text-lg">description</span> Export Report
           </button>
@@ -84,7 +88,9 @@
         <header class="flex justify-between items-start border-b border-[#00458f]/10 pb-10 relative z-10">
           <div class="flex gap-6 items-center">
             <div class="h-20 w-20 bg-[#d7e2ff] flex items-center justify-center rounded-3xl text-[#00458f] shadow-inner">
-              <span class="material-symbols-outlined !text-5xl">medical_services</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 1 1-2-2V6h6v4a2 2 0 1 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+              </svg>
             </div>
             <div>
               <h1 class="font-manrope text-4xl font-black tracking-tighter text-[#00458f] leading-none mb-1">MorphoAid</h1>
@@ -242,7 +248,9 @@
         <header class="flex justify-between items-center border-b border-[#00458f]/10 pb-6 relative z-10 mb-4">
           <div class="flex gap-4 items-center">
             <div class="h-12 w-12 bg-[#d7e2ff] flex items-center justify-center rounded-xl text-[#00458f]">
-              <span class="material-symbols-outlined !text-3xl">medical_services</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 1 1-2-2V6h6v4a2 2 0 1 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+              </svg>
             </div>
             <h2 class="font-manrope text-xl font-black text-[#00458f] tracking-tighter pt-1">MorphoAid</h2>
           </div>
@@ -370,8 +378,8 @@
                   {{ alert.type === 'success' ? 'check_circle' : 'error_outline' }}
                 </span>
               </div>
-              <h3 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">{{ alert.title }}</h3>
-              <p class="text-slate-400 font-bold text-sm leading-relaxed mb-8">{{ alert.message }}</p>
+              <h3 data-testid="alert-title" class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">{{ alert.title }}</h3>
+              <p data-testid="alert-message" class="text-slate-400 font-bold text-sm leading-relaxed mb-8">{{ alert.message }}</p>
               <button @click="closeAlert" class="w-full py-4 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-95 transition-all">
                 OK
               </button>
@@ -549,14 +557,18 @@ const printReport = () => {
         return;
     }
 
+    // Set up completion handler before triggering the system dialog
     window.onafterprint = () => {
         showAlert('Success', 'Report exported successfully.', 'success');
+        window.onafterprint = null; // Clean up
     };
 
     try {
         window.print();
-    } catch (e) {
+    } catch (err) {
+        console.error("Export execution failed:", err);
         showAlert('Error', 'Error exporting report. Please try again later.', 'error');
+        window.onafterprint = null;
     }
 };
 

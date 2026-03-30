@@ -166,9 +166,9 @@ const fetchActivities = async () => {
 const filteredActivities = computed(() => {
   return activities.value.filter(a => {
     const matchesSearch = 
-      a.userEmail.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      a.target.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      a.action.toLowerCase().includes(searchQuery.value.toLowerCase());
+      (a.userEmail?.toLowerCase() || '').includes(searchQuery.value.toLowerCase()) ||
+      (a.target?.toLowerCase() || '').includes(searchQuery.value.toLowerCase()) ||
+      (a.action?.toLowerCase() || '').includes(searchQuery.value.toLowerCase());
     
     const matchesRole = filterRole.value === 'ALL' || a.userRole === filterRole.value;
     const matchesStatus = filterStatus.value === 'ALL' || a.status === filterStatus.value;

@@ -123,8 +123,7 @@ const routes = [
       { path: 'invitations', component: InvitationManagement },
       { path: 'activity-log', component: ActivityLog },
       { path: 'approvals', component: UserApprovals },
-      { path: 'account', component: AccountManagement },
-      { path: 'about', component: AboutUs }
+      { path: 'account', component: AccountManagement }
     ]
   },
 

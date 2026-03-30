@@ -10,6 +10,7 @@
             type="text" 
             v-model="searchQuery" 
             placeholder="Search email or role..."
+            data-testid="search-input"
             class="pl-10 pr-4 py-2 bg-[#F8F8F8] border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-medium w-64"
           />
         </div>
@@ -65,7 +66,9 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-50">
-          <tr v-for="user in users" :key="user.id || user.email" class="hover:bg-gray-50/50 transition-colors group">
+          <tr v-for="user in users" :key="user.id || user.email" 
+            data-testid="user-row"
+            class="hover:bg-gray-50/50 transition-colors group">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
@@ -88,6 +91,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <button @click="handleDeleteUser(user)"
                 v-if="user.email !== authStore.user?.email"
+                data-testid="delete-user-button"
                 class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ml-auto">
                 <span class="material-symbols-outlined text-[18px]">person_remove</span>
                 <span class="font-bold text-xs">Delete User</span>
@@ -108,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { adminService } from '@/services/admin.service';
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'vue-router';

@@ -3,7 +3,7 @@
     <Transition name="fade">
       <div v-if="isOpen" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" @click.self="handleClose">
         <Transition name="scale">
-          <div v-if="isOpen" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div v-if="isOpen" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-300" data-testid="case-upload-modal">
             <!-- Modal Header - Simplified as per image -->
             <div class="p-8">
               <!-- Upload Area -->
@@ -25,6 +25,7 @@
                   accept=".png, .jpg, .jpeg"
                   @change="handleFileChange"
                   :disabled="aiStatus === 'Offline'"
+                  data-testid="file-input"
                 />
 
                 <div v-if="previewUrl" class="relative group/preview">
@@ -68,18 +69,18 @@
                       class="w-full px-4 py-3 bg-[#F8F8F8] border border-gray-100 rounded-xl text-gray-500 font-medium cursor-not-allowed"
                     />
                   </div>
-                  <div class="relative">
+                  <div class="relative" ref="searchContainerRef" @keydown.esc="showDropdown = false">
                     <label class="block text-[11px] font-bold text-[#5C5C5C] uppercase tracking-wider mb-2">Location</label>
-                    <div class="relative group/search">
+                    <div class="relative group/search" @focusout="handleFocusOut">
                       <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-xl group-focus-within/search:text-[#48B7CB] transition-colors">search</span>
                       <input
                         type="text"
                         v-model="provinceSearch"
                         @focus="showDropdown = true"
                         @input="handleSearchInput"
-                        @blur="handleBlur"
                         placeholder="Search or select province..."
                         class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#48B7CB]/20 focus:border-[#48B7CB] transition-all text-[#2E2E2E] text-sm font-medium"
+                        data-testid="location-input"
                       />
                       
                       <div v-if="showDropdown && filteredProvinces.length > 0" class="absolute z-[110] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-56 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
@@ -89,6 +90,7 @@
                           @mousedown.prevent="selectProvince(province)"
                           class="px-5 py-3 hover:bg-[#F3F9FA] cursor-pointer text-sm font-medium transition-colors"
                           :class="form.location === province ? 'text-[#48B7CB] bg-[#F3F9FA]' : 'text-[#5C5C5C]'"
+                          data-testid="province-option"
                         >
                           {{ province }}
                         </div>
@@ -111,6 +113,7 @@
                   @click="handleSubmit"
                   :disabled="isSubmitting || !selectedFile || aiStatus === 'Offline'"
                   class="px-8 py-2.5 bg-[#004A99] hover:bg-[#003D7A] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#004A99]/20 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100"
+                  data-testid="upload-case-button"
                 >
                   <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -132,9 +135,9 @@
           <div :class="['w-14 h-14 rounded-full flex items-center justify-center mb-6 mx-auto', alert.type === 'success' ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500']">
             <span class="material-symbols-outlined text-3xl">{{ alert.type === 'success' ? 'check_circle' : 'error' }}</span>
           </div>
-          <h3 class="text-xl font-bold text-[#2E2E2E] text-center mb-2">{{ alert.title }}</h3>
-          <p class="text-[#5C5C5C] text-center mb-8 leading-relaxed">{{ alert.message }}</p>
-          <button @click="closeAlert" class="w-full py-3 bg-[#48B7CB] hover:bg-[#368998] text-white font-bold rounded-xl shadow-lg shadow-[#48B7CB]/20 transition-all">
+          <h3 class="text-xl font-bold text-[#2E2E2E] text-center mb-2" data-testid="alert-title">{{ alert.title }}</h3>
+          <p class="text-[#5C5C5C] text-center mb-8 leading-relaxed" data-testid="alert-message">{{ alert.message }}</p>
+          <button @click="closeAlert" class="w-full py-3 bg-[#48B7CB] hover:bg-[#368998] text-white font-bold rounded-xl shadow-lg shadow-[#48B7CB]/20 transition-all" data-testid="alert-ok-button">
             OK
           </button>
         </div>
@@ -170,6 +173,7 @@ const aiStatus = ref('Checking...')
 
 const provinceSearch = ref('')
 const showDropdown = ref(false)
+const searchContainerRef = ref(null)
 
 const alert = reactive({
   show: false,
@@ -263,10 +267,14 @@ const selectProvince = (province) => {
   showDropdown.value = false
 }
 
-const handleBlur = () => {
-  setTimeout(() => {
-    showDropdown.value = false
-  }, 200)
+const handleFocusOut = (event) => {
+  // Use a tiny delay to allow relatedTarget to be populated
+  // and check if focus is still within the container
+  requestAnimationFrame(() => {
+    if (searchContainerRef.value && !searchContainerRef.value.contains(document.activeElement)) {
+      showDropdown.value = false
+    }
+  })
 }
 
 const englishProvinces = [

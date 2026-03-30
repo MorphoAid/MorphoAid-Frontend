@@ -3,8 +3,10 @@
     <div class="bg-surface-container-lowest p-8 sm:p-10 rounded-xl shadow-[0_32px_64px_-12px_rgba(25,28,32,0.06)]">
       <!-- Header Section -->
       <div class="mb-10 text-center">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-surface-container-high mb-6">
-          <span class="material-symbols-outlined text-primary text-3xl" data-icon="clinical_notes">clinical_notes</span>
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-surface-container-high mb-6 shadow-inner">
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+            <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 1 1-2-2V6h6v4a2 2 0 1 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+          </svg>
         </div>
         <h1 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface mb-2">MorphoAid</h1>
         <p class="text-on-surface-variant text-sm font-medium">AI-Based Malaria Treatment Supporting Platform Environment</p>
@@ -194,6 +196,9 @@ async function handleLogin() {
     } else if (user.role === 'ADMIN') {
       // SRS-29: Admin user
       router.push('/admin/dashboard')
+    } else if (user.role === 'DATA_PREP') {
+      // Align with STC expectations: Redirect unauthorized role to forbidden page
+      router.push('/forbidden')
     } else {
       // Fallback
       router.push('/')

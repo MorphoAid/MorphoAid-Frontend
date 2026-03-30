@@ -56,6 +56,7 @@
         </div>
         <div class="flex items-center gap-4">
           <button @click="viewDigitalReport" 
+              data-testid="view-digital-report-button"
               class="px-8 py-4 rounded-2xl bg-white border-2 border-[#00458f]/10 text-[#00458f] text-xs font-black uppercase tracking-widest hover:bg-[#f8f9ff] hover:border-[#00458f]/30 transition-all flex items-center gap-3 shadow-sm active:scale-95">
               <span class="material-symbols-outlined text-xl">description</span>
               View Digital Report
@@ -73,7 +74,7 @@
       
       <!-- Success Toast -->
       <Transition name="toast">
-        <div v-if="showSaveSuccess" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 bg-[#191c20] text-white px-8 py-4 rounded-3xl shadow-2xl border border-white/10 backdrop-blur-2xl">
+        <div v-if="showSaveSuccess" data-testid="save-success-toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 bg-[#191c20] text-white px-8 py-4 rounded-3xl shadow-2xl border border-white/10 backdrop-blur-2xl">
           <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
             <span class="material-symbols-outlined text-sm font-black">check</span>
           </div>
@@ -199,6 +200,7 @@
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Diagnostic Classification</label>
                     <div class="relative group">
                         <select v-model="confirmedStage" 
+                            data-testid="verdict-stage-select"
                             class="w-full bg-white border border-slate-100 rounded-2xl text-sm font-bold text-[#191c20] focus:ring-4 focus:ring-[#00458f]/5 py-4 px-5 appearance-none shadow-sm transition-all cursor-pointer">
                             <option value="RING">Parasite Stage: Ring</option>
                             <option value="TROPH">Parasite Stage: Trophozoite</option>
@@ -213,12 +215,14 @@
                 <div class="space-y-2.5">
                   <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clinical Observations & Findings</label>
                   <textarea v-model="verdictNotes" 
+                            data-testid="verdict-note-textarea"
                             class="w-full h-full min-h-[160px] bg-white border border-slate-100 rounded-[2rem] text-sm font-medium text-slate-600 focus:ring-4 focus:ring-[#00458f]/5 p-6 resize-none transition-all shadow-sm placeholder:text-slate-300" 
                             placeholder="Document morphological characteristics, parasite density estimates, or relevant clinical symptoms..."></textarea>
                 </div>
                 <div class="md:col-span-2 flex justify-end gap-4 pt-2">
                    <button type="button" @click="verdictNotes = ''" class="px-8 py-4 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Discard</button>
                    <button type="submit" :disabled="!verdictNotes.trim() || isSavingVerdict" 
+                        data-testid="submit-verdict-button"
                         class="px-10 py-4 bg-[#00458f] text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all flex items-center gap-3">
                       <span v-if="!isSavingVerdict" class="material-symbols-outlined text-lg">verified</span>
                       <div v-else class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
@@ -239,7 +243,7 @@
                 <span class="material-symbols-outlined text-[#00458f] p-2 bg-[#00458f]/5 rounded-xl" style="font-variation-settings: 'FILL' 1;">person</span>
                 <h2 class="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">Patient Profile</h2>
               </div>
-              <button @click="savePatientInfo" class="p-2 rounded-xl bg-slate-50 text-[#00458f] hover:bg-slate-100 transition-all flex items-center justify-center group shadow-sm active:scale-90">
+              <button @click="savePatientInfo" data-testid="save-patient-info-button" class="p-2 rounded-xl bg-slate-50 text-[#00458f] hover:bg-slate-100 transition-all flex items-center justify-center group shadow-sm active:scale-90">
                   <span class="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500">sync</span>
               </button>
             </div>
@@ -256,13 +260,13 @@
                 <div class="space-y-1.5">
                   <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Age</label>
                   <div class="relative">
-                    <input v-model="patientData.age" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
+                    <input v-model="patientData.age" data-testid="patient-age-input" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">YR</span>
                   </div>
                 </div>
                 <div class="space-y-1.5">
                   <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Gender</label>
-                  <select v-model="patientData.gender" class="w-full bg-[#f8f9ff] border-none rounded-xl text-xs font-black text-[#191c20] p-4 appearance-none cursor-pointer">
+                  <select v-model="patientData.gender" data-testid="patient-gender-select" class="w-full bg-[#f8f9ff] border-none rounded-xl text-xs font-black text-[#191c20] p-4 appearance-none cursor-pointer">
                       <option value="Male">MALE</option>
                       <option value="Female">FEMALE</option>
                   </select>
@@ -273,14 +277,14 @@
                 <div class="space-y-1.5">
                   <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Weight</label>
                   <div class="relative">
-                    <input v-model="patientData.weight" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
+                    <input v-model="patientData.weight" data-testid="patient-weight-input" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">KG</span>
                   </div>
                 </div>
                 <div class="space-y-1.5">
                   <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Fever</label>
                   <div class="relative">
-                    <input v-model="patientData.feverDuration" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
+                    <input v-model="patientData.feverDuration" data-testid="patient-fever-input" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">DAYS</span>
                   </div>
                 </div>
@@ -288,7 +292,7 @@
 
               <div class="space-y-3">
                 <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Risk Assessment</label>
-                <select v-model="patientData.riskFactors" class="w-full bg-[#f8f9ff] border-none rounded-xl text-[10px] font-black text-[#191c20] p-4 appearance-none cursor-pointer uppercase tracking-widest">
+                <select v-model="patientData.riskFactors" data-testid="patient-risk-select" class="w-full bg-[#f8f9ff] border-none rounded-xl text-[10px] font-black text-[#191c20] p-4 appearance-none cursor-pointer uppercase tracking-widest">
                     <option value="None">Normal / Low Risk</option>
                     <option value="Pregnancy">Pregnancy (Critical)</option>
                     <option value="Travel History">Recent Travel Exposure</option>
@@ -418,9 +422,9 @@
                   {{ alert.type === 'success' ? 'check_circle' : 'error_outline' }}
                 </span>
               </div>
-              <h3 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight">{{ alert.title }}</h3>
-              <p class="text-slate-400 font-bold text-sm leading-relaxed mb-8">{{ alert.message }}</p>
-              <button @click="closeAlert" class="w-full py-4 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-95 transition-all">
+              <h3 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight" data-testid="alert-title">{{ alert.title }}</h3>
+              <p class="text-slate-400 font-bold text-sm leading-relaxed mb-8" data-testid="alert-message">{{ alert.message }}</p>
+              <button @click="closeAlert" data-testid="alert-ok-button" class="w-full py-4 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-95 transition-all">
                 OK
               </button>
             </div>
@@ -599,7 +603,7 @@ const triggerAnalysis = async () => {
         await http.post(`/cases/${caseId.value}/analyze`);
         await loadAllData();
     } catch (err) {
-        alert('Analysis sequence interrupted. Please check network connectivity.');
+        showAlert('Error', 'Analysis sequence interrupted. Please check network connectivity.', 'error');
     } finally {
         isAnalyzing.value = false;
     }
@@ -633,7 +637,8 @@ const handleSaveReport = async () => {
     }
 }
 
-const savePatientInfo = async (silent = false) => {
+const savePatientInfo = async (eventOrSilent) => {
+    const silent = eventOrSilent === true;
     try {
         const payload = {
             patientCode: patientData.value.patientCode ? Number(patientData.value.patientCode) : null,
@@ -651,7 +656,10 @@ const savePatientInfo = async (silent = false) => {
             setTimeout(() => { showSaveSuccess.value = false; }, 3000);
         }
     } catch (err) {
-        if(!silent) alert("Sync error. Verify patient ID format.");
+        if(!silent) {
+            const msg = err.response?.data?.message || "Sync error. Verify patient ID format.";
+            showAlert('Error', msg, 'error');
+        }
         throw err;
     }
 };
@@ -675,11 +683,12 @@ const toggleNoteStatus = async (note, status) => {
         await fetchNotes();
     } catch (err) {
         console.error("Verdict status update rejected.");
-        alert("Unable to update clinical verdict status. Please try again later.");
+        showAlert('Error', 'Unable to update clinical verdict status. Please try again later.', 'error');
     }
 };
 
-const saveVerdict = async (silent = false) => {
+const saveVerdict = async (eventOrSilent) => {
+    const silent = eventOrSilent === true;
     if (!verdictNotes.value.trim()) return;
     isSavingVerdict.value = true;
     try {
@@ -697,7 +706,9 @@ const saveVerdict = async (silent = false) => {
     } catch (err) {
         if(!silent) {
             console.error("Verdict persistence failed.");
-            showAlert('Error', 'Unable to submit clinical verdict. Please try again later.', 'error');
+            const apiMsg = err.response?.data?.message;
+            const msg = apiMsg ? `Unable to submit clinical verdict. ${apiMsg}` : 'Unable to submit clinical verdict. Please try again later.';
+            showAlert('Error', msg, 'error');
         }
         throw err;
     } finally {
@@ -717,7 +728,7 @@ const exportPdf = async () => {
         link.click();
         link.remove();
     } catch (err) {
-        alert("Export engine failed.");
+        showAlert('Error', 'Export engine failed.', 'error');
     } finally {
         isExporting.value = false;
     }

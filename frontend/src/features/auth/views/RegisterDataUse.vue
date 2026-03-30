@@ -177,6 +177,11 @@
       <!-- Left Side: Informational/Brand Panel -->
       <div class="clinical-gradient p-10 flex flex-col justify-between relative overflow-hidden text-on-primary">
         <div class="relative z-10">
+          <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-white mb-6 backdrop-blur-sm border border-white/10">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 1 1-2-2V6h6v4a2 2 0 1 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+            </svg>
+          </div>
           <span class="text-xs font-bold tracking-widest uppercase opacity-70 mb-4 block">MorphoAid Identity</span>
           <h2 class="font-headline text-4xl font-extrabold tracking-tight leading-tight mb-6">Medical Identity Verification</h2>
           <p class="text-on-primary-container leading-relaxed opacity-90 max-w-sm">

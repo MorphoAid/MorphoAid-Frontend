@@ -1,8 +1,12 @@
 <template>
     <header class="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20">
         <!-- Logo moved to Sidebar -->
-        <div class="w-10 h-10 lg:hidden">
-            <!-- Mobile logo if needed -->
+        <div class="h-10 w-10 lg:hidden flex items-center justify-center">
+            <div class="w-8 h-8 bg-[#004A99] rounded-lg flex items-center justify-center text-white shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 1 1-2-2V6h6v4a2 2 0 1 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+                </svg>
+            </div>
         </div>
 
         <!-- Search Bar Contextual (SRS-119/120) -->
@@ -12,6 +16,7 @@
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </span>
                 <input type="text" v-model="searchStore.query" 
+                    data-testid="navbar-search-input"
                     @focus="showSearchDropdown = true" 
                     @click="showSearchDropdown = true"
                     @input="showSearchDropdown = true"
@@ -26,6 +31,7 @@
 
             <!-- Search Dropdown (SRS-121) -->
             <div v-if="showSearchDropdown" 
+                 data-testid="search-results-dropdown"
                  class="absolute bg-white border border-gray-100 shadow-xl rounded-xl w-full mt-2 py-2 z-[100] max-h-72 overflow-y-auto"
                  style="scrollbar-width: thin; scrollbar-color: #B8E7FC transparent;">
                  
@@ -36,13 +42,16 @@
                  </div>
 
                  <!-- No Results (SRS-124) -->
-                 <div v-else-if="searchStore.query && searchResults.length === 0" class="px-4 py-6 text-center">
+                 <div v-else-if="searchStore.query && searchResults.length === 0" 
+                      data-testid="search-no-results"
+                      class="px-4 py-6 text-center">
                      <span class="material-symbols-outlined text-slate-300 text-3xl mb-2">search_off</span>
                      <p class="text-sm text-slate-400 font-bold tracking-tight">No matching results found.</p>
                  </div>
 
                  <!-- Results -->
                  <div v-else v-for="result in searchResults" :key="result.name"
+                      data-testid="search-result-item"
                       @mouseenter="result.type !== 'case' && mapStore.setHoveredLocation(result.type, result.name)"
                       @mouseleave="result.type !== 'case' && mapStore.clearHoveredLocation()"
                       @mousedown.prevent="selectLocation(result)"
@@ -58,10 +67,11 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-4 shrink-0">
+        <div class="flex items-center gap-4 shrink-0 ml-auto">
             <div class="relative" ref="dropdownRef">
                 <!-- Avatar Button -->
                 <button @click="isDropdownOpen = !isDropdownOpen"
+                    data-testid="user-avatar-button"
                     class="w-10 h-10 bg-[#F8F8F8] rounded-full flex items-center justify-center text-[#5C5C5C] shadow-sm overflow-hidden border border-gray-200 focus:outline-none hover:bg-gray-100 transition-colors">
                     <img v-if="profilePictureUrl" :src="profilePictureUrl" alt="avatar"
                         class="w-full h-full object-cover rounded-full" />
@@ -95,6 +105,7 @@
 
                     <!-- Logout -->
                     <button @click="handleLogout"
+                        data-testid="logout-button"
                         class="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-[#2E2E2E] hover:bg-gray-50 hover:text-[#FF4C38] transition-colors">
                         <svg class="w-4 h-4 text-gray-400 group-hover:text-[#FF4C38]" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +177,16 @@ const showSearchDropdown = ref(false)
 const searchContainerRef = ref(null)
 const searchError = ref(null)
 
-const regions = ['North', 'Northeast', 'Central', 'East', 'West', 'South']
+const regionsMap = {
+  'Northern Region': ['chiangmai', 'chiangrai', 'lampang', 'lamphun', 'maehongson', 'nan', 'phayao', 'phrae', 'uttaradit'],
+  'Northeastern Region': ['amnatcharoen', 'buengkan', 'buriram', 'chaiyaphum', 'kalasin', 'khonkaen', 'loei', 'mahasarakham', 'mukdahan', 'nakhonphanom', 'nakhonratchasima', 'nongbualamphu', 'nongkhai', 'roiet', 'sakonnakhon', 'sisaket', 'surin', 'ubonratchathani', 'udonthani', 'yasothon'],
+  'Central Region': ['angthong', 'phranakhonsiayutthaya', 'ayutthaya', 'krungthepmahanakhon', 'bangkok', 'chainat', 'kamphaengphet', 'lopburi', 'nakhonnayok', 'nakhonpathom', 'nakhonsawan', 'nonthaburi', 'pathumthani', 'phetchabun', 'phichit', 'phitsanulok', 'samutprakan', 'samutsakhon', 'samutsongkhram', 'saraburi', 'singburi', 'sukhothai', 'suphanburi', 'uthaithani'],
+  'Eastern Region': ['chachoengsao', 'chanthaburi', 'chonburi', 'prachinburi', 'rayong', 'sakaeo', 'trat'],
+  'Western Region': ['kanchanaburi', 'phetchaburi', 'prachuapkhirikhan', 'ratchaburi', 'tak'],
+  'Southern Region': ['chumphon', 'krabi', 'nakhonsithammarat', 'narathiwat', 'pattani', 'phangnga', 'phatthalung', 'phuket', 'ranong', 'satun', 'songkhla', 'suratthani', 'trang', 'yala']
+}
+
+const regions = Object.keys(regionsMap)
 
 const searchContext = computed(() => {
     return route.path.startsWith('/data-use/cases') ? 'cases' : 'map'
@@ -191,12 +211,14 @@ const searchResults = computed(() => {
             }
             let res = []
             regions.forEach(r => {
-                if (r.toLowerCase().includes(q)) {
+                const normalizedR = r.toLowerCase();
+                if (normalizedR.includes(q) || q.includes(normalizedR)) {
                     res.push({ type: 'region', name: r })
                 }
             })
             englishProvinces.forEach(p => {
-                if (p.toLowerCase().includes(q)) {
+                const normalizedP = p.toLowerCase();
+                if (normalizedP.includes(q) || q.includes(normalizedP)) {
                     res.push({ type: 'province', name: p })
                 }
             })

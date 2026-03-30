@@ -5,6 +5,10 @@ export const adminService = {
         return http.get('/admin/users');
     },
 
+    async getPendingUsers() {
+        return http.get('/admin/users/pending');
+    },
+
     async updateUserRole(id, role) {
         return http.patch(`/admin/users/${id}`, { role });
     },
@@ -15,5 +19,13 @@ export const adminService = {
 
     async getActivities() {
         return http.get('/admin/activities');
+    },
+
+    async approveUser(id) {
+        return http.patch(`/admin/users/${id}/approve`);
+    },
+
+    async rejectUser(id) {
+        return http.delete(`/admin/users/${id}/reject`);
     }
 };
