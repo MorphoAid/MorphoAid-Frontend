@@ -21,6 +21,7 @@ export default defineConfig({
     // Give API calls enough time in slower CI environments
     actionTimeout: 10_000,
     navigationTimeout: 15_000,
+    slowMo: 700,
   },
 
   projects: [

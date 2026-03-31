@@ -292,7 +292,7 @@ const uploadImage = async () => {
     isUploading.value = false;
     
     if (err?.response?.data?.type === 'ImageValidationFailed') {
-      customAlert('Upload Rejected', err.response.data.message);
+      customAlert('Upload Rejected', 'The image is invalid, not a blood cell or microscope image.');
     } else {
       errorMessage.value = err?.response?.data?.message || err.message || 'Server error occurred during upload.';
     }

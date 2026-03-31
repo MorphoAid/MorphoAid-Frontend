@@ -1,5 +1,5 @@
 <template>
-    <header class="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20">
+    <header class="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20 relative">
         <!-- Logo moved to Sidebar -->
         <div class="h-10 w-10 lg:hidden flex items-center justify-center">
             <div class="w-8 h-8 bg-[#004A99] rounded-lg flex items-center justify-center text-white shadow-inner">
@@ -9,8 +9,10 @@
             </div>
         </div>
 
-        <!-- Search Bar Contextual (SRS-119/120) -->
-        <div v-if="authStore.user?.role === 'DATA_USE'" class="flex-1 max-w-md mx-8 relative" ref="searchContainerRef">
+        <!-- Search Bar Contextual (SRS-119/120) - Centered with absolute positioning -->
+        <div v-if="authStore.user?.role === 'DATA_USE'" 
+            class="absolute left-1/2 -translate-x-1/2 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md z-30 px-2 sm:px-0" 
+            ref="searchContainerRef">
             <div class="relative flex items-center">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -57,10 +59,10 @@
                       @mousedown.prevent="selectLocation(result)"
                       class="px-4 py-2 hover:bg-[#F3F9FA] cursor-pointer flex items-center justify-between group transition-colors">
                       <div>
-                          <p class="text-sm font-semibold text-[#2E2E2E]" :class="result.type === 'case' ? 'text-[#48B7CB]' : 'group-hover:text-[#48B7CB]'">{{ result.name }}</p>
+                          <p class="text-sm font-semibold text-[#2E2E2E]" :class="['case', 'navigation'].includes(result.type) ? 'text-[#48B7CB]' : 'group-hover:text-[#48B7CB]'">{{ result.name }}</p>
                           <p class="text-[10px] text-[#5C5C5C] uppercase tracking-wide">{{ result.type }}</p>
                       </div>
-                      <span v-if="result.type !== 'case'" class="material-symbols-outlined text-[#B8E7FC] group-hover:text-[#48B7CB] xl:text-[20px] lg:text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span v-if="!['case', 'navigation'].includes(result.type)" class="material-symbols-outlined text-[#B8E7FC] group-hover:text-[#48B7CB] xl:text-[20px] lg:text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">
                           travel_explore
                       </span>
                  </div>
@@ -187,29 +189,52 @@ const regionsMap = {
 }
 
 const regions = Object.keys(regionsMap)
-
 const searchContext = computed(() => {
-    return route.path.startsWith('/data-use/cases') ? 'cases' : 'map'
+    if (route.path.startsWith('/data-use/cases')) return 'cases'
+    if (route.path === '/data-use') return 'map'
+    return 'none'
 })
 
 const searchPlaceholder = computed(() => {
-    return searchContext.value === 'cases' ? 'Search ID (e.g. 12)...' : 'Search province or region...'
+    if (searchContext.value === 'cases') return 'Search ID (e.g. 12)...'
+    if (searchContext.value === 'map') return 'Search destination or region...'
+    return 'Search pages or content...'
 })
+
+const quickNavItems = [
+  { name: 'Dashboard', type: 'page', route: '/data-use', searchTerms: ['dashboard', 'home', 'main'] },
+  { name: 'Cases', type: 'page', route: '/data-use/cases', searchTerms: ['search', 'case', 'list', 'cases'] },
+  { name: 'Insight', type: 'page', route: '/data-use/insights', searchTerms: ['insight', 'inside', 'visual', 'statistics', 'stats'] },
+  { name: 'Information', type: 'page', route: '/data-use/about', searchTerms: ['info', 'information', 'about', 'help'] }
+]
 
 const searchResults = computed(() => {
     try {
         searchError.value = null
         const q = searchStore.query.trim().toLowerCase()
         
-        // SRS-120: Province or Region search only for Data Use
-        // Forcing map context here. If we need case search elsewhere, we can conditionally enable it.
-        const effectiveContext = authStore.user?.role === 'DATA_USE' ? 'map' : searchContext.value
+        let res = []
+
+        // 1. Navigation items (SRS requested addition)
+        if (q) {
+            quickNavItems.forEach(item => {
+                if (item.name.toLowerCase().includes(q) || item.searchTerms.some(term => term.includes(q))) {
+                    res.push({ type: 'navigation', name: item.name, route: item.route })
+                }
+            })
+        }
+
+        // 2. Existing results
+        // SRS-120: Dynamic context based on current page
+        const effectiveContext = searchContext.value
 
         if (effectiveContext === 'map') {
             if (!q) {
-                return regions.map(r => ({ type: 'region', name: r }))
+                // Default regions if nothing typed
+                regions.forEach(r => res.push({ type: 'region', name: r }))
+                return res.slice(0, 8)
             }
-            let res = []
+
             regions.forEach(r => {
                 const normalizedR = r.toLowerCase();
                 if (normalizedR.includes(q) || q.includes(normalizedR)) {
@@ -222,18 +247,18 @@ const searchResults = computed(() => {
                     res.push({ type: 'province', name: p })
                 }
             })
-            return res.slice(0, 8)
         } 
         
         else if (effectiveContext === 'cases') {
-            if (!q) return []
-            const cleanQ = q.replace('cas-0', '')
-            return searchStore.globalCases
-                .filter(c => c.id.toString().includes(cleanQ))
-                .map(c => ({ type: 'case', name: `CAS-0${c.id}`, rawId: c.id.toString() }))
-                .slice(0, 5)
+            if (q) {
+              const cleanQ = q.replace('cas-0', '')
+              searchStore.globalCases
+                  .filter(c => c.id.toString().includes(cleanQ))
+                  .forEach(c => res.push({ type: 'case', name: `CAS-0${c.id}`, rawId: c.id.toString() }))
+            }
         }
-        return []
+
+        return res.slice(0, 8)
     } catch (err) {
         console.error('Search evaluation failed:', err)
         searchError.value = 'failed'
@@ -250,6 +275,10 @@ const selectLocation = (result) => {
     } else if (result.type === 'case') {
         searchStore.setQuery(result.rawId)
         showSearchDropdown.value = false
+    } else if (result.type === 'navigation') {
+        router.push(result.route)
+        showSearchDropdown.value = false
+        searchStore.clear()
     }
 }
 
@@ -278,6 +307,12 @@ watch(() => mapStore.selectedRegion, (val) => {
             searchStore.setQuery(val);
         }
     }
+})
+
+// Clear search state on route changes
+watch(() => route.path, () => {
+    searchStore.clear()
+    showSearchDropdown.value = false
 })
 
 onMounted(() => {

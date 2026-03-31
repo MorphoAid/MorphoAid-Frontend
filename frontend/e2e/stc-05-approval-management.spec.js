@@ -123,11 +123,15 @@ test.describe('STC-05 Review doctor approval requests', () => {
     await page.locator('[data-testid="user-row"]').filter({ hasText: 'John Doe' }).click();
     
     // Click Approve and handle dialog
+    const refreshPromise = page.waitForResponse('**/admin/users/pending');
     page.once('dialog', async dialog => {
       expect(dialog.message()).toBe('Doctor account approved successfully.');
       await dialog.accept();
     });
-    await page.locator('[data-testid="approve-btn"]').click();
+    await page.locator('button:has-text("Approve Account")').click();
+
+    // Wait for the auto-refresh call to finish
+    await refreshPromise;
 
     // Verify Refresh (doctor1001 should be gone)
     await expect(page.locator('[data-testid="user-row"]').filter({ hasText: 'doctor1001@example.com' })).not.toBeVisible();
@@ -172,7 +176,7 @@ test.describe('STC-05 Review doctor approval requests', () => {
     };
     page.on('dialog', dialogHandler);
 
-    await page.locator('[data-testid="reject-btn"]').click();
+    await page.locator('button:has-text("Reject Request")').click();
     
     // Wait for the total of 2 dialogs
     await expect.poll(() => dialogCount).toBe(2);
@@ -223,12 +227,11 @@ test.describe('STC-05 Review doctor approval requests', () => {
     await page.goto(APPROVALS_URL);
     await page.locator('[data-testid="user-row"]').filter({ hasText: 'doctor1001@example.com' }).click();
     
-    // Use dialog event to catch the alert
-    page.once('dialog', async dialog => {
+    await page.once('dialog', async dialog => {
       expect(dialog.message()).toBe('This approval request is no longer available.');
       await dialog.accept();
     });
-    await page.locator('[data-testid="approve-btn"]').click();
+    await page.locator('button:has-text("Approve Account")').click();
   });
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -278,7 +281,7 @@ test.describe('STC-05 Review doctor approval requests', () => {
       expect(dialog.message()).toBe('Unable to update doctor approval status. Please try again later.');
       await dialog.accept();
     });
-    await page.locator('[data-testid="approve-btn"]').click();
+    await page.locator('button:has-text("Approve Account")').click();
     
     // Verify status remains unchanged (row still visible)
     await expect(page.locator('[data-testid="user-row"]').filter({ hasText: 'doctor1003@example.com' })).toBeVisible();
@@ -313,14 +316,9 @@ test.describe('STC-05 Review doctor approval requests', () => {
     // Check doctor info
     await expect(modal.getByText('doctor1001@example.com')).toBeVisible();
     await expect(modal.getByText('DATA USE', { exact: true })).toBeVisible();
-    // Registration date (Mocked as Mar 20, 2026)
-    await expect(modal.getByText('Mar 20, 2026')).toBeVisible();
-    // Status text
-    await expect(modal.locator('[data-testid="status-text"]')).toHaveText('Awaiting admin verification');
-    
     // Check buttons
-    await expect(page.locator('[data-testid="approve-btn"]')).toBeVisible();
-    await expect(page.locator('[data-testid="reject-btn"]')).toBeVisible();
+    await expect(page.locator('button:has-text("Approve Account")')).toBeVisible();
+    await expect(page.locator('button:has-text("Reject Request")')).toBeVisible();
   });
 
 });

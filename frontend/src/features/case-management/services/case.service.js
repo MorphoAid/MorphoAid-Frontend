@@ -34,3 +34,7 @@ export const fetchNextPatientCode = async () => {
 export const deleteCase = async (caseId) => {
     return http.delete(`/cases/${caseId}`)
 }
+
+export const fetchAiResult = async (caseId) => {
+    return http.get(`/cases/${caseId}/ai-result`)
+}

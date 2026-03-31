@@ -1,27 +1,27 @@
 <template>
-  <div class="min-h-screen bg-[#f8f9ff] text-[#191c20] font-inter pb-12">
+  <div class="min-h-screen bg-surface text-on-surface font-inter pb-12">
     <!-- Main Content Canvas -->
     <div v-if="loadingCase" class="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div class="w-12 h-12 border-4 border-[#00458f]/20 border-t-[#00458f] rounded-full animate-spin"></div>
+        <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
         <p class="text-slate-400 font-medium animate-pulse font-manrope">Synchronizing clinical data...</p>
     </div>
 
     <div v-else-if="caseNotFound" class="max-w-4xl mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-sm border border-red-100 text-center">
         <span class="material-symbols-outlined text-red-500 text-5xl mb-4">error_outline</span>
-        <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2 text-red-600">Case record not found.</h2>
-        <button @click="router.push('/data-use/cases')" class="mt-4 px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Back to Case List</button>
+        <h2 class="text-2xl font-extrabold text-on-surface font-manrope mb-2 text-error">Case record not found.</h2>
+        <button @click="router.push('/data-use/cases')" class="mt-4 px-6 py-2 bg-primary text-on-primary rounded-xl font-bold">Back to Case List</button>
     </div>
     
     <div v-else-if="caseAccessDenied" class="max-w-4xl mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-sm border border-amber-100 text-center">
         <span class="material-symbols-outlined text-amber-500 text-5xl mb-4">block</span>
         <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2">Access denied.</h2>
-        <button @click="router.push('/data-use/cases')" class="mt-4 px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Back to Case List</button>
+        <button @click="router.push('/data-use/cases')" class="mt-4 px-6 py-2 bg-primary text-on-primary rounded-xl font-bold">Back to Case List</button>
     </div>
 
     <div v-else-if="caseError" class="max-w-4xl mx-auto mt-20 p-8 bg-white rounded-[2.5rem] shadow-sm border border-red-100 text-center">
         <span class="material-symbols-outlined text-red-500 text-5xl mb-4">bolt</span>
         <h2 class="text-2xl font-extrabold text-[#191c20] font-manrope mb-2">Unable to load case detail. Please try again later.</h2>
-        <button @click="loadAllData" class="mt-4 px-6 py-2 bg-[#00458f] text-white rounded-xl font-bold">Try Refreshing</button>
+        <button @click="loadAllData" class="mt-4 px-6 py-2 bg-primary text-on-primary rounded-xl font-bold">Try Refreshing</button>
     </div>
 
     <div v-else-if="caseData" class="max-w-screen-2xl mx-auto p-6 flex flex-col gap-6 pt-4">
@@ -29,21 +29,21 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-6">
           <button @click="router.push('/data-use/cases')" 
-                  class="flex items-center justify-center h-14 w-14 rounded-3xl bg-white hover:shadow-md transition-all border border-slate-100 text-[#00458f] group active:scale-90">
+                  class="flex items-center justify-center h-14 w-14 rounded-3xl bg-white hover:shadow-md transition-all border border-slate-100 text-primary group active:scale-90">
             <span class="material-symbols-outlined text-3xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
           </button>
           <div>
             <div class="flex items-center gap-3 mb-1">
-              <h1 class="text-3xl font-black tracking-tighter text-[#191c20] font-manrope leading-none">
+              <h1 class="text-3xl font-black tracking-tighter text-on-surface font-manrope leading-none">
                 Case #{{ String(caseId).padStart(5, 'PX-00000').replace('PX-00000', 'PX-') }}
               </h1>
-              <div class="px-3 py-1 bg-[#00458f]/5 rounded-lg border border-[#00458f]/10">
-                <span class="text-[10px] font-black text-[#00458f] uppercase tracking-widest">{{ statusLabel }}</span>
+              <div class="px-3 py-1 bg-primary/5 rounded-lg border border-primary/10">
+                <span class="text-[10px] font-black text-primary uppercase tracking-widest">{{ statusLabel }}</span>
               </div>
             </div>
             <div v-if="statusLabel === 'processing'" class="flex items-center gap-2 mb-2">
-                <div class="animate-spin h-3 w-3 border-2 border-[#00458f]/20 border-t-[#00458f] rounded-full"></div>
-                <span class="text-[11px] font-bold text-[#00458f] animate-pulse">analysis is still in progress</span>
+                <div class="animate-spin h-3 w-3 border-2 border-primary/20 border-t-primary rounded-full"></div>
+                <span class="text-[11px] font-bold text-primary animate-pulse">analysis is still in progress</span>
             </div>
             <div v-else-if="statusLabel === 'fails'" class="flex items-center gap-2 mb-2 text-red-600">
                 <span class="material-symbols-outlined text-sm">error</span>
@@ -57,12 +57,12 @@
         <div class="flex items-center gap-4">
           <button @click="viewDigitalReport" 
               data-testid="view-digital-report-button"
-              class="px-8 py-4 rounded-2xl bg-white border-2 border-[#00458f]/10 text-[#00458f] text-xs font-black uppercase tracking-widest hover:bg-[#f8f9ff] hover:border-[#00458f]/30 transition-all flex items-center gap-3 shadow-sm active:scale-95">
+              class="px-8 py-4 rounded-2xl bg-white border-2 border-primary/10 text-primary text-xs font-black uppercase tracking-widest hover:bg-surface hover:border-primary/30 transition-all flex items-center gap-3 shadow-sm active:scale-95">
               <span class="material-symbols-outlined text-xl">description</span>
               View Digital Report
           </button>
           <button @click="handleSaveReport" :disabled="isSavingReport"
-              class="px-8 py-4 rounded-2xl bg-gradient-to-br from-[#00458f] to-[#005cbb] text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-3 relative overflow-hidden group">
+              class="px-8 py-4 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-on-primary text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center gap-3 relative overflow-hidden group">
               <div v-if="isSavingReport" class="absolute inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-10">
                 <div class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
               </div>
@@ -92,47 +92,56 @@
           <!-- Microscopy Viewer -->
           <div class="relative bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-200/50 group aspect-video flex items-center justify-center">
             
-            <div v-if="!caseData?.imageId" class="w-full h-full flex flex-col items-center justify-center bg-slate-50 p-12">
+            <div v-if="!caseData?.imageId" class="w-full h-full flex flex-col items-center justify-center bg-surface p-12">
                  <CaseImageUpload :caseId="caseId" :existingFilename="caseData.imageFilename" :imageId="caseData.imageId"
                     @upload-success="loadAllData" />
             </div>
 
-            <div v-else-if="isAnalyzing" class="w-full h-full relative flex items-center justify-center bg-slate-900/5 backdrop-blur-sm z-10">
-                <div class="flex flex-col items-center gap-4">
-                    <div class="w-16 h-16 border-4 border-[#00458f]/20 border-t-[#00458f] rounded-full animate-spin"></div>
-                    <p class="text-[#00458f] font-black uppercase tracking-widest text-sm">AI Analyzing Smear...</p>
-                </div>
-            </div>
+            <div v-if="caseData?.imageId" class="absolute inset-0 bg-slate-900 flex items-center justify-center overflow-hidden">
+               <!-- Small Analyzing Overlay -->
+               <div v-if="isAnalyzing" class="absolute top-6 right-6 z-30 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-200/50 shadow-lg">
+                  <div class="w-4 h-4 border-2 border-[#48B7CB]/20 border-t-[#48B7CB] rounded-full animate-spin"></div>
+                  <span class="text-[10px] font-black uppercase tracking-widest text-[#48B7CB]">AI Processing</span>
+               </div>
 
-            <div v-else class="absolute inset-0 bg-slate-900 flex items-center justify-center overflow-hidden">
                <AnnotatedImage 
                  v-if="caseData.imageId && aiData" 
                  :case-id="caseId"
                  :image-id="caseData.imageId"
                  :detections="rawAiDetections" 
+                 :zoom="microscopyZoom"
                  class="w-full h-full"
                />
-               <img v-else-if="previewImageUrl" :src="previewImageUrl" class="w-full h-full object-contain" />
-               <div v-else class="text-slate-500 font-medium">Image not available</div>
+               <img v-else-if="previewImageUrl" 
+                    :src="previewImageUrl" 
+                    class="w-full h-full object-contain transition-transform duration-300" 
+                    :style="`transform: scale(${microscopyZoom})`" />
+               <div v-else class="text-slate-500 font-medium flex flex-col items-center gap-2">
+                 <span class="material-symbols-outlined text-4xl animate-pulse">image</span>
+                 Decoding imagery...
+               </div>
             </div>
             
             <!-- Viewer Controls -->
             <div v-if="caseData?.imageId" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-xl border border-slate-200/50 rounded-2xl px-6 py-3 flex items-center gap-6 shadow-2xl z-20 transition-all opacity-0 group-hover:opacity-100">
-              <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">zoom_in</span></button>
-              <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">zoom_out</span></button>
+              <button @click="handleZoomIn" class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 active:scale-90"><span class="material-symbols-outlined text-xl">zoom_in</span></button>
+              <button @click="handleZoomOut" class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 active:scale-90"><span class="material-symbols-outlined text-xl">zoom_out</span></button>
               <div class="h-4 w-px bg-slate-200"></div>
               <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">layers</span></button>
               <button class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"><span class="material-symbols-outlined text-xl">fullscreen</span></button>
               <div class="h-4 w-px bg-slate-200"></div>
-              <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">MAG: 1000X</span>
+              <button @click="resetZoom" class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 group">
+                <span class="text-[10px] font-black uppercase tracking-[0.2em]">MAG: {{ Math.round(1000 * microscopyZoom) }}X</span>
+                <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">restart_alt</span>
+              </button>
             </div>
           </div>
 
           <!-- Clinical Verdict History Section -->
           <section class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-200/50">
             <div class="flex items-center gap-3 mb-8">
-              <span class="material-symbols-outlined text-[#00458f] p-2 bg-[#00458f]/5 rounded-xl">clinical_notes</span>
-              <h2 class="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">Clinical Verdict History</h2>
+              <span class="material-symbols-outlined text-primary p-2 bg-primary/5 rounded-xl">clinical_notes</span>
+              <h2 class="text-xs font-black tracking-[0.2em] text-on-surface-variant/70 uppercase">Clinical Verdict History</h2>
             </div>
             
             <div v-if="notes.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -152,7 +161,7 @@
                     <div class="flex-1 mr-4">
                       <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ note.authorName || 'Medical Officer' }} • {{ formatRelativeTime(note.createdAt) }}</p>
                       <div class="flex flex-wrap gap-2 items-center mt-1">
-                          <p class="text-sm font-black text-[#191c20] capitalize tracking-tight">{{ (parseNoteContent(note.note).parasiteStage || 'Observation').toLowerCase().replace('druga', 'DrugA').replace('drugb', 'DrugB') }}</p>
+                          <p class="text-sm font-black text-on-surface capitalize tracking-tight">{{ (parseNoteContent(note.note).parasiteStage || 'Observation').toLowerCase().replace('druga', 'DrugA').replace('drugb', 'DrugB') }}</p>
                           <span v-if="parseNoteContent(note.note).drugExposure && parseNoteContent(note.note).drugExposure !== 'None'" 
                                 class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-black rounded border border-amber-100 uppercase tracking-tighter">
                                 {{ parseNoteContent(note.note).drugExposure }} Exposure
@@ -189,10 +198,10 @@
             </div>
 
             <!-- Current Verdict Form -->
-            <div class="bg-[#f8f9ff] rounded-[2.5rem] p-10 border border-[#00458f]/5">
+            <div class="bg-surface-container-low rounded-[2.5rem] p-10 border border-primary/5">
               <div class="flex items-center gap-3 mb-8">
-                <span class="material-symbols-outlined text-[#00458f] p-2 bg-[#00458f]/10 rounded-xl">add_notes</span>
-                <h2 class="text-xs font-black tracking-[0.2em] text-[#00458f] uppercase">Issue New Clinical Verdict</h2>
+                <span class="material-symbols-outlined text-primary p-2 bg-primary/10 rounded-xl">add_notes</span>
+                <h2 class="text-xs font-black tracking-[0.2em] text-primary uppercase">Issue New Clinical Verdict</h2>
               </div>
               <form @submit.prevent="saveVerdict" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="space-y-6">
@@ -201,7 +210,8 @@
                     <div class="relative group">
                         <select v-model="confirmedStage" 
                             data-testid="verdict-stage-select"
-                            class="w-full bg-white border border-slate-100 rounded-2xl text-sm font-bold text-[#191c20] focus:ring-4 focus:ring-[#00458f]/5 py-4 px-5 appearance-none shadow-sm transition-all cursor-pointer">
+                            class="w-full bg-white border border-slate-100 rounded-2xl text-sm font-bold text-on-surface focus:ring-4 focus:ring-primary/5 focus:border-primary/20 py-4 px-5 appearance-none shadow-sm transition-all cursor-pointer">
+                            <option value="">None / Select Classification</option>
                             <option value="RING">Parasite Stage: Ring</option>
                             <option value="TROPH">Parasite Stage: Trophozoite</option>
                             <option value="SCHIZ">Parasite Stage: Schizont</option>
@@ -216,14 +226,14 @@
                   <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clinical Observations & Findings</label>
                   <textarea v-model="verdictNotes" 
                             data-testid="verdict-note-textarea"
-                            class="w-full h-full min-h-[160px] bg-white border border-slate-100 rounded-[2rem] text-sm font-medium text-slate-600 focus:ring-4 focus:ring-[#00458f]/5 p-6 resize-none transition-all shadow-sm placeholder:text-slate-300" 
+                            class="w-full h-full min-h-[160px] bg-white border border-slate-100 rounded-[2rem] text-sm font-medium text-on-surface-variant focus:ring-4 focus:ring-primary/5 p-6 resize-none transition-all shadow-sm placeholder:text-slate-300" 
                             placeholder="Document morphological characteristics, parasite density estimates, or relevant clinical symptoms..."></textarea>
                 </div>
                 <div class="md:col-span-2 flex justify-end gap-4 pt-2">
                    <button type="button" @click="verdictNotes = ''" class="px-8 py-4 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Discard</button>
-                   <button type="submit" :disabled="!verdictNotes.trim() || isSavingVerdict" 
+                   <button type="submit" :disabled="!confirmedStage || !verdictNotes.trim() || isSavingVerdict" 
                         data-testid="submit-verdict-button"
-                        class="px-10 py-4 bg-[#00458f] text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all flex items-center gap-3">
+                        class="px-10 py-4 bg-primary text-on-primary rounded-[1.5rem] text-xs font-black uppercase tracking-[0.1em] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:scale-100 disabled:cursor-not-allowed transition-all flex items-center gap-3">
                       <span v-if="!isSavingVerdict" class="material-symbols-outlined text-lg">verified</span>
                       <div v-else class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
                       {{ isSavingVerdict ? 'Syncing...' : 'Submit Verification' }}
@@ -237,62 +247,62 @@
         <!-- Right Section: Analysis Panels -->
         <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
           <!-- Patient Information Card -->
-          <section class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-200/50">
-            <div class="flex items-center justify-between mb-8">
+          <section class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-200/50">
+            <div class="flex items-center justify-between mb-5">
               <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[#00458f] p-2 bg-[#00458f]/5 rounded-xl" style="font-variation-settings: 'FILL' 1;">person</span>
-                <h2 class="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">Patient Profile</h2>
+                <span class="material-symbols-outlined text-primary p-2 bg-primary/5 rounded-xl" style="font-variation-settings: 'FILL' 1;">person</span>
+                <h2 class="text-xs font-black tracking-[0.2em] text-on-surface-variant uppercase">Patient Profile</h2>
               </div>
-              <button @click="savePatientInfo" data-testid="save-patient-info-button" class="p-2 rounded-xl bg-slate-50 text-[#00458f] hover:bg-slate-100 transition-all flex items-center justify-center group shadow-sm active:scale-90">
+              <button @click="savePatientInfo" data-testid="save-patient-info-button" class="p-2 rounded-xl bg-surface-container-high text-primary hover:bg-primary/10 transition-all flex items-center justify-center group shadow-sm active:scale-90">
                   <span class="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500">sync</span>
               </button>
             </div>
             
-            <div v-if="patientData" class="space-y-8">
+            <div v-if="patientData" class="space-y-5">
               <div class="space-y-1.5">
-                <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">System ID</label>
+                <label class="block text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">System ID</label>
                 <input v-model="patientData.patientCode" 
                        readonly
-                       class="w-full bg-slate-50 border-none rounded-xl text-sm font-black text-slate-400 p-4 cursor-not-allowed opacity-60" />
+                       class="w-full bg-surface-container-low border-none rounded-xl text-sm font-black text-on-surface-variant p-4 cursor-not-allowed" />
               </div>
 
-              <div class="grid grid-cols-2 gap-6">
+              <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1.5">
-                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Age</label>
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Age</label>
                   <div class="relative">
-                    <input v-model="patientData.age" data-testid="patient-age-input" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">YR</span>
+                    <input v-model="patientData.age" data-testid="patient-age-input" type="number" class="w-full bg-surface border-none rounded-xl text-sm font-black text-on-surface p-4 pr-10" />
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-on-surface-variant pointer-events-none">YR</span>
                   </div>
                 </div>
                 <div class="space-y-1.5">
-                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Gender</label>
-                  <select v-model="patientData.gender" data-testid="patient-gender-select" class="w-full bg-[#f8f9ff] border-none rounded-xl text-xs font-black text-[#191c20] p-4 appearance-none cursor-pointer">
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Gender</label>
+                  <select v-model="patientData.gender" data-testid="patient-gender-select" class="w-full bg-surface border-none rounded-xl text-xs font-black text-on-surface p-4 appearance-none cursor-pointer">
                       <option value="Male">MALE</option>
                       <option value="Female">FEMALE</option>
                   </select>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-6">
+              <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1.5">
-                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Weight</label>
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Weight</label>
                   <div class="relative">
-                    <input v-model="patientData.weight" data-testid="patient-weight-input" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">KG</span>
+                    <input v-model="patientData.weight" data-testid="patient-weight-input" type="number" class="w-full bg-surface border-none rounded-xl text-sm font-black text-on-surface p-4 pr-10" />
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-on-surface-variant pointer-events-none">KG</span>
                   </div>
                 </div>
                 <div class="space-y-1.5">
-                  <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Fever</label>
+                  <label class="block text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Fever</label>
                   <div class="relative">
-                    <input v-model="patientData.feverDuration" data-testid="patient-fever-input" type="number" class="w-full bg-[#f8f9ff] border-none rounded-xl text-sm font-black text-[#191c20] p-4 pr-10" />
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 pointer-events-none">DAYS</span>
+                    <input v-model="patientData.feverDuration" data-testid="patient-fever-input" type="number" class="w-full bg-surface border-none rounded-xl text-sm font-black text-on-surface p-4 pr-10" />
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-on-surface-variant pointer-events-none">DAYS</span>
                   </div>
                 </div>
               </div>
 
               <div class="space-y-3">
-                <label class="block text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black opacity-60">Risk Assessment</label>
-                <select v-model="patientData.riskFactors" data-testid="patient-risk-select" class="w-full bg-[#f8f9ff] border-none rounded-xl text-[10px] font-black text-[#191c20] p-4 appearance-none cursor-pointer uppercase tracking-widest">
+                <label class="block text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Risk Assessment</label>
+                <select v-model="patientData.riskFactors" data-testid="patient-risk-select" class="w-full bg-surface border-none rounded-xl text-[10px] font-black text-on-surface p-4 appearance-none cursor-pointer uppercase tracking-widest">
                     <option value="None">Normal / Low Risk</option>
                     <option value="Pregnancy">Pregnancy (Critical)</option>
                     <option value="Travel History">Recent Travel Exposure</option>
@@ -300,8 +310,8 @@
                 </select>
                 <div class="flex flex-wrap gap-2 pt-1">
                   <span v-for="risk in parseRiskFactors(patientData.riskFactors)" :key="risk"
-                        class="px-3 py-1.5 bg-red-50 text-red-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-red-100 flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                        class="px-3 py-1.5 bg-error/5 text-error text-[9px] font-black rounded-lg uppercase tracking-widest border border-error/10 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-error rounded-full animate-pulse"></span>
                     {{ risk }}
                   </span>
                 </div>
@@ -310,17 +320,17 @@
           </section>
 
           <!-- Diagnostic AI Panel -->
-          <section class="bg-[#00458f] rounded-[2.5rem] p-10 shadow-2xl shadow-[#00458f]/20 text-white relative overflow-hidden group/ai">
+          <section class="clinical-gradient rounded-[2.5rem] p-10 shadow-2xl shadow-primary/10 text-on-primary relative overflow-hidden group/ai">
             <!-- Decorative circle -->
             <div class="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full blur-[80px] group-hover/ai:scale-110 transition-transform duration-1000"></div>
-            <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-[#a0f0f0]/5 rounded-full blur-[60px]"></div>
+            <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-blue-300/5 rounded-full blur-[60px]"></div>
             
             <div class="flex items-center justify-between mb-10 relative z-10">
               <div class="flex items-center gap-4">
                 <span class="material-symbols-outlined text-white/90 p-3 bg-white/10 rounded-2xl shadow-inner" style="font-variation-settings: 'FILL' 1;">psychology</span>
                 <div>
                     <h2 class="text-[10px] font-black tracking-[0.3em] text-white/50 uppercase leading-none mb-1">AI Diagnostic</h2>
-                    <p class="text-xs font-bold text-[#a0f0f0] uppercase tracking-widest leading-none">Insight Engine</p>
+                    <p class="text-xs font-black text-white uppercase tracking-widest leading-none">Insight Engine</p>
                 </div>
               </div>
               <div class="flex flex-col items-end">
@@ -329,23 +339,23 @@
             </div>
             
             <div v-if="aiData" class="space-y-10 relative z-10">
-              <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[2rem] border border-white/10 shadow-2xl transition-all group-hover/ai:-translate-y-1">
+              <div class="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/10 shadow-2xl transition-all group-hover/ai:-translate-y-1">
                 <div class="flex items-center justify-between mb-4">
-                    <p class="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Dominant Stage</p>
+                    <p class="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Dominant Stage</p>
                     <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 bg-[#a0f0f0] rounded-full animate-ping"></span>
-                        <span class="text-[10px] font-black text-[#a0f0f0] uppercase tracking-widest">Optimized</span>
+                        <span class="w-2 h-2 bg-blue-300 rounded-full animate-ping"></span>
+                        <span class="text-[10px] font-black text-blue-300 uppercase tracking-widest">Optimized</span>
                     </div>
                 </div>
                 <div class="flex items-end justify-between mb-6">
                   <h3 class="text-3xl font-black text-white leading-none font-manrope capitalize tracking-tight">{{ aiData.parasiteStage?.toLowerCase() || 'Negative' }} Stage</h3>
                   <div class="text-right">
-                      <p class="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none mb-1">Prob.</p>
-                      <span class="text-xl font-black text-[#a0f0f0] leading-none">{{ (aiData.confidence * 100).toFixed(1) }}%</span>
+                      <p class="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Prob.</p>
+                      <span class="text-xl font-black text-blue-200 leading-none">{{ (aiData.confidence * 100).toFixed(1) }}%</span>
                   </div>
                 </div>
                 <div class="w-full h-2.5 bg-white/10 rounded-full overflow-hidden shadow-inner p-[1px]">
-                  <div class="h-full bg-gradient-to-r from-[#a0f0f0] to-[#50c8c8] rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_#a0f0f0]" :style="`width: ${aiData.confidence * 100}%`"></div>
+                  <div class="h-full bg-gradient-to-r from-blue-300 to-blue-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(147,197,253,0.3)]" :style="`width: ${aiData.confidence * 100}%`"></div>
                 </div>
               </div>
               
@@ -355,7 +365,7 @@
                       <span class="material-symbols-outlined text-white/40">vaccines</span>
                       <span class="text-xs font-bold text-white/50 uppercase tracking-widest">Drug Response</span>
                   </div>
-                  <span class="text-xs font-black uppercase px-2.5 py-1 rounded-lg" :class="aiData.drugExposure ? 'bg-[#a0f0f0]/20 text-[#a0f0f0]' : 'bg-white/5 text-white/40'">
+                  <span class="text-xs font-black uppercase px-2.5 py-1 rounded-lg" :class="aiData.drugExposure ? 'bg-blue-300/20 text-blue-300' : 'bg-white/5 text-white/40'">
                     {{ aiData.drugExposure ? 'Positive (Type '+aiData.drugType+')' : 'Negative' }}
                   </span>
                 </div>
@@ -365,8 +375,8 @@
                       <span class="text-xs font-bold text-white/50 uppercase tracking-widest">Analysis Integrity</span>
                   </div>
                   <div class="flex items-center gap-1.5">
-                      <span class="text-[10px] font-black text-[#a0f0f0] uppercase tracking-widest">LEGITIMIZED</span>
-                      <span class="material-symbols-outlined text-sm text-[#a0f0f0]">check_circle</span>
+                      <span class="text-[10px] font-black text-blue-300 uppercase tracking-widest">LEGITIMIZED</span>
+                      <span class="material-symbols-outlined text-sm text-blue-300">check_circle</span>
                   </div>
                 </div>
               </div>
@@ -424,7 +434,7 @@
               </div>
               <h3 class="text-2xl font-black text-[#191c20] font-manrope mb-2 tracking-tight" data-testid="alert-title">{{ alert.title }}</h3>
               <p class="text-slate-400 font-bold text-sm leading-relaxed mb-8" data-testid="alert-message">{{ alert.message }}</p>
-              <button @click="closeAlert" data-testid="alert-ok-button" class="w-full py-4 bg-[#00458f] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#00458f]/20 hover:scale-[1.02] active:scale-95 transition-all">
+              <button @click="closeAlert" data-testid="alert-ok-button" class="w-full py-4 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                 OK
               </button>
             </div>
@@ -457,8 +467,13 @@ const caseError = ref(null);
 // AI & Analysis State
 const aiData = ref(null);
 const rawAiDetections = ref([]);
-const isAnalyzing = computed(() => caseData.value?.status === 'PENDING' || caseData.value?.status === 'PROCESSING');
 const previewImageUrl = ref(null);
+let pollTimer = null;
+
+const isAnalyzing = computed(() => {
+    const s = caseData.value?.status;
+    return s === 'PENDING' || s === 'PROCESSING';
+});
 
 const statusLabel = computed(() => {
     const s = caseData.value?.status;
@@ -478,11 +493,30 @@ const patientData = ref({
     feverDuration: ''
 });
 const verdictNotes = ref('');
-const confirmedStage = ref('RING');
+const confirmedStage = ref('');
 const isSavingVerdict = ref(false);
 const isSavingReport = ref(false);
 const showSaveSuccess = ref(false);
 const isExporting = ref(false);
+
+// Viewer State
+const microscopyZoom = ref(1.0);
+
+const handleZoomIn = () => {
+    if (microscopyZoom.value < 4.0) {
+        microscopyZoom.value = parseFloat((microscopyZoom.value + 0.25).toFixed(2));
+    }
+};
+
+const handleZoomOut = () => {
+    if (microscopyZoom.value > 0.5) {
+        microscopyZoom.value = parseFloat((microscopyZoom.value - 0.25).toFixed(2));
+    }
+};
+
+const resetZoom = () => {
+    microscopyZoom.value = 1.0;
+};
 
 const alert = ref({
     show: false,
@@ -508,19 +542,49 @@ const closeAlert = () => {
     }
 }
 
-const loadAllData = async () => {
-    loadingCase.value = true;
+const startPolling = () => {
+    if (pollTimer) return;
+    pollTimer = setInterval(() => {
+        loadAllData(true);
+    }, 3000); // Polling every 3 seconds
+};
+
+const stopPolling = () => {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+};
+
+const loadAllData = async (quiet = false) => {
+    if (!quiet) loadingCase.value = true;
     try {
         await fetchCaseDetail();
-        if (caseData.value?.imageId) {
-            await fetchAiResult();
-            await loadPreviewImage();
+        
+        // Polling management
+        if (isAnalyzing.value) {
+            startPolling();
+        } else {
+            stopPolling();
         }
-        await fetchNotes();
+
+        if (caseData.value?.imageId) {
+            // Only fetch AI result if completed or if we don't have it yet
+            if (caseData.value.status === 'ANALYZED' || caseData.value.status === 'COMPLETED' || !aiData.value) {
+                await fetchAiResult();
+            }
+            // Always try to load image if hasn't been loaded
+            if (!previewImageUrl.value) {
+                await loadPreviewImage();
+            }
+        }
+        
+        if (!quiet) await fetchNotes();
     } catch (err) {
         console.error("Failed to sequence data hydration:", err);
+        stopPolling();
     } finally {
-        loadingCase.value = false;
+        if (!quiet) loadingCase.value = false;
     }
 };
 
@@ -598,14 +662,11 @@ const fetchNotes = async () => {
 };
 
 const triggerAnalysis = async () => {
-    isAnalyzing.value = true;
     try {
         await http.post(`/cases/${caseId.value}/analyze`);
-        await loadAllData();
+        await loadAllData(true); // Restart data cycle which will start polling
     } catch (err) {
         showAlert('Error', 'Analysis sequence interrupted. Please check network connectivity.', 'error');
-    } finally {
-        isAnalyzing.value = false;
     }
 };
 
@@ -761,7 +822,10 @@ const parseRiskFactors = (str) => {
 };
 
 onMounted(loadAllData);
-onUnmounted(() => { if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value); });
+onUnmounted(() => { 
+    stopPolling();
+    if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value); 
+});
 watch(() => route.params.id, (newId) => { if (newId) loadAllData(); });
 </script>
 

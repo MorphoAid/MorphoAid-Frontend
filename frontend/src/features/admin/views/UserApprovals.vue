@@ -81,60 +81,145 @@
     <!-- Detail Modal -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="selected" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" @click.self="selected = null">
+        <div v-if="selected" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" @click.self="selected = null">
           <Transition name="scale">
-            <div v-if="selected" data-testid="approval-modal" class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden">
+            <div v-if="selected" data-testid="approval-modal" class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
               <!-- Modal Header -->
-              <div class="bg-gradient-to-r from-[#48B7CB] to-[#2F8EA2] px-6 py-5">
-                <div class="flex items-center gap-4">
-                  <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">
-                    {{ initials(selected) }}
+              <div class="bg-gradient-to-br from-[#48B7CB] via-[#3FA6B9] to-[#2F8EA2] px-8 py-8 relative overflow-hidden">
+                <!-- Abstract decorations -->
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-black/5 rounded-full -ml-12 -mb-12 blur-xl"></div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                  <div class="relative">
+                    <img v-if="selected.profilePictureUrl" :src="selected.profilePictureUrl" class="w-24 h-24 rounded-2xl object-cover border-4 border-white/30 shadow-lg" />
+                    <div v-else class="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold text-3xl border-2 border-white/30 shadow-lg">
+                      {{ initials(selected) }}
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-sm">
+                      <div class="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
                   </div>
-                  <div>
-                    <p class="text-white font-bold text-lg">{{ fullName(selected) || '—' }}</p>
-                    <p class="text-white/80 text-sm">{{ selected.email }}</p>
+                  <div class="text-center md:text-left flex-1">
+                    <h2 class="text-2xl font-black text-white leading-tight uppercase tracking-tight">{{ fullName(selected) }}</h2>
+                    <p class="text-white/80 font-medium">{{ selected.email }}</p>
+                    <div class="mt-3 flex flex-wrap justify-center md:justify-start gap-2">
+                      <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/20">
+                        {{ selected.role?.replace('_', ' ') }}
+                      </span>
+                    </div>
+                  </div>
+                  <button @click="selected = null" class="absolute top-2 right-2 text-white/50 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Modal Content (Scrollable) -->
+              <div class="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Personal Info Section -->
+                  <div class="space-y-4">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Personal Information</h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 rounded-2xl p-4 transition-all hover:bg-gray-100/80 border border-transparent hover:border-gray-200">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">First Name</p>
+                        <p class="font-bold text-gray-800">{{ selected.firstName || '—' }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-2xl p-4 transition-all hover:bg-gray-100/80 border border-transparent hover:border-gray-200">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Last Name</p>
+                        <p class="font-bold text-gray-800">{{ selected.lastName || '—' }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Professional Info Section -->
+                  <div class="space-y-4">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Professional Details</h3>
+                    <div class="space-y-3">
+                      <div class="bg-gray-50 rounded-2xl p-4 transition-all hover:bg-gray-100/80 border border-transparent hover:border-gray-200">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Medical Title</p>
+                        <p class="font-bold text-gray-800">{{ selected.title || 'Doctor' }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-2xl p-4 transition-all hover:bg-gray-100/80 border border-transparent hover:border-gray-200">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">License Number</p>
+                        <p class="font-bold text-gray-800">{{ selected.licenseNumber || '—' }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Workplace Section -->
+                  <div class="md:col-span-2 space-y-4">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Workplace & Affiliation</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div class="bg-gray-50 rounded-2xl p-4 flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        </div>
+                        <div>
+                          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Hospital</p>
+                          <p class="font-bold text-gray-800">{{ selected.hospital || '—' }}</p>
+                        </div>
+                      </div>
+                      <div class="bg-gray-50 rounded-2xl p-4 flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Organization</p>
+                          <p class="font-bold text-gray-800">{{ selected.organization || '—' }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Verification Document Section -->
+                  <div class="md:col-span-2 space-y-4 pt-2">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Medical Identity Verification</h3>
+                    <div v-if="selected.verificationDocumentUrl" class="relative group">
+                      <div v-if="!verificationDocUrl" class="w-full h-48 md:h-64 bg-gray-100 animate-pulse rounded-3xl border border-gray-200 flex items-center justify-center">
+                        <svg class="animate-spin h-8 w-8 text-[#48B7CB]" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                        </svg>
+                      </div>
+                      <img v-else :src="verificationDocUrl" class="w-full h-48 md:h-64 object-cover rounded-3xl border border-gray-200 cursor-pointer transition-all hover:brightness-95 shadow-sm" @click="window.open(verificationDocUrl, '_blank')" />
+                      <div v-if="verificationDocUrl" class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <div class="bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-black px-4 py-2 rounded-full shadow-xl flex items-center gap-2">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                          Open Document
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="bg-amber-50 rounded-2xl p-6 border border-amber-100 flex flex-col items-center justify-center text-center">
+                      <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 mb-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.876c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                      </div>
+                      <p class="text-amber-800 font-bold text-sm">No verification document provided</p>
+                      <p class="text-amber-600 text-[11px] mt-1">Manual background check may be required.</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Modal Body -->
-              <div class="px-6 py-5 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="bg-gray-50 rounded-xl p-4">
-                    <p class="text-xs font-bold text-[#5C5C5C] uppercase tracking-wider mb-1">Role</p>
-                    <p class="font-semibold text-[#2E2E2E]">{{ selected.role?.replace('_', ' ') }}</p>
-                  </div>
-                  <div class="bg-gray-50 rounded-xl p-4">
-                    <p class="text-xs font-bold text-[#5C5C5C] uppercase tracking-wider mb-1">Registered</p>
-                    <p class="font-semibold text-[#2E2E2E]">{{ fmtDate(selected.createdAt) }}</p>
-                  </div>
-                  <div class="bg-amber-50 rounded-xl p-4 col-span-2 flex items-center gap-3">
-                    <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                    <p class="text-sm text-amber-700 font-medium" data-testid="status-text">Awaiting admin verification</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Modal Actions -->
-              <div class="px-6 pb-6 flex gap-3">
+              <!-- Modal Footer -->
+              <div class="px-8 py-6 bg-gray-50 border-t border-gray-100 flex gap-4">
                 <button
                   @click="reject(selected)"
                   :disabled="processing"
-                  class="flex-1 h-12 rounded-xl border-2 border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  data-testid="reject-btn"
+                  class="flex-1 h-14 rounded-2xl border-2 border-red-200 text-red-600 font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-sm active:scale-95"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  Reject
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  Reject Request
                 </button>
                 <button
                   @click="approve(selected)"
                   :disabled="processing"
-                  class="flex-1 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  data-testid="approve-btn"
+                  class="flex-[1.5] h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg shadow-emerald-200 active:scale-95"
                 >
-                  <svg v-if="processing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  Approve
+                  <svg v-if="processing" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                  <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  Approve Account
                 </button>
               </div>
             </div>
@@ -146,7 +231,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
 import api from '@/services/http'
 import { adminService } from '@/services/admin.service'
 
@@ -156,6 +241,42 @@ const loading = ref(false)
 const processing = ref(false)
 const approvedCount = ref(0)
 const rejectedCount = ref(0)
+const verificationDocUrl = ref(null)
+
+async function fetchVerificationDocument(user) {
+  if (!user?.verificationDocumentUrl) {
+    verificationDocUrl.value = null
+    return
+  }
+
+  try {
+    const response = await api.get(user.verificationDocumentUrl, { responseType: 'blob' })
+    if (verificationDocUrl.value) {
+      URL.revokeObjectURL(verificationDocUrl.value)
+    }
+    verificationDocUrl.value = URL.createObjectURL(response.data)
+  } catch (e) {
+    console.error('Failed to fetch verification document', e)
+    verificationDocUrl.value = null
+  }
+}
+
+watch(selected, (newUser) => {
+  if (newUser) {
+    fetchVerificationDocument(newUser)
+  } else {
+    if (verificationDocUrl.value) {
+      URL.revokeObjectURL(verificationDocUrl.value)
+      verificationDocUrl.value = null
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (verificationDocUrl.value) {
+    URL.revokeObjectURL(verificationDocUrl.value)
+  }
+})
 
 function initials(user) {
   const f = user.firstName?.[0] || ''
@@ -237,8 +358,22 @@ onMounted(load)
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-.scale-enter-active, .scale-leave-active { transition: all 0.2s ease; }
-.scale-enter-from, .scale-leave-to { opacity: 0; transform: scale(0.95); }
+.scale-enter-active, .scale-leave-active { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.scale-enter-from, .scale-leave-to { opacity: 0; transform: scale(0.9) translateY(20px); }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
 </style>

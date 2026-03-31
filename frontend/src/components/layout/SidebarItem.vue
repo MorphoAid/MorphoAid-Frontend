@@ -1,8 +1,8 @@
 <template>
     <component :is="disabled ? 'div' : 'RouterLink'" :to="to" :class="[
-        'flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors mb-2',
-        disabled ? 'opacity-50 cursor-not-allowed text-[#5C5C5C]' : 'cursor-pointer hover:bg-[#C6E9EF]/50',
-        isActive && !disabled ? 'bg-[#C6E9EF] text-[#2B6E7A]' : 'text-[#5C5C5C]'
+        'flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all mb-2 text-xs uppercase tracking-widest',
+        disabled ? 'opacity-50 cursor-not-allowed text-on-surface-variant/40' : 'cursor-pointer hover:bg-secondary/20',
+        isActive && !disabled ? 'bg-secondary text-primary shadow-sm shadow-primary/5' : 'text-on-surface-variant'
     ]">
         <div class="w-5 h-5 flex items-center justify-center">
             <slot name="icon"></slot>

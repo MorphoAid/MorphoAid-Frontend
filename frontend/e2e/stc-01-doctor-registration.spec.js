@@ -70,12 +70,20 @@ async function fillStep1(page, {
   confirmPassword,
   agree = true,
 } = {}) {
-  await page.selectOption('#title', title)
-  await page.fill('#first_name', firstName)
-  await page.fill('#last_name', lastName)
-  await page.fill('#email', email)
-  await page.fill('#password', password)
-  await page.fill('#confirm_password', confirmPassword)
+  // Title select (missing ID, find by label text or placeholder)
+  await page.selectOption('select', title)
+  
+  // First/Last Name inputs (missing IDs, use placeholders)
+  await page.fill('input[placeholder*="As shown on medical license"]', firstName)
+  await page.fill('input[placeholder="Enter last name"]', lastName)
+  
+  // Email input (use input type)
+  await page.fill('input[type="email"]', email)
+  
+  // Passwords (multiple with same placeholder, use nth)
+  await page.fill('input[placeholder="••••••••"] >> nth=0', password)
+  await page.fill('input[placeholder="••••••••"] >> nth=1', confirmPassword)
+  
   if (agree) {
     const checkbox = page.locator('#terms')
     const checked = await checkbox.isChecked()
@@ -111,7 +119,7 @@ async function mockRegister(page, status = 201, body = {}) {
  */
 async function goToRegister(page) {
   await page.goto(REGISTER_URL)
-  await expect(page.locator('#title')).toBeVisible()
+  await expect(page.locator('select')).toBeVisible()
   // Bypass native browser validation to allow testing the app's custom validation logic
   await page.evaluate(() => {
     document.querySelector('form')?.setAttribute('novalidate', 'true')

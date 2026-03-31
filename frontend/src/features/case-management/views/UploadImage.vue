@@ -366,7 +366,7 @@ const handleSubmit = async () => {
     isSubmitting.value = false
 
     if (error.response?.data?.type === 'ImageValidationFailed') {
-      customAlert('Upload Rejected', error.response.data.message)
+      customAlert('Upload Rejected', 'The image is invalid, not a blood cell or microscope image.')
     } else {
       customAlert('Upload Failed', error.response?.data?.message || error.message)
     }

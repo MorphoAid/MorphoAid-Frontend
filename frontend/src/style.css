@@ -2,52 +2,25 @@
 
 @theme {
   --color-outline: #727784;
-  --color-on-secondary-fixed-variant: #3c4858;
-  --color-error: #ba1a1a;
+  --color-error: #A92222;
   --color-on-error: #ffffff;
-  --color-secondary-fixed-dim: #bbc7db;
-  --color-secondary: #535f70;
-  --color-secondary-fixed: #d7e3f8;
-  --color-on-secondary-container: #596576;
-  --color-surface-variant: #e1e2e8;
-  --color-inverse-on-surface: #eff0f6;
-  --color-surface: #f8f9ff;
+  --color-secondary: #B8E7FC;
+  --color-on-secondary: #121212;
+  --color-surface: #F8F8F8;
+  --color-on-surface: #121212;
+  --color-background: #F8F8F8;
+  --color-on-background: #121212;
+  --color-on-surface-variant: #3A3A3A;
+  --color-primary: #48B7CB;
   --color-on-primary: #ffffff;
-  --color-surface-tint: #005cbb;
-  --color-surface-container-highest: #e1e2e8;
-  --color-surface-bright: #f8f9ff;
-  --color-inverse-primary: #abc7ff;
-  --color-surface-container-lowest: #ffffff;
-  --color-on-surface: #191c20;
-  --color-surface-container: #eceef3;
-  --color-on-tertiary-container: #97e7e6;
-  --color-inverse-surface: #2e3135;
-  --color-on-primary-container: #c7d9ff;
-  --color-background: #f8f9ff;
-  --color-surface-container-high: #e7e8ee;
-  --color-tertiary: #005050;
+  --color-primary-container: #F0F8FF;
+  --color-on-primary-container: #2E2E2E;
+  --color-secondary-container: #F0F8FF;
+  --color-accent-orange: #FF4C38;
+  --color-accent-green: #407533;
   --color-outline-variant: #c2c6d4;
-  --color-on-primary-fixed: #001b3f;
-  --color-tertiary-fixed-dim: #84d4d3;
-  --color-primary-fixed: #d7e2ff;
-  --color-on-secondary-fixed: #101c2b;
-  --color-on-tertiary-fixed-variant: #004f4f;
-  --color-secondary-container: #d7e3f8;
-  --color-error-container: #ffdad6;
-  --color-on-surface-variant: #424752;
-  --color-tertiary-fixed: #a0f0f0;
-  --color-tertiary-container: #006a6a;
-  --color-surface-container-low: #f2f3f9;
-  --color-on-background: #191c20;
-  --color-on-primary-fixed-variant: #00458f;
-  --color-surface-dim: #d8dae0;
-  --color-on-tertiary-fixed: #002020;
-  --color-on-secondary: #ffffff;
-  --color-on-tertiary: #ffffff;
-  --color-primary-container: #005cbb;
-  --color-primary: #00458f;
-  --color-primary-fixed-dim: #abc7ff;
-  --color-on-error-container: #93000a;
+  --color-surface-container-low: #F0F8FF;
+  --color-surface-container-lowest: #ffffff;
   
   --font-headline: 'Manrope', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -69,7 +42,7 @@ body {
 }
 
 .clinical-gradient, .bg-clinical-gradient {
-    background: linear-gradient(135deg, #00458f 0%, #005cbb 100%);
+    background: linear-gradient(135deg, #48B7CB 0%, #2F8EA2 100%);
 }
 
 .glass-effect, .glass-panel {

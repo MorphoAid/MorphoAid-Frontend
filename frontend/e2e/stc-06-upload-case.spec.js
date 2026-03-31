@@ -229,7 +229,7 @@ test.describe('STC-06 Upload blood smear image and submit for AI analysis', () =
 
     // Assert: Upload Rejected alert
     await expect(page.getByTestId('alert-title')).toHaveText('Upload Rejected')
-    await expect(page.getByTestId('alert-message')).toHaveText('Not a blood smear / microscope image')
+    await expect(page.getByTestId('alert-message')).toHaveText('The image is invalid, not a blood cell or microscope image.')
   })
 
   // ────────────────────────────────────────────────────────────────────────────

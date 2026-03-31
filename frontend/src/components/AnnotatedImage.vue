@@ -6,7 +6,14 @@
         <div v-else-if="errorMsg" class="text-red-500 italic text-sm py-2">
             {{ errorMsg }}
         </div>
-        <div v-else class="annotated-image-container" ref="containerRef">
+        <div v-else 
+             class="annotated-image-container" 
+             ref="containerRef"
+             @mousedown="startPan"
+             @mousemove="onPan"
+             @mouseup="stopPan"
+             @mouseleave="stopPan"
+             :style="{ cursor: isDragging ? 'grabbing' : props.zoom > 1 ? 'grab' : 'default' }">
             <canvas ref="canvasRef" class="annotated-canvas"></canvas>
         </div>
     </div>
@@ -28,13 +35,39 @@ const props = defineProps({
     caseId: { type: [Number, String], required: true },
     imageId: { type: [Number, String], required: false },
     detections: { type: Array, default: () => [] },
+    zoom: { type: Number, default: 1.0 },
 });
 
 const canvasRef = ref(null);
 const containerRef = ref(null);
 const loading = ref(true);
 const errorMsg = ref(null);
+
+// Panning State
+const isDragging = ref(false);
+const startX = ref(0);
+const startY = ref(0);
+const offsetX = ref(0);
+const offsetY = ref(0);
 let loadedImage = null;
+
+const startPan = (e) => {
+    if (props.zoom <= 1) return;
+    isDragging.value = true;
+    startX.value = e.clientX - offsetX.value;
+    startY.value = e.clientY - offsetY.value;
+};
+
+const onPan = (e) => {
+    if (!isDragging.value) return;
+    offsetX.value = e.clientX - startX.value;
+    offsetY.value = e.clientY - startY.value;
+    drawAnnotations();
+};
+
+const stopPan = () => {
+    isDragging.value = false;
+};
 
 const fetchAndDraw = async () => {
     if (!props.imageId) {
@@ -89,9 +122,11 @@ const drawAnnotations = () => {
 
     // Fit to container width
     const containerWidth = container.clientWidth;
-    const scale = containerWidth / imgW;
-    const displayW = containerWidth;
-    const displayH = imgH * scale;
+    const baseScale = containerWidth / imgW;
+    const currentScale = baseScale * props.zoom;
+    
+    const displayW = imgW * currentScale;
+    const displayH = imgH * currentScale;
 
     // Set canvas size to display size (CSS pixels), with devicePixelRatio for sharpness
     const dpr = window.devicePixelRatio || 1;
@@ -99,20 +134,26 @@ const drawAnnotations = () => {
     canvas.height = displayH * dpr;
     canvas.style.width = displayW + 'px';
     canvas.style.height = displayH + 'px';
+    
+    // Apply panning offset via CSS transforms for smoother movement
+    canvas.style.transform = `translate(${offsetX.value}px, ${offsetY.value}px)`;
+
     ctx.scale(dpr, dpr);
 
     // Draw image scaled to display size
     ctx.drawImage(loadedImage, 0, 0, displayW, displayH);
+    
+    const finalScale = currentScale; // Use this for annotations
 
     // Draw bounding boxes
     if (props.detections && props.detections.length > 0) {
         props.detections.forEach((det) => {
             if (!det.box) return;
 
-            const x1 = det.box.x1 * scale;
-            const y1 = det.box.y1 * scale;
-            const x2 = det.box.x2 * scale;
-            const y2 = det.box.y2 * scale;
+            const x1 = det.box.x1 * finalScale;
+            const y1 = det.box.y1 * finalScale;
+            const x2 = det.box.x2 * finalScale;
+            const y2 = det.box.y2 * finalScale;
             const boxW = x2 - x1;
             const boxH = y2 - y1;
 
@@ -160,26 +201,44 @@ watch(() => props.detections, () => {
 }, { deep: true });
 
 watch(() => props.imageId, () => {
+    offsetX.value = 0;
+    offsetY.value = 0;
     fetchAndDraw();
+});
+
+watch(() => props.zoom, () => {
+    // Reset offsets if zoom is back to 1.0
+    if (props.zoom <= 1.0) {
+        offsetX.value = 0;
+        offsetY.value = 0;
+    }
+    drawAnnotations();
 });
 </script>
 
 <style scoped>
 .annotated-image-wrapper {
     width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .annotated-image-container {
     width: 100%;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    height: 100%;
     overflow: hidden;
-    background-color: #f9fafb;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 .annotated-canvas {
     display: block;
-    width: 100%;
-    height: auto;
+    max-width: none; /* Allow zoom to expand beyond container */
+    max-height: none;
+    transition: transform 0.1s ease-out; /* Smooth pan transitions */
 }
 </style>

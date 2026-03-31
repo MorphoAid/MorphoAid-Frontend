@@ -213,20 +213,23 @@ function getProvinceRegion(provEn, provTh) {
     for (const [reg, provs] of Object.entries(regionsMap)) {
         if (provs.includes(normal)) return reg
     }
-    return 'Central'
+    return 'Central Region'
 }
 
 const displayedSummaryItems = computed(() => {
     if (selectedRegion.value === 'All') {
-        const regionTotals = { 'North': 0, 'Northeast': 0, 'Central': 0, 'East': 0, 'West': 0, 'South': 0 }
+        const regionTotals = {}
+        Object.keys(regionsMap).forEach(k => regionTotals[k] = 0)
+        
         heatmapData.value.forEach(d => {
             const reg = getProvinceRegion(d.provinceNameEn, d.provinceNameTh)
             if (regionTotals[reg] !== undefined) regionTotals[reg] += d.value;
         })
+        
         const max = Math.max(...Object.values(regionTotals), 1)
         return Object.entries(regionTotals)
           .map(([reg, val]) => ({
-            name: reg + ' Region',
+            name: reg,
             subtitle: 'Cumulative Cases',
             value: val,
             percentage: (val / max) * 100,
@@ -236,7 +239,6 @@ const displayedSummaryItems = computed(() => {
             onClickRegion: reg
           }))
           .sort((a,b) => b.value - a.value)
-          .filter(x => x.value > 0)
     } else {
         const isRegion = Object.keys(regionsMap).includes(selectedRegion.value)
         let provs = []

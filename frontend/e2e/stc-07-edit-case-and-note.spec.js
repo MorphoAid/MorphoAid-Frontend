@@ -267,6 +267,7 @@ test.describe('STC-07 Edit case information and add diagnostic note', () => {
     )
 
     await page.goto(`/data-use/cases/${TD.TD01.caseId}`)
+    await page.selectOption('[data-testid="verdict-stage-select"]', 'RING')
     await page.fill('[data-testid="verdict-note-textarea"]', TD.TD07.longNote)
     await page.click('[data-testid="submit-verdict-button"]')
 
@@ -306,6 +307,7 @@ test.describe('STC-07 Edit case information and add diagnostic note', () => {
     )
 
     await page.goto(`/data-use/cases/${TD.TD01.caseId}`)
+    await page.selectOption('[data-testid="verdict-stage-select"]', 'RING')
     await page.fill('[data-testid="verdict-note-textarea"]', TD.TD01.note)
     await page.click('[data-testid="submit-verdict-button"]')
 

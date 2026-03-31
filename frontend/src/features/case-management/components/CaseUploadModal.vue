@@ -111,15 +111,15 @@
                 </button>
                 <button
                   @click="handleSubmit"
-                  :disabled="isSubmitting || !selectedFile || aiStatus === 'Offline'"
+                  :disabled="isSubmitting || isLoadingInitial || !selectedFile || aiStatus === 'Offline'"
                   class="px-8 py-2.5 bg-[#004A99] hover:bg-[#003D7A] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#004A99]/20 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100"
                   data-testid="upload-case-button"
                 >
-                  <svg v-if="isSubmitting" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                  <svg v-if="isSubmitting || isLoadingInitial" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>{{ isSubmitting ? 'Uploading...' : 'Upload Case' }}</span>
+                  <span>{{ isSubmitting ? 'Uploading...' : (isLoadingInitial ? 'Loading...' : 'Upload Case') }}</span>
                 </button>
               </div>
             </div>
@@ -169,6 +169,7 @@ const selectedFileSize = ref('')
 const previewUrl = ref('')
 const isSubmitting = ref(false)
 const isDragging = ref(false)
+const isLoadingInitial = ref(true)
 const aiStatus = ref('Checking...')
 
 const provinceSearch = ref('')
@@ -313,7 +314,9 @@ const closeAlert = () => {
 }
 
 const loadInitialData = async () => {
+  if (!props.isOpen) return
   try {
+    isLoadingInitial.value = true
     const [aiRes, nextCodeRes, authRes] = await Promise.all([
       systemService.getAiStatus().catch(() => ({ aiStatus: 'OFFLINE' })),
       fetchNextPatientCode().catch(() => ({ data: 'ERROR' })),
@@ -328,6 +331,8 @@ const loadInitialData = async () => {
     }
   } catch (e) {
     console.error('Failed to load initial data:', e)
+  } finally {
+    isLoadingInitial.value = false
   }
 }
 
@@ -374,6 +379,12 @@ const handleSubmit = async () => {
     return
   }
 
+  // Ensure patient code and technician are loaded
+  if (isLoadingInitial.value || !form.patientCode || form.patientCode === 'ERROR') {
+    showAlert('System Error', 'Could not retrieve patient data. Please refresh and try again.', 'error')
+    return
+  }
+
   if (isSubmitting.value) return
 
   try {
@@ -411,7 +422,7 @@ const handleSubmit = async () => {
     const resData = error.response?.data
     if (resData?.type === 'ImageValidationFailed' || (error.response?.status === 400 && resData?.message)) {
       // SRS-44: Upload Rejected
-      showAlert('Upload Rejected', resData.message || 'Image validation failed.', 'error')
+      showAlert('Upload Rejected', 'The image is invalid, not a blood cell or microscope image.', 'error')
     } else {
       // SRS-50: System/Database error
       showAlert('Error', 'Error creating case. Please try again later.', 'error')
